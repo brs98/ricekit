@@ -1429,7 +1429,7 @@
       "Step 4: Verify new symlink is created",
       "Step 5: Verify no dangling or broken symlinks"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
