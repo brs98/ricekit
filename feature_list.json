@@ -1011,7 +1011,7 @@
       "Step 4: Read preferences.json",
       "Step 5: Verify recentThemes array contains these three themes in reverse chronological order"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

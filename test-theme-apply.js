@@ -1,52 +1,94 @@
-// Test script to verify theme application
+/**
+ * Test script to verify theme application and recent themes tracking
+ */
+
 const fs = require('fs');
 const path = require('path');
 
-const currentDir = path.join(process.env.HOME, 'Library/Application Support/MacTheme/current');
+const macthemeDir = path.join(process.env.HOME, 'Library/Application Support/MacTheme');
+const prefsPath = path.join(macthemeDir, 'preferences.json');
+const statePath = path.join(macthemeDir, 'state.json');
+
+console.log('='.repeat(60));
+console.log('MacTheme Application Test');
+console.log('='.repeat(60));
+console.log();
+
+// Check if directories exist
+console.log('1. Checking MacTheme directories...');
+console.log(`   MacTheme dir: ${fs.existsSync(macthemeDir) ? '✓' : '✗'}`);
+console.log(`   Preferences: ${fs.existsSync(prefsPath) ? '✓' : '✗'}`);
+console.log(`   State: ${fs.existsSync(statePath) ? '✓' : '✗'}`);
+console.log();
+
+// Read current state
+if (fs.existsSync(statePath)) {
+  console.log('2. Current State:');
+  const state = JSON.parse(fs.readFileSync(statePath, 'utf-8'));
+  console.log(`   Current theme: ${state.currentTheme || 'none'}`);
+  if (state.lastSwitched) {
+    console.log(`   Last switched: ${new Date(state.lastSwitched).toLocaleString()}`);
+  }
+  console.log();
+}
+
+// Read preferences
+if (fs.existsSync(prefsPath)) {
+  console.log('3. Preferences:');
+  const prefs = JSON.parse(fs.readFileSync(prefsPath, 'utf-8'));
+  console.log(`   Recent themes (${prefs.recentThemes?.length || 0}):`);
+  if (prefs.recentThemes && prefs.recentThemes.length > 0) {
+    prefs.recentThemes.forEach((theme, index) => {
+      console.log(`     ${index + 1}. ${theme}`);
+    });
+  } else {
+    console.log('     (none yet - apply a theme to populate this)');
+  }
+  console.log();
+
+  console.log(`   Favorites (${prefs.favorites?.length || 0}):`);
+  if (prefs.favorites && prefs.favorites.length > 0) {
+    prefs.favorites.forEach((theme, index) => {
+      console.log(`     ${index + 1}. ${theme}`);
+    });
+  } else {
+    console.log('     (none yet)');
+  }
+  console.log();
+}
+
+// Check symlink
+const currentDir = path.join(macthemeDir, 'current');
 const symlinkPath = path.join(currentDir, 'theme');
-const themePath = path.join(process.env.HOME, 'Library/Application Support/MacTheme/themes/tokyo-night');
 
-console.log('Testing theme application...');
-console.log('Symlink path:', symlinkPath);
-console.log('Theme path:', themePath);
-
-// Check if theme exists
-if (!fs.existsSync(themePath)) {
-  console.error('Theme directory does not exist:', themePath);
-  process.exit(1);
-}
-
-// Remove existing symlink if it exists
+console.log('4. Symlink Status:');
 if (fs.existsSync(symlinkPath)) {
-  const stats = fs.lstatSync(symlinkPath);
-  if (stats.isSymbolicLink()) {
-    fs.unlinkSync(symlinkPath);
-    console.log('Removed existing symlink');
-  }
-}
-
-// Create new symlink
-try {
-  fs.symlinkSync(themePath, symlinkPath, 'dir');
-  console.log('✓ Created symlink successfully');
-
-  // Verify symlink
-  const linkStats = fs.lstatSync(symlinkPath);
-  if (linkStats.isSymbolicLink()) {
-    console.log('✓ Symlink verification passed');
-
-    // Try to read through the symlink
-    const themeJson = path.join(symlinkPath, 'theme.json');
-    if (fs.existsSync(themeJson)) {
-      console.log('✓ Can read files through symlink');
-      const content = fs.readFileSync(themeJson, 'utf-8');
-      const metadata = JSON.parse(content);
-      console.log('✓ Theme:', metadata.name);
+  try {
+    const stats = fs.lstatSync(symlinkPath);
+    if (stats.isSymbolicLink()) {
+      const target = fs.readlinkSync(symlinkPath);
+      console.log(`   ✓ Symlink exists: ${symlinkPath}`);
+      console.log(`   → Points to: ${target}`);
+      const themeName = path.basename(target);
+      console.log(`   → Theme: ${themeName}`);
+    } else {
+      console.log(`   ✗ Path exists but is not a symlink`);
     }
+  } catch (err) {
+    console.log(`   ✗ Error reading symlink: ${err.message}`);
   }
-
-  console.log('\nAll checks passed!');
-} catch (err) {
-  console.error('Failed to create symlink:', err);
-  process.exit(1);
+} else {
+  console.log(`   ✗ Symlink does not exist yet`);
+  console.log(`     (Apply a theme through the app to create it)`);
 }
+console.log();
+
+console.log('='.repeat(60));
+console.log('Test Complete');
+console.log('='.repeat(60));
+console.log();
+console.log('Next steps:');
+console.log('1. Launch the app: npm run dev');
+console.log('2. Apply 2-3 themes through the UI');
+console.log('3. Run this script again to verify recent themes tracking');
+console.log();
