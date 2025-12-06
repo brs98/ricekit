@@ -30,4 +30,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onAppearanceChange: (callback: (appearance: string) => void) => {
     ipcRenderer.on('system:appearance-changed', (_event, appearance) => callback(appearance));
   },
+
+  // State operations
+  getState: () => ipcRenderer.invoke('state:get'),
 });

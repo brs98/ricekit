@@ -1,8 +1,13 @@
 import { useState } from 'react';
 import './App.css';
+import { ThemeGrid } from './components/ThemeGrid';
+
+type FilterMode = 'all' | 'light' | 'dark' | 'favorites';
 
 function App() {
   const [activeView, setActiveView] = useState('themes');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterMode, setFilterMode] = useState<FilterMode>('all');
 
   return (
     <div className="app">
@@ -46,13 +51,47 @@ function App() {
       <div className="main-content">
         <div className="content-header">
           <h2 className="text-2xl font-bold capitalize">{activeView}</h2>
+          {activeView === 'themes' && (
+            <div className="theme-controls">
+              <input
+                type="text"
+                placeholder="Search themes..."
+                className="search-input"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <div className="filter-chips">
+                <button
+                  className={`filter-chip ${filterMode === 'all' ? 'active' : ''}`}
+                  onClick={() => setFilterMode('all')}
+                >
+                  All
+                </button>
+                <button
+                  className={`filter-chip ${filterMode === 'light' ? 'active' : ''}`}
+                  onClick={() => setFilterMode('light')}
+                >
+                  Light
+                </button>
+                <button
+                  className={`filter-chip ${filterMode === 'dark' ? 'active' : ''}`}
+                  onClick={() => setFilterMode('dark')}
+                >
+                  Dark
+                </button>
+                <button
+                  className={`filter-chip ${filterMode === 'favorites' ? 'active' : ''}`}
+                  onClick={() => setFilterMode('favorites')}
+                >
+                  ★ Favorites
+                </button>
+              </div>
+            </div>
+          )}
         </div>
         <div className="content-body">
           {activeView === 'themes' && (
-            <div className="placeholder">
-              <h3>Themes View</h3>
-              <p>Theme browser will be implemented here</p>
-            </div>
+            <ThemeGrid searchQuery={searchQuery} filterMode={filterMode} />
           )}
           {activeView === 'editor' && (
             <div className="placeholder">

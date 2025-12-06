@@ -104,6 +104,7 @@ export interface ElectronAPI {
   setPreferences: (prefs: Preferences) => Promise<void>;
   getSystemAppearance: () => Promise<'light' | 'dark'>;
   onAppearanceChange: (callback: (appearance: string) => void) => void;
+  getState: () => Promise<State>;
 }
 
 declare global {

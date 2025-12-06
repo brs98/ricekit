@@ -6,6 +6,7 @@ import {
   getCustomThemesDir,
   getPreferencesPath,
   getStatePath,
+  getCurrentDir,
 } from './directories';
 import type { Theme, ThemeMetadata, Preferences, State } from '../shared/types';
 
@@ -38,6 +39,9 @@ export function setupIpcHandlers(): void {
 
   // System operations
   ipcMain.handle('system:appearance', handleGetSystemAppearance);
+
+  // State operations
+  ipcMain.handle('state:get', handleGetState);
 
   console.log('IPC handlers registered');
 }
@@ -126,13 +130,47 @@ async function handleGetTheme(_event: any, name: string): Promise<Theme | null> 
  */
 async function handleApplyTheme(_event: any, name: string): Promise<void> {
   console.log(`Applying theme: ${name}`);
-  // TODO: Implement symlink update and app refresh
-  // For now, just update the state
+
+  // Find the theme
+  const theme = await handleGetTheme(null, name);
+  if (!theme) {
+    throw new Error(`Theme ${name} not found`);
+  }
+
+  // Create or update symlink
+  const currentDir = getCurrentDir();
+  const symlinkPath = path.join(currentDir, 'theme');
+
+  // Remove existing symlink if it exists
+  if (fs.existsSync(symlinkPath)) {
+    // Check if it's a symlink
+    const stats = fs.lstatSync(symlinkPath);
+    if (stats.isSymbolicLink()) {
+      fs.unlinkSync(symlinkPath);
+      console.log(`Removed existing symlink: ${symlinkPath}`);
+    } else if (stats.isDirectory()) {
+      // If it's a directory (shouldn't happen), remove it
+      fs.rmSync(symlinkPath, { recursive: true, force: true });
+      console.log(`Removed existing directory: ${symlinkPath}`);
+    }
+  }
+
+  // Create new symlink
+  try {
+    fs.symlinkSync(theme.path, symlinkPath, 'dir');
+    console.log(`Created symlink: ${symlinkPath} -> ${theme.path}`);
+  } catch (err) {
+    console.error('Failed to create symlink:', err);
+    throw new Error(`Failed to create symlink: ${err}`);
+  }
+
+  // Update state
   const statePath = getStatePath();
   const state: State = JSON.parse(fs.readFileSync(statePath, 'utf-8'));
   state.currentTheme = name;
   state.lastSwitched = Date.now();
   fs.writeFileSync(statePath, JSON.stringify(state, null, 2));
+
   console.log(`Theme ${name} applied successfully`);
 }
 
@@ -242,4 +280,13 @@ async function handleSetPreferences(_event: any, prefs: Preferences): Promise<vo
 async function handleGetSystemAppearance(): Promise<'light' | 'dark'> {
   // TODO: Implement actual system appearance detection
   return 'dark';
+}
+
+/**
+ * Get current application state
+ */
+async function handleGetState(): Promise<State> {
+  const statePath = getStatePath();
+  const stateContent = fs.readFileSync(statePath, 'utf-8');
+  return JSON.parse(stateContent);
 }
