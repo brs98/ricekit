@@ -140,7 +140,7 @@
       "Step 5: Verify the clicked theme is now marked as active",
       "Step 6: Verify symlink at ~/Library/Application Support/MacTheme/current/theme points to new theme"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -241,7 +241,7 @@
       "Step 5: Click outside modal or close button",
       "Step 6: Verify modal closes"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -254,7 +254,7 @@
       "Step 5: Verify each color shows label and hex value",
       "Step 6: Verify color swatches match hex values visually"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -266,7 +266,7 @@
       "Step 4: Paste clipboard contents",
       "Step 5: Verify pasted value is the correct hex code"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -278,7 +278,7 @@
       "Step 4: Verify terminal colors match theme palette",
       "Step 5: Verify sample commands and output are readable"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -290,7 +290,7 @@
       "Step 4: Verify syntax highlighting uses theme colors",
       "Step 5: Verify code is readable and well-formatted"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -314,7 +314,7 @@
       "Step 4: Verify modal closes after applying",
       "Step 5: Verify theme is now marked as active in grid"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

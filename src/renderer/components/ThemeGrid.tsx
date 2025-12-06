@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Theme } from '../../shared/types';
 import { ThemeCard } from './ThemeCard';
+import { ThemeDetailModal } from './ThemeDetailModal';
 
 interface ThemeGridProps {
   searchQuery?: string;
@@ -13,6 +14,7 @@ export function ThemeGrid({ searchQuery = '', filterMode = 'all' }: ThemeGridPro
   const [favorites, setFavorites] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedTheme, setSelectedTheme] = useState<Theme | null>(null);
 
   // Load themes on mount
   useEffect(() => {
@@ -128,17 +130,31 @@ export function ThemeGrid({ searchQuery = '', filterMode = 'all' }: ThemeGridPro
   }
 
   return (
-    <div className="theme-grid">
-      {filteredThemes.map((theme) => (
-        <ThemeCard
-          key={theme.name}
-          theme={theme}
-          isActive={currentTheme === theme.name}
+    <>
+      <div className="theme-grid">
+        {filteredThemes.map((theme) => (
+          <ThemeCard
+            key={theme.name}
+            theme={theme}
+            isActive={currentTheme === theme.name}
+            onApply={handleApplyTheme}
+            onToggleFavorite={handleToggleFavorite}
+            isFavorite={favorites.includes(theme.name)}
+            onClick={() => setSelectedTheme(theme)}
+          />
+        ))}
+      </div>
+
+      {selectedTheme && (
+        <ThemeDetailModal
+          theme={selectedTheme}
+          isActive={currentTheme === selectedTheme.name}
+          onClose={() => setSelectedTheme(null)}
           onApply={handleApplyTheme}
           onToggleFavorite={handleToggleFavorite}
-          isFavorite={favorites.includes(theme.name)}
+          isFavorite={favorites.includes(selectedTheme.name)}
         />
-      ))}
-    </div>
+      )}
+    </>
   );
 }

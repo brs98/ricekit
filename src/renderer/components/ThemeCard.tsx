@@ -6,9 +6,10 @@ interface ThemeCardProps {
   onApply: (themeName: string) => void;
   onToggleFavorite?: (themeName: string) => void;
   isFavorite?: boolean;
+  onClick?: () => void;
 }
 
-export function ThemeCard({ theme, isActive, onApply, onToggleFavorite, isFavorite }: ThemeCardProps) {
+export function ThemeCard({ theme, isActive, onApply, onToggleFavorite, isFavorite, onClick }: ThemeCardProps) {
   const { metadata, name, isLight } = theme;
   const colors = metadata.colors;
 
@@ -23,7 +24,11 @@ export function ThemeCard({ theme, isActive, onApply, onToggleFavorite, isFavori
   ];
 
   return (
-    <div className={`theme-card ${isActive ? 'active' : ''}`}>
+    <div
+      className={`theme-card ${isActive ? 'active' : ''}`}
+      onClick={onClick}
+      style={{ cursor: onClick ? 'pointer' : 'default' }}
+    >
       <div className="theme-card-header">
         <h3 className="theme-card-title">{metadata.name}</h3>
         {onToggleFavorite && (
@@ -57,7 +62,10 @@ export function ThemeCard({ theme, isActive, onApply, onToggleFavorite, isFavori
         </span>
         <button
           className={`apply-btn ${isActive ? 'active' : ''}`}
-          onClick={() => onApply(name)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onApply(name);
+          }}
           disabled={isActive}
         >
           {isActive ? 'Active' : 'Apply'}

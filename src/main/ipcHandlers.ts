@@ -1,4 +1,4 @@
-import { ipcMain } from 'electron';
+import { ipcMain, Notification } from 'electron';
 import fs from 'fs';
 import path from 'path';
 import {
@@ -172,6 +172,16 @@ async function handleApplyTheme(_event: any, name: string): Promise<void> {
   fs.writeFileSync(statePath, JSON.stringify(state, null, 2));
 
   console.log(`Theme ${name} applied successfully`);
+
+  // Show notification
+  if (Notification.isSupported()) {
+    const notification = new Notification({
+      title: 'Theme Applied',
+      body: `${theme.metadata.name} is now active`,
+      silent: false,
+    });
+    notification.show();
+  }
 }
 
 /**
