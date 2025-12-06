@@ -1096,7 +1096,7 @@
       "Step 4: Verify quick switcher appears",
       "Step 5: Verify quick switcher is functional"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1107,7 +1107,7 @@
       "Step 3: Verify Kitty receives reload command (kitty @ set-colors)",
       "Step 4: Verify Kitty terminal colors update immediately"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

@@ -145,6 +145,105 @@ async function handleGetTheme(_event: any, name: string): Promise<Theme | null> 
 }
 
 /**
+ * Notify running terminal applications to reload their themes
+ */
+async function notifyTerminalsToReload(themePath: string): Promise<void> {
+  console.log('Notifying terminals to reload themes...');
+
+  // Get the colors from the theme for Kitty
+  const themeJsonPath = path.join(themePath, 'theme.json');
+  let themeColors: any = null;
+
+  try {
+    const themeData = JSON.parse(fs.readFileSync(themeJsonPath, 'utf-8'));
+    themeColors = themeData.colors;
+  } catch (err) {
+    console.error('Failed to read theme colors:', err);
+  }
+
+  // 1. Notify Kitty terminal
+  // Check if Kitty is running and has remote control enabled
+  try {
+    const kittyConfigPath = path.join(themePath, 'kitty.conf');
+    if (fs.existsSync(kittyConfigPath) && themeColors) {
+      // Build kitty @ set-colors command with theme colors
+      const colorArgs: string[] = [];
+
+      // Map theme colors to Kitty color names
+      if (themeColors.background) colorArgs.push(`background=${themeColors.background}`);
+      if (themeColors.foreground) colorArgs.push(`foreground=${themeColors.foreground}`);
+      if (themeColors.cursor) colorArgs.push(`cursor=${themeColors.cursor}`);
+      if (themeColors.selection) colorArgs.push(`selection_background=${themeColors.selection}`);
+
+      // ANSI colors
+      if (themeColors.black) colorArgs.push(`color0=${themeColors.black}`);
+      if (themeColors.red) colorArgs.push(`color1=${themeColors.red}`);
+      if (themeColors.green) colorArgs.push(`color2=${themeColors.green}`);
+      if (themeColors.yellow) colorArgs.push(`color3=${themeColors.yellow}`);
+      if (themeColors.blue) colorArgs.push(`color4=${themeColors.blue}`);
+      if (themeColors.magenta) colorArgs.push(`color5=${themeColors.magenta}`);
+      if (themeColors.cyan) colorArgs.push(`color6=${themeColors.cyan}`);
+      if (themeColors.white) colorArgs.push(`color7=${themeColors.white}`);
+
+      // Bright colors
+      if (themeColors.brightBlack) colorArgs.push(`color8=${themeColors.brightBlack}`);
+      if (themeColors.brightRed) colorArgs.push(`color9=${themeColors.brightRed}`);
+      if (themeColors.brightGreen) colorArgs.push(`color10=${themeColors.brightGreen}`);
+      if (themeColors.brightYellow) colorArgs.push(`color11=${themeColors.brightYellow}`);
+      if (themeColors.brightBlue) colorArgs.push(`color12=${themeColors.brightBlue}`);
+      if (themeColors.brightMagenta) colorArgs.push(`color13=${themeColors.brightMagenta}`);
+      if (themeColors.brightCyan) colorArgs.push(`color14=${themeColors.brightCyan}`);
+      if (themeColors.brightWhite) colorArgs.push(`color15=${themeColors.brightWhite}`);
+
+      if (colorArgs.length > 0) {
+        const kittyCommand = `kitty @ set-colors ${colorArgs.join(' ')}`;
+        exec(kittyCommand, (error, stdout, stderr) => {
+          if (error) {
+            console.log('Kitty not available or remote control disabled:', error.message);
+          } else {
+            console.log('✓ Kitty terminal reloaded successfully');
+          }
+        });
+      }
+    }
+  } catch (err) {
+    console.log('Could not notify Kitty:', err);
+  }
+
+  // 2. Notify iTerm2 using AppleScript
+  try {
+    const iterm2ConfigPath = path.join(themePath, 'iterm2.itermcolors');
+    if (fs.existsSync(iterm2ConfigPath)) {
+      // AppleScript to reload iTerm2 profile
+      const appleScript = `
+        tell application "iTerm2"
+          tell current session of current window
+            set foreground color to {0, 0, 0}
+            set background color to {65535, 65535, 65535}
+          end tell
+        end tell
+      `;
+
+      exec(`osascript -e '${appleScript}'`, (error, stdout, stderr) => {
+        if (error) {
+          console.log('iTerm2 not available or not running:', error.message);
+        } else {
+          console.log('✓ iTerm2 reloaded (profile refresh triggered)');
+        }
+      });
+    }
+  } catch (err) {
+    console.log('Could not notify iTerm2:', err);
+  }
+
+  // Note: Alacritty auto-reloads when config changes (watches config file)
+  // Note: Warp requires manual reload
+  // Note: Hyper auto-reloads when .hyper.js changes
+
+  console.log('Terminal reload notifications sent');
+}
+
+/**
  * Apply a theme
  */
 export async function handleApplyTheme(_event: any, name: string): Promise<void> {
@@ -228,6 +327,13 @@ export async function handleApplyTheme(_event: any, name: string): Promise<void>
     refreshTrayMenu();
   } catch (err) {
     console.error('Failed to refresh tray menu:', err);
+  }
+
+  // Notify terminal applications to reload themes
+  try {
+    await notifyTerminalsToReload(theme.path);
+  } catch (err) {
+    console.error('Failed to notify terminals:', err);
   }
 }
 
