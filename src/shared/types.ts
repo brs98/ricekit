@@ -111,6 +111,7 @@ export interface ElectronAPI {
   backupPreferences: () => Promise<string | null>;
   restorePreferences: () => Promise<boolean>;
   getSystemAppearance: () => Promise<'light' | 'dark'>;
+  getSunriseSunset: () => Promise<{ sunrise: string; sunset: string; location: string } | null>;
   onAppearanceChange: (callback: (appearance: string) => void) => void;
   getState: () => Promise<State>;
   closeQuickSwitcher: () => Promise<void>;

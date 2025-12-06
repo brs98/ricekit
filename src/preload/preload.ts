@@ -31,6 +31,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // System operations
   getSystemAppearance: () => ipcRenderer.invoke('system:appearance'),
+  getSunriseSunset: () => ipcRenderer.invoke('system:getSunriseSunset'),
   onAppearanceChange: (callback: (appearance: string) => void) => {
     ipcRenderer.on('system:appearance-changed', (_event, appearance) => callback(appearance));
   },

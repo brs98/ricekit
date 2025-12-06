@@ -2342,6 +2342,72 @@ body {
   line-height: 1.5;
 }
 
+/* Sunrise/Sunset Times Display */
+.sunset-times {
+  margin: 16px 0;
+  padding: 16px;
+  background: rgba(255, 149, 0, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 149, 0, 0.15);
+}
+
+.sun-times-display {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sun-time-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 6px;
+}
+
+.sun-time-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1d1d1f;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sun-time-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #007aff;
+  font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
+}
+
+.sun-time-location {
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.location-text {
+  font-size: 12px;
+  color: #86868b;
+  font-style: italic;
+}
+
+.loading-text {
+  font-size: 13px;
+  color: #86868b;
+  text-align: center;
+  margin: 0;
+}
+
+.error-text {
+  font-size: 13px;
+  color: #ff3b30;
+  text-align: center;
+  margin: 0;
+}
+
 /* Save Indicator */
 .save-indicator {
   position: fixed;

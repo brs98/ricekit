@@ -12,6 +12,8 @@ export function SettingsView() {
   const [selectedThemesForExport, setSelectedThemesForExport] = useState<string[]>([]);
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [sunriseSunset, setSunriseSunset] = useState<{ sunrise: string; sunset: string; location: string } | null>(null);
+  const [loadingSunTimes, setLoadingSunTimes] = useState(false);
 
   useEffect(() => {
     loadPreferences();
@@ -87,6 +89,26 @@ export function SettingsView() {
     };
     savePreferences(updated);
   }
+
+  async function loadSunriseSunset() {
+    try {
+      setLoadingSunTimes(true);
+      const times = await window.electronAPI.getSunriseSunset();
+      setSunriseSunset(times);
+    } catch (err) {
+      console.error('Failed to get sunrise/sunset times:', err);
+      setSunriseSunset(null);
+    } finally {
+      setLoadingSunTimes(false);
+    }
+  }
+
+  // Load sunrise/sunset times when sunset mode is selected
+  useEffect(() => {
+    if (preferences?.autoSwitch.mode === 'sunset') {
+      loadSunriseSunset();
+    }
+  }, [preferences?.autoSwitch.mode]);
 
   async function handleExportThemes() {
     if (selectedThemesForExport.length === 0) {
@@ -386,8 +408,33 @@ export function SettingsView() {
                   <div className="info-box">
                     <p>
                       Themes will switch automatically based on sunrise and sunset times
-                      for your location. This requires location permissions.
+                      for your location.
                     </p>
+                  </div>
+
+                  {/* Display sunrise/sunset times */}
+                  <div className="sunset-times">
+                    {loadingSunTimes && (
+                      <p className="loading-text">Loading sunrise and sunset times...</p>
+                    )}
+                    {!loadingSunTimes && sunriseSunset && (
+                      <div className="sun-times-display">
+                        <div className="sun-time-item">
+                          <span className="sun-time-label">🌅 Sunrise:</span>
+                          <span className="sun-time-value">{sunriseSunset.sunrise}</span>
+                        </div>
+                        <div className="sun-time-item">
+                          <span className="sun-time-label">🌇 Sunset:</span>
+                          <span className="sun-time-value">{sunriseSunset.sunset}</span>
+                        </div>
+                        <div className="sun-time-location">
+                          <span className="location-text">Location: {sunriseSunset.location}</span>
+                        </div>
+                      </div>
+                    )}
+                    {!loadingSunTimes && !sunriseSunset && (
+                      <p className="error-text">Unable to calculate sunrise/sunset times</p>
+                    )}
                   </div>
 
                   <div className="setting-item">
