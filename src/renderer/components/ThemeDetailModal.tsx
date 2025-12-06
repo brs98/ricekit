@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Theme } from '../../shared/types';
-import { X, Check } from 'lucide-react';
+import { X, Check, Image as ImageIcon } from 'lucide-react';
 
 interface ThemeDetailModalProps {
   theme: Theme;
@@ -22,6 +22,26 @@ export function ThemeDetailModal({
   isFavorite,
 }: ThemeDetailModalProps) {
   const [copiedColor, setCopiedColor] = useState<string | null>(null);
+  const [wallpapers, setWallpapers] = useState<string[]>([]);
+  const [selectedWallpaper, setSelectedWallpaper] = useState<string | null>(null);
+  const [wallpapersLoading, setWallpapersLoading] = useState(false);
+
+  // Load wallpapers when modal opens
+  useEffect(() => {
+    loadWallpapers();
+  }, [theme.name]);
+
+  const loadWallpapers = async () => {
+    try {
+      setWallpapersLoading(true);
+      const wallpaperList = await window.electronAPI.listWallpapers(theme.name);
+      setWallpapers(wallpaperList);
+    } catch (err) {
+      console.error('Failed to load wallpapers:', err);
+    } finally {
+      setWallpapersLoading(false);
+    }
+  };
 
   const handleCopyColor = async (colorName: string, colorValue: string) => {
     try {
@@ -163,6 +183,59 @@ export function ThemeDetailModal({
               </div>
             </div>
           </div>
+
+          {/* Wallpapers */}
+          {wallpapers.length > 0 && (
+            <div className="modal-section">
+              <h3 className="section-title">
+                <ImageIcon size={16} style={{ display: 'inline', marginRight: '8px' }} />
+                Wallpapers
+              </h3>
+              {wallpapersLoading ? (
+                <div className="wallpaper-loading">Loading wallpapers...</div>
+              ) : (
+                <div className="wallpaper-grid">
+                  {wallpapers.map((wallpaper, index) => (
+                    <div
+                      key={wallpaper}
+                      className="wallpaper-thumbnail"
+                      onClick={() => setSelectedWallpaper(wallpaper)}
+                      title="Click to preview"
+                    >
+                      <img
+                        src={`file://${wallpaper}`}
+                        alt={`Wallpaper ${index + 1}`}
+                        className="wallpaper-thumb-img"
+                      />
+                      <div className="wallpaper-thumb-overlay">
+                        <ImageIcon size={20} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Wallpaper Preview Modal */}
+          {selectedWallpaper && (
+            <div className="wallpaper-preview-overlay" onClick={() => setSelectedWallpaper(null)}>
+              <div className="wallpaper-preview-content" onClick={(e) => e.stopPropagation()}>
+                <button
+                  className="wallpaper-preview-close"
+                  onClick={() => setSelectedWallpaper(null)}
+                  aria-label="Close preview"
+                >
+                  <X size={24} />
+                </button>
+                <img
+                  src={`file://${selectedWallpaper}`}
+                  alt="Wallpaper preview"
+                  className="wallpaper-preview-img"
+                />
+              </div>
+            </div>
+          )}
 
           {/* Main Colors */}
           <div className="modal-section">

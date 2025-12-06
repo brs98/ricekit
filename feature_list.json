@@ -302,7 +302,7 @@
       "Step 4: Verify wallpaper thumbnails are displayed",
       "Step 5: Verify clicking a thumbnail shows larger preview"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
