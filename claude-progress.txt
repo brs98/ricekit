@@ -1825,3 +1825,70 @@ Progress Summary: 38/202 tests passing (19% complete)
 ===========================================
 End of Session 7 Progress Report
 ===========================================
+
+
+===========================================
+🚨 BUG REPORT - CRITICAL - Must Fix First
+===========================================
+Date: 2025-12-06
+Reported by: User observation
+
+ISSUE
+=====
+The app displays "Failed to load themes. Please try again." error message
+in the Themes view when the application launches.
+
+SYMPTOMS
+========
+- ThemeGrid component shows error state
+- Themes exist on disk at ~/Library/Application Support/MacTheme/themes/
+- All 11 bundled themes have valid theme.json files
+- The error occurs in loadThemes() function in ThemeGrid.tsx line 29
+- Call to window.electronAPI.listThemes() is failing
+
+VERIFIED WORKING
+================
+- Themes directory exists: ~/Library/Application Support/MacTheme/themes/
+- All theme.json files are valid JSON with correct structure
+- Theme files (alacritty.toml, kitty.conf, etc.) exist
+- TypeScript compilation appears successful
+- Preload script exists at dist/preload/preload.js
+- IPC handlers are registered in main process
+
+INVESTIGATION NEEDED
+====================
+1. Check Electron main process console for errors (not renderer console)
+2. Verify IPC handler 'theme:list' is being invoked
+3. Check if handleListThemes() is throwing an exception
+4. Verify getThemesDir() returns correct path
+5. Check if fs.readdirSync or fs.statSync is failing
+6. Possible issues:
+   - File permissions
+   - Path resolution in packaged vs dev mode
+   - Exception in loadTheme() not being caught properly
+
+STEPS TO DEBUG
+==============
+1. Add console.log at start of handleListThemes() to verify it's called
+2. Add try/catch around the entire function body with detailed logging
+3. Log the value of getThemesDir() and getCustomThemesDir()
+4. Check if fs.existsSync(themesDir) returns true
+5. Test with a simple IPC handler that just returns a hardcoded array
+
+PRIORITY
+========
+🔴 CRITICAL - This blocks all theme functionality
+Must be fixed BEFORE implementing any new features.
+
+ACTION FOR NEXT SESSION
+=======================
+1. DO NOT mark any new tests as passing until this is fixed
+2. Add extensive logging to handleListThemes() in ipcHandlers.ts
+3. Run the app and check the terminal output (main process logs)
+4. Fix the root cause
+5. Verify themes load successfully in the UI
+6. Only then continue with other features
+
+===========================================
+End of Bug Report
+===========================================

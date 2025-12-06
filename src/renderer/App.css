@@ -1426,3 +1426,213 @@ body {
     color: #636366;
   }
 }
+
+/* ==================================
+   Setup Wizard Modal Styles
+   ================================== */
+
+.setup-wizard-modal {
+  max-width: 700px;
+  max-height: 80vh;
+}
+
+.setup-wizard-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.wizard-intro {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #636366;
+  margin: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .wizard-intro {
+    color: #98989d;
+  }
+}
+
+.import-statement-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.import-statement-section h3 {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0;
+  color: #1d1d1f;
+}
+
+@media (prefers-color-scheme: dark) {
+  .import-statement-section h3 {
+    color: #f5f5f7;
+  }
+}
+
+.code-block {
+  position: relative;
+  background: #f5f5f7;
+  border: 1px solid #d1d1d6;
+  border-radius: 8px;
+  padding: 16px;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Courier New', monospace;
+  font-size: 13px;
+  overflow-x: auto;
+}
+
+@media (prefers-color-scheme: dark) {
+  .code-block {
+    background: #2c2c2e;
+    border-color: #48484a;
+  }
+}
+
+.code-block pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.code-block code {
+  color: #1d1d1f;
+}
+
+@media (prefers-color-scheme: dark) {
+  .code-block code {
+    color: #f5f5f7;
+  }
+}
+
+.copy-button {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 6px 12px;
+  background: #ffffff;
+  border: 1px solid #d1d1d6;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.copy-button:hover {
+  background: #f5f5f7;
+  border-color: #007aff;
+}
+
+.copy-button.copied {
+  background: #34c759;
+  border-color: #34c759;
+  color: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  .copy-button {
+    background: #3a3a3c;
+    border-color: #48484a;
+    color: #f5f5f7;
+  }
+
+  .copy-button:hover {
+    background: #48484a;
+    border-color: #007aff;
+  }
+
+  .copy-button.copied {
+    background: #30d158;
+    border-color: #30d158;
+  }
+}
+
+.instructions-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.instructions-section h3 {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0;
+  color: #1d1d1f;
+}
+
+@media (prefers-color-scheme: dark) {
+  .instructions-section h3 {
+    color: #f5f5f7;
+  }
+}
+
+.instruction-list {
+  margin: 0;
+  padding-left: 24px;
+  list-style: decimal;
+}
+
+.instruction-list li {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #1d1d1f;
+  margin-bottom: 8px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .instruction-list li {
+    color: #f5f5f7;
+  }
+}
+
+.config-path-info {
+  padding: 12px;
+  background: #f5f5f7;
+  border: 1px solid #d1d1d6;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #636366;
+}
+
+.config-path-info strong {
+  color: #1d1d1f;
+}
+
+.config-path-info code {
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Courier New', monospace;
+  color: #1d1d1f;
+}
+
+@media (prefers-color-scheme: dark) {
+  .config-path-info {
+    background: #2c2c2e;
+    border-color: #48484a;
+    color: #98989d;
+  }
+
+  .config-path-info strong {
+    color: #f5f5f7;
+  }
+
+  .config-path-info code {
+    color: #f5f5f7;
+  }
+}
+
+.setup-wizard-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.setup-wizard-actions .primary-button {
+  flex: 0 0 auto;
+}
+
+.setup-wizard-actions .secondary-button {
+  flex: 0 0 auto;
+}

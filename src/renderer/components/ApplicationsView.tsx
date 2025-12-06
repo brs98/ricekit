@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import type { AppInfo } from '../../shared/types';
+import { SetupWizardModal } from './SetupWizardModal';
 
 export function ApplicationsView() {
   const [apps, setApps] = useState<AppInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [setupApp, setSetupApp] = useState<AppInfo | null>(null);
 
   useEffect(() => {
     loadApps();
@@ -155,7 +157,10 @@ export function ApplicationsView() {
 
                     <div className="app-card-actions">
                       {app.isInstalled && !app.isConfigured && (
-                        <button className="setup-button">
+                        <button
+                          className="setup-button"
+                          onClick={() => setSetupApp(app)}
+                        >
                           Setup Integration
                         </button>
                       )}
@@ -190,6 +195,17 @@ export function ApplicationsView() {
             Install terminal emulators, editors, or CLI tools to use MacTheme.
           </p>
         </div>
+      )}
+
+      {setupApp && (
+        <SetupWizardModal
+          app={setupApp}
+          onClose={() => setSetupApp(null)}
+          onSetupComplete={() => {
+            setSetupApp(null);
+            loadApps(); // Refresh app list to update configured status
+          }}
+        />
       )}
     </div>
   );

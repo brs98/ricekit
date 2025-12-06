@@ -460,10 +460,87 @@ async function handleDetectApps(): Promise<any[]> {
 
 /**
  * Setup an application for theming
+ * Automatically configures the app's config file to import MacTheme themes
  */
-async function handleSetupApp(_event: any, appName: string, mode: string): Promise<void> {
-  console.log(`Setting up app: ${appName} with mode: ${mode}`);
-  // TODO: Implement app setup
+async function handleSetupApp(_event: any, appName: string): Promise<void> {
+  console.log(`Setting up app: ${appName}`);
+
+  const homeDir = os.homedir();
+  const themeBasePath = '~/Library/Application Support/MacTheme/current/theme';
+
+  try {
+    // Define config paths and import statements for each app
+    const appConfigs: Record<string, { configPath: string; importLine: string; section?: string }> = {
+      alacritty: {
+        configPath: path.join(homeDir, '.config', 'alacritty', 'alacritty.toml'),
+        importLine: `import = ["${themeBasePath}/alacritty.toml"]`,
+      },
+      kitty: {
+        configPath: path.join(homeDir, '.config', 'kitty', 'kitty.conf'),
+        importLine: `include ${themeBasePath}/kitty.conf`,
+      },
+      neovim: {
+        configPath: path.join(homeDir, '.config', 'nvim', 'init.lua'),
+        importLine: `dofile(vim.fn.expand("${themeBasePath}/neovim.lua"))`,
+      },
+      vscode: {
+        configPath: path.join(homeDir, 'Library', 'Application Support', 'Code', 'User', 'settings.json'),
+        importLine: `"workbench.colorCustomizations": require("${themeBasePath}/vscode.json")`,
+      },
+      starship: {
+        configPath: path.join(homeDir, '.config', 'starship.toml'),
+        importLine: `"$include" = '${themeBasePath}/starship.toml'`,
+      },
+    };
+
+    const config = appConfigs[appName];
+    if (!config) {
+      throw new Error(`Unsupported app: ${appName}`);
+    }
+
+    const { configPath, importLine } = config;
+    const configDir = path.dirname(configPath);
+
+    // Create config directory if it doesn't exist
+    if (!fs.existsSync(configDir)) {
+      fs.mkdirSync(configDir, { recursive: true });
+    }
+
+    // Read existing config or create new one
+    let configContent = '';
+    if (fs.existsSync(configPath)) {
+      // Create backup
+      const backupPath = `${configPath}.bak`;
+      fs.copyFileSync(configPath, backupPath);
+      console.log(`Created backup at: ${backupPath}`);
+
+      configContent = fs.readFileSync(configPath, 'utf-8');
+
+      // Check if import already exists
+      if (configContent.includes(importLine) || configContent.includes('MacTheme/current/theme')) {
+        throw new Error('MacTheme import already exists in config file');
+      }
+    }
+
+    // Add import statement at the top of the file
+    const newContent = importLine + '\n\n' + configContent;
+    fs.writeFileSync(configPath, newContent, 'utf-8');
+
+    console.log(`Successfully configured ${appName} at ${configPath}`);
+
+    // Show notification
+    if (Notification.isSupported()) {
+      const notification = new Notification({
+        title: 'Setup Complete',
+        body: `${appName} has been configured to use MacTheme themes`,
+        silent: false,
+      });
+      notification.show();
+    }
+  } catch (error: any) {
+    console.error(`Failed to setup ${appName}:`, error);
+    throw new Error(`Failed to setup ${appName}: ${error.message}`);
+  }
 }
 
 /**

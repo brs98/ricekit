@@ -18,7 +18,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Application operations
   detectApps: () => ipcRenderer.invoke('apps:detect'),
-  setupApp: (appName: string, mode: string) => ipcRenderer.invoke('apps:setup', appName, mode),
+  setupApp: (appName: string) => ipcRenderer.invoke('apps:setup', appName),
   refreshApp: (appName: string) => ipcRenderer.invoke('apps:refresh', appName),
 
   // Preferences operations

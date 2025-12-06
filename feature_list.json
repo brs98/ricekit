@@ -580,7 +580,7 @@
       "Step 4: Verify setup wizard modal opens",
       "Step 5: Verify wizard shows instructions for configuring the app"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -591,7 +591,7 @@
       "Step 3: Verify path shown is ~/Library/Application Support/MacTheme/current/theme/alacritty.toml",
       "Step 4: Verify copy button exists to copy import statement"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -602,7 +602,7 @@
       "Step 3: Verify path shown is correct for Kitty",
       "Step 4: Verify instructions explain where to add the line"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -613,7 +613,7 @@
       "Step 3: Verify path uses vim.fn.expand properly",
       "Step 4: Verify instructions explain where to add the code"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -625,7 +625,7 @@
       "Step 4: Paste clipboard contents",
       "Step 5: Verify pasted text matches import statement"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -639,7 +639,7 @@
       "Step 6: Verify ~/.config/alacritty/alacritty.toml is modified",
       "Step 7: Verify import statement is added to file"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -651,7 +651,7 @@
       "Step 4: Verify app's integration status changes to 'Configured'",
       "Step 5: Verify setup button is replaced with checkmark or similar indicator"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

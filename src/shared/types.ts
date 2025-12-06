@@ -98,7 +98,7 @@ export interface ElectronAPI {
   listWallpapers: (themeName: string) => Promise<string[]>;
   applyWallpaper: (path: string) => Promise<void>;
   detectApps: () => Promise<AppInfo[]>;
-  setupApp: (appName: string, mode: string) => Promise<void>;
+  setupApp: (appName: string) => Promise<void>;
   refreshApp: (appName: string) => Promise<void>;
   getPreferences: () => Promise<Preferences>;
   setPreferences: (prefs: Preferences) => Promise<void>;
