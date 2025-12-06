@@ -1184,7 +1184,7 @@
       "Step 4: Verify bundled themes are included",
       "Step 5: Verify custom themes are included"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1196,7 +1196,7 @@
       "Step 4: Verify file paths are included",
       "Step 5: Verify error handling for non-existent theme"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
