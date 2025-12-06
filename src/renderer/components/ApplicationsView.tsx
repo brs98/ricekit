@@ -7,9 +7,11 @@ export function ApplicationsView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [setupApp, setSetupApp] = useState<AppInfo | null>(null);
+  const [enabledApps, setEnabledApps] = useState<string[]>([]);
 
   useEffect(() => {
     loadApps();
+    loadPreferences();
   }, []);
 
   const loadApps = async () => {
@@ -23,6 +25,51 @@ export function ApplicationsView() {
       setError('Failed to detect applications');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadPreferences = async () => {
+    try {
+      const prefs = await window.electronAPI.getPreferences();
+      setEnabledApps(prefs.enabledApps);
+    } catch (err) {
+      console.error('Failed to load preferences:', err);
+      // Default to all apps enabled
+      setEnabledApps([]);
+    }
+  };
+
+  const handleToggleApp = async (appName: string) => {
+    try {
+      // Empty array means all apps are enabled by default
+      // When an app is in the array, it's enabled; when not in array, it's disabled
+      const isCurrentlyEnabled = enabledApps.length === 0 || enabledApps.includes(appName);
+      let newEnabledApps: string[];
+
+      if (enabledApps.length === 0) {
+        // First toggle - initialize with all apps except the one being disabled
+        newEnabledApps = apps
+          .map(a => a.name)
+          .filter(name => name !== appName);
+      } else if (isCurrentlyEnabled) {
+        // Remove from enabled list (disable app)
+        newEnabledApps = enabledApps.filter(name => name !== appName);
+      } else {
+        // Add to enabled list (enable app)
+        newEnabledApps = [...enabledApps, appName];
+      }
+
+      // Update local state immediately for responsive UI
+      setEnabledApps(newEnabledApps);
+
+      // Persist to preferences
+      const prefs = await window.electronAPI.getPreferences();
+      prefs.enabledApps = newEnabledApps;
+      await window.electronAPI.setPreferences(prefs);
+    } catch (err) {
+      console.error('Failed to toggle app:', err);
+      // Reload preferences to sync state
+      loadPreferences();
     }
   };
 
@@ -130,7 +177,19 @@ export function ApplicationsView() {
                     className={`app-card ${!app.isInstalled ? 'not-installed' : ''}`}
                   >
                     <div className="app-card-header">
-                      <h4 className="app-name">{app.displayName}</h4>
+                      <div className="app-name-row">
+                        <h4 className="app-name">{app.displayName}</h4>
+                        {app.isInstalled && (
+                          <label className="toggle-switch">
+                            <input
+                              type="checkbox"
+                              checked={enabledApps.length === 0 || enabledApps.includes(app.name)}
+                              onChange={() => handleToggleApp(app.name)}
+                            />
+                            <span className="toggle-slider"></span>
+                          </label>
+                        )}
+                      </div>
                       <div className="app-badges">
                         {app.isInstalled ? (
                           <span className="badge badge-installed">✓ Installed</span>
