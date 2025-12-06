@@ -750,7 +750,7 @@
       "Step 5: Verify 'Notifications' section exists",
       "Step 6: Verify 'Backup & Restore' section exists"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -764,7 +764,7 @@
       "Step 6: Toggle off",
       "Step 7: Verify toggle switches to off state"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -807,7 +807,7 @@
       "Step 6: Verify defaultLightTheme is 'catppuccin-latte'",
       "Step 7: Verify defaultDarkTheme is 'catppuccin-mocha'"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

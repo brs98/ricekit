@@ -4,6 +4,7 @@ import { ThemeGrid } from './components/ThemeGrid';
 import { ThemeEditor } from './components/ThemeEditor';
 import { ApplicationsView } from './components/ApplicationsView';
 import { WallpapersView } from './components/WallpapersView';
+import { SettingsView } from './components/SettingsView';
 import { ThemeMetadata } from '../shared/types';
 
 type FilterMode = 'all' | 'light' | 'dark' | 'favorites';
@@ -125,10 +126,7 @@ function App() {
             <WallpapersView />
           )}
           {activeView === 'settings' && (
-            <div className="placeholder">
-              <h3>Settings</h3>
-              <p>Settings panel will be implemented here</p>
-            </div>
+            <SettingsView />
           )}
         </div>
       </div>

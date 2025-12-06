@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Theme } from '../../shared/types';
-import { X, Copy, Check } from 'lucide-react';
+import { X, Check } from 'lucide-react';
 
 interface ThemeDetailModalProps {
   theme: Theme;
