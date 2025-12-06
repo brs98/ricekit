@@ -516,7 +516,93 @@ async function handleCreateTheme(_event: any, data: ThemeMetadata): Promise<void
  */
 async function handleUpdateTheme(_event: any, name: string, data: ThemeMetadata): Promise<void> {
   console.log(`Updating theme: ${name}`);
-  // TODO: Implement theme update
+
+  try {
+    // Only allow updating custom themes
+    const customThemesDir = getCustomThemesDir();
+
+    // Create safe directory name from the theme name
+    const themeDirName = name.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+    const themeDir = path.join(customThemesDir, themeDirName);
+
+    // Check if theme exists in custom themes directory
+    if (!fs.existsSync(themeDir)) {
+      throw new Error('Theme not found in custom themes directory. Only custom themes can be updated.');
+    }
+
+    // Read existing theme metadata to preserve any fields not in the update
+    const existingMetadataPath = path.join(themeDir, 'theme.json');
+    let existingMetadata: ThemeMetadata;
+    if (fs.existsSync(existingMetadataPath)) {
+      existingMetadata = JSON.parse(fs.readFileSync(existingMetadataPath, 'utf-8'));
+    } else {
+      throw new Error('Theme metadata (theme.json) not found');
+    }
+
+    // Merge existing metadata with updates
+    const updatedMetadata: ThemeMetadata = {
+      ...existingMetadata,
+      ...data,
+      // Preserve the original name unless explicitly changed
+      name: data.name || existingMetadata.name || name,
+    };
+
+    // Import the helper function from themeInstaller
+    const { generateThemeConfigFiles } = await import('./themeInstaller');
+
+    // Remove all existing config files (but not wallpapers or other directories)
+    const configFiles = [
+      'alacritty.toml',
+      'kitty.conf',
+      'iterm2.itermcolors',
+      'warp.yaml',
+      'hyper.js',
+      'vscode.json',
+      'neovim.lua',
+      'raycast.json',
+      'bat.conf',
+      'delta.gitconfig',
+      'starship.toml',
+      'zsh-theme.zsh',
+      'theme.json'
+    ];
+
+    for (const file of configFiles) {
+      const filePath = path.join(themeDir, file);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    }
+
+    // Regenerate all config files with the updated metadata
+    generateThemeConfigFiles(themeDir, updatedMetadata);
+
+    console.log(`Theme "${name}" updated successfully at ${themeDir}`);
+
+    // Show notification
+    if (Notification.isSupported()) {
+      const notification = new Notification({
+        title: 'Theme Updated',
+        body: `${updatedMetadata.name} has been updated successfully`,
+        silent: false,
+      });
+      notification.show();
+    }
+
+    // If this is the currently active theme, we may want to notify terminals to reload
+    const state = await handleGetState();
+    if (state.currentTheme === name) {
+      console.log('Updated theme is currently active, notifying terminals to reload...');
+      try {
+        await notifyTerminalsToReload(themeDir);
+      } catch (err) {
+        console.error('Failed to notify terminals:', err);
+      }
+    }
+  } catch (error) {
+    console.error('Error updating theme:', error);
+    throw error;
+  }
 }
 
 /**
