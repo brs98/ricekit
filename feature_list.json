@@ -1220,7 +1220,7 @@
       "Step 4: Verify theme directory is created in custom-themes",
       "Step 5: Verify all config files are generated"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
