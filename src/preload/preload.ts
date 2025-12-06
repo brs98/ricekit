@@ -34,4 +34,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // State operations
   getState: () => ipcRenderer.invoke('state:get'),
+
+  // Quick switcher operations
+  closeQuickSwitcher: () => ipcRenderer.invoke('quickswitcher:close'),
+  onQuickSwitcherOpened: (callback: () => void) => {
+    ipcRenderer.on('quick-switcher-opened', () => callback());
+  },
 });

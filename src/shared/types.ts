@@ -106,6 +106,8 @@ export interface ElectronAPI {
   getSystemAppearance: () => Promise<'light' | 'dark'>;
   onAppearanceChange: (callback: (appearance: string) => void) => void;
   getState: () => Promise<State>;
+  closeQuickSwitcher: () => Promise<void>;
+  onQuickSwitcherOpened: (callback: () => void) => void;
 }
 
 declare global {

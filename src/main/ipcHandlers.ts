@@ -45,6 +45,16 @@ export function setupIpcHandlers(): void {
   // State operations
   ipcMain.handle('state:get', handleGetState);
 
+  // Quick switcher operations
+  ipcMain.handle('quickswitcher:close', async () => {
+    const { BrowserWindow } = await import('electron');
+    const allWindows = BrowserWindow.getAllWindows();
+    const quickSwitcher = allWindows.find(win => win.getTitle() === '' && win.isAlwaysOnTop());
+    if (quickSwitcher) {
+      quickSwitcher.hide();
+    }
+  });
+
   console.log('IPC handlers registered');
 }
 

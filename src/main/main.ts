@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, nativeTheme, Tray, Menu, nativeImage } from 'electron';
+import { app, BrowserWindow, ipcMain, nativeTheme, Tray, Menu, nativeImage, globalShortcut } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import { initializeApp, getPreferencesPath, getStatePath } from './directories';
@@ -6,6 +6,7 @@ import { installBundledThemes } from './themeInstaller';
 import { setupIpcHandlers, handleAppearanceChange, checkScheduleAndApplyTheme } from './ipcHandlers';
 
 let mainWindow: BrowserWindow | null = null;
+let quickSwitcherWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
 
 /**
@@ -178,6 +179,81 @@ function createWindow() {
   });
 }
 
+/**
+ * Create or show the quick switcher overlay window
+ */
+function createQuickSwitcher() {
+  if (quickSwitcherWindow) {
+    // If already exists, just show and focus it
+    quickSwitcherWindow.show();
+    quickSwitcherWindow.focus();
+    quickSwitcherWindow.webContents.send('quick-switcher-opened');
+    return;
+  }
+
+  const { screen } = require('electron');
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const { width, height } = primaryDisplay.workAreaSize;
+
+  // Create a centered, semi-transparent overlay window
+  quickSwitcherWindow = new BrowserWindow({
+    width: 600,
+    height: 400,
+    x: Math.floor((width - 600) / 2),
+    y: Math.floor((height - 400) / 2),
+    frame: false,
+    transparent: true,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    resizable: false,
+    backgroundColor: '#00000000',
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: path.join(__dirname, '../preload/preload.js'),
+    },
+  });
+
+  const isDev = !app.isPackaged;
+
+  if (isDev) {
+    quickSwitcherWindow.loadURL('http://localhost:5173/#/quick-switcher');
+  } else {
+    quickSwitcherWindow.loadFile(path.join(__dirname, '../renderer/index.html'), {
+      hash: 'quick-switcher',
+    });
+  }
+
+  quickSwitcherWindow.on('blur', () => {
+    // Close quick switcher when it loses focus
+    if (quickSwitcherWindow) {
+      quickSwitcherWindow.hide();
+    }
+  });
+
+  quickSwitcherWindow.on('closed', () => {
+    quickSwitcherWindow = null;
+  });
+
+  // Send event to notify renderer that quick switcher opened
+  quickSwitcherWindow.webContents.once('did-finish-load', () => {
+    if (quickSwitcherWindow) {
+      quickSwitcherWindow.webContents.send('quick-switcher-opened');
+    }
+  });
+}
+
+/**
+ * Toggle quick switcher visibility
+ */
+function toggleQuickSwitcher() {
+  if (quickSwitcherWindow && quickSwitcherWindow.isVisible()) {
+    quickSwitcherWindow.hide();
+  } else {
+    createQuickSwitcher();
+  }
+}
+
 // This method will be called when Electron has finished initialization
 app.whenReady().then(() => {
   // Initialize application directories and files
@@ -225,6 +301,21 @@ app.whenReady().then(() => {
   // Also check immediately on startup
   checkScheduleAndApplyTheme();
 
+  // Register global keyboard shortcut for quick switcher
+  const ret = globalShortcut.register('CommandOrControl+Shift+T', () => {
+    console.log('Quick switcher shortcut triggered');
+    toggleQuickSwitcher();
+  });
+
+  if (!ret) {
+    console.error('Global shortcut registration failed');
+  } else {
+    console.log('Quick switcher shortcut registered: Cmd+Shift+T');
+  }
+
+  // Verify shortcut is registered
+  console.log('Shortcut registered:', globalShortcut.isRegistered('CommandOrControl+Shift+T'));
+
   app.on('activate', () => {
     // On macOS, re-create window when dock icon is clicked and no windows are open
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -238,4 +329,9 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
   }
+});
+
+// Unregister shortcuts when app is about to quit
+app.on('will-quit', () => {
+  globalShortcut.unregisterAll();
 });
