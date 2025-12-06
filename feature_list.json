@@ -1381,7 +1381,7 @@
       "Step 4: Verify preload script is configured",
       "Step 5: Verify renderer process cannot access Node APIs directly"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1393,7 +1393,7 @@
       "Step 4: Verify exposed APIs use ipcRenderer invoke pattern",
       "Step 5: Test API access from renderer process"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
