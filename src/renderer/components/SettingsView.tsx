@@ -11,6 +11,7 @@ export function SettingsView() {
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [selectedThemesForExport, setSelectedThemesForExport] = useState<string[]>([]);
   const [exporting, setExporting] = useState(false);
+  const [importing, setImporting] = useState(false);
 
   useEffect(() => {
     loadPreferences();
@@ -125,6 +126,27 @@ export function SettingsView() {
         return [...prev, themeName];
       }
     });
+  }
+
+  async function handleImportThemes() {
+    try {
+      setImporting(true);
+
+      // Call import with no path to show file picker dialog
+      await window.electronAPI.importTheme('');
+
+      // Reload themes to show the newly imported theme(s)
+      await loadThemes();
+
+      alert('Theme imported successfully!');
+    } catch (error: any) {
+      console.error('Failed to import theme:', error);
+      if (error.message !== 'Import canceled') {
+        alert(`Failed to import theme: ${error.message}`);
+      }
+    } finally {
+      setImporting(false);
+    }
   }
 
   if (loading) {
@@ -507,9 +529,10 @@ export function SettingsView() {
             </div>
             <button
               className="secondary-button"
-              onClick={() => alert('Import functionality coming soon')}
+              onClick={handleImportThemes}
+              disabled={importing}
             >
-              Import...
+              {importing ? 'Importing...' : 'Import...'}
             </button>
           </div>
 

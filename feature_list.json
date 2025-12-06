@@ -911,7 +911,7 @@
       "Step 6: Navigate to Themes view",
       "Step 7: Verify imported themes appear in grid"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -922,7 +922,7 @@
       "Step 3: Verify imported theme directories exist",
       "Step 4: Verify all config files are present in imported themes"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

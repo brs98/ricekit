@@ -3,6 +3,8 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import archiver from 'archiver';
+import { promisify } from 'util';
+import { exec } from 'child_process';
 import {
   getThemesDir,
   getCustomThemesDir,
@@ -473,10 +475,122 @@ async function handleExportTheme(_event: any, name: string, exportPath?: string)
 
 /**
  * Import a theme from a file
+ * If importPath is null/undefined, shows an open dialog
  */
-async function handleImportTheme(_event: any, importPath: string): Promise<void> {
-  console.log(`Importing theme from ${importPath}`);
-  // TODO: Implement theme import
+async function handleImportTheme(_event: any, importPath?: string): Promise<void> {
+  console.log(`Importing theme${importPath ? ` from ${importPath}` : ''}`);
+
+  try {
+    const execAsync = promisify(exec);
+
+    // If no import path provided, show open dialog
+    if (!importPath) {
+      const { BrowserWindow } = await import('electron');
+      const mainWindow = BrowserWindow.getAllWindows()[0];
+
+      const result = await dialog.showOpenDialog(mainWindow, {
+        title: 'Import Theme',
+        filters: [
+          { name: 'MacTheme Files', extensions: ['mactheme', 'zip'] },
+          { name: 'All Files', extensions: ['*'] }
+        ],
+        properties: ['openFile']
+      });
+
+      if (result.canceled || !result.filePaths || result.filePaths.length === 0) {
+        throw new Error('Import canceled');
+      }
+
+      importPath = result.filePaths[0];
+    }
+
+    // Validate file exists
+    if (!fs.existsSync(importPath)) {
+      throw new Error(`File not found: ${importPath}`);
+    }
+
+    // Create temporary directory for extraction
+    const tmpDir = path.join(os.tmpdir(), `mactheme-import-${Date.now()}`);
+    fs.mkdirSync(tmpDir, { recursive: true });
+
+    try {
+      // Extract the zip archive
+      console.log(`Extracting archive to: ${tmpDir}`);
+      await execAsync(`unzip -q "${importPath}" -d "${tmpDir}"`);
+
+      // Find the theme directory (should be the only directory in tmpDir)
+      const extractedContents = fs.readdirSync(tmpDir);
+
+      if (extractedContents.length === 0) {
+        throw new Error('Archive is empty');
+      }
+
+      // Get the theme directory (first directory in the extracted contents)
+      const themeDir = extractedContents.find(name => {
+        const itemPath = path.join(tmpDir, name);
+        return fs.statSync(itemPath).isDirectory();
+      });
+
+      if (!themeDir) {
+        throw new Error('No theme directory found in archive');
+      }
+
+      const extractedThemePath = path.join(tmpDir, themeDir);
+
+      // Validate theme structure - must have theme.json
+      const themeMetadataPath = path.join(extractedThemePath, 'theme.json');
+      if (!fs.existsSync(themeMetadataPath)) {
+        throw new Error('Invalid theme: missing theme.json');
+      }
+
+      // Read and parse theme metadata
+      const themeMetadata = JSON.parse(fs.readFileSync(themeMetadataPath, 'utf-8'));
+      const themeName = themeMetadata.name || themeDir;
+
+      // Determine destination directory
+      const customThemesDir = getCustomThemesDir();
+      let destThemeDir = path.join(customThemesDir, themeDir);
+
+      // Check if theme already exists
+      if (fs.existsSync(destThemeDir)) {
+        // Generate unique name by appending number
+        let counter = 1;
+        while (fs.existsSync(path.join(customThemesDir, `${themeDir}-${counter}`))) {
+          counter++;
+        }
+        destThemeDir = path.join(customThemesDir, `${themeDir}-${counter}`);
+        console.log(`Theme already exists, importing as: ${path.basename(destThemeDir)}`);
+      }
+
+      // Copy theme to custom-themes directory
+      fs.cpSync(extractedThemePath, destThemeDir, { recursive: true });
+      console.log(`Theme imported to: ${destThemeDir}`);
+
+      // Clean up temp directory
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+
+      // Show success notification
+      if (Notification.isSupported()) {
+        const notification = new Notification({
+          title: 'Theme Imported',
+          body: `${themeName} has been imported successfully`,
+          silent: false,
+        });
+        notification.show();
+      }
+
+      console.log(`Successfully imported theme: ${themeName}`);
+    } catch (extractError) {
+      // Clean up temp directory on error
+      if (fs.existsSync(tmpDir)) {
+        fs.rmSync(tmpDir, { recursive: true, force: true });
+      }
+      throw extractError;
+    }
+  } catch (error) {
+    console.error('Failed to import theme:', error);
+    throw error;
+  }
 }
 
 /**
