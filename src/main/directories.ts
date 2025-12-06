@@ -86,6 +86,10 @@ export function ensurePreferences(): void {
       startAtLogin: false,
       showInMenuBar: true,
       showNotifications: true,
+      notifications: {
+        onThemeChange: true,
+        onScheduledSwitch: true,
+      },
     };
 
     fs.writeFileSync(prefsPath, JSON.stringify(defaultPreferences, null, 2));

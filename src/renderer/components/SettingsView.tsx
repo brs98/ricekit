@@ -372,16 +372,41 @@ export function SettingsView() {
 
           <div className="setting-item">
             <div className="setting-info">
-              <label className="setting-label">Show Notifications</label>
+              <label className="setting-label">Show Notifications on Theme Change</label>
               <p className="setting-description">
-                Display notifications when themes are applied
+                Display a notification when you manually apply a theme
               </p>
             </div>
             <label className="toggle-switch">
               <input
                 type="checkbox"
-                checked={preferences.showNotifications}
-                onChange={(e) => updatePreference('showNotifications', e.target.checked)}
+                checked={preferences.notifications?.onThemeChange ?? preferences.showNotifications ?? true}
+                onChange={(e) => updatePreference('notifications', {
+                  ...preferences.notifications,
+                  onThemeChange: e.target.checked,
+                  onScheduledSwitch: preferences.notifications?.onScheduledSwitch ?? preferences.showNotifications ?? true
+                })}
+              />
+              <span className="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div className="setting-item">
+            <div className="setting-info">
+              <label className="setting-label">Show Notifications on Scheduled Switch</label>
+              <p className="setting-description">
+                Display a notification when themes auto-switch based on schedule or system appearance
+              </p>
+            </div>
+            <label className="toggle-switch">
+              <input
+                type="checkbox"
+                checked={preferences.notifications?.onScheduledSwitch ?? preferences.showNotifications ?? true}
+                onChange={(e) => updatePreference('notifications', {
+                  ...preferences.notifications,
+                  onThemeChange: preferences.notifications?.onThemeChange ?? preferences.showNotifications ?? true,
+                  onScheduledSwitch: e.target.checked
+                })}
               />
               <span className="toggle-slider"></span>
             </label>

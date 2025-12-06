@@ -204,8 +204,9 @@ export async function handleApplyTheme(_event: any, name: string): Promise<void>
 
   console.log(`Theme ${name} applied successfully`);
 
-  // Show notification
-  if (Notification.isSupported()) {
+  // Show notification if enabled
+  const shouldShowNotification = prefs.notifications?.onThemeChange ?? prefs.showNotifications ?? true;
+  if (Notification.isSupported() && shouldShowNotification) {
     const notification = new Notification({
       title: 'Theme Applied',
       body: `${theme.metadata.name} is now active`,
@@ -871,8 +872,9 @@ export async function handleAppearanceChange(): Promise<void> {
     console.log(`Auto-switching to ${appearance} theme: ${themeToApply}`);
     await handleApplyTheme(null, themeToApply);
 
-    // Show notification
-    if (Notification.isSupported()) {
+    // Show notification if enabled (use onScheduledSwitch for system appearance changes)
+    const shouldShowNotification = prefs.notifications?.onScheduledSwitch ?? prefs.showNotifications ?? true;
+    if (Notification.isSupported() && shouldShowNotification) {
       const notification = new Notification({
         title: 'Theme Auto-Switched',
         body: `Switched to ${appearance} theme: ${themeToApply}`,
@@ -952,8 +954,9 @@ export async function checkScheduleAndApplyTheme(): Promise<void> {
     console.log(`Schedule-based auto-switching to ${shouldUseDarkTheme ? 'dark' : 'light'} theme: ${themeToApply}`);
     await handleApplyTheme(null, themeToApply);
 
-    // Show notification
-    if (Notification.isSupported()) {
+    // Show notification if enabled
+    const shouldShowNotification = prefs.notifications?.onScheduledSwitch ?? prefs.showNotifications ?? true;
+    if (Notification.isSupported() && shouldShowNotification) {
       const notification = new Notification({
         title: 'Theme Auto-Switched',
         body: `Scheduled switch to ${themeToApply}`,

@@ -75,7 +75,11 @@ export interface Preferences {
   };
   startAtLogin: boolean;
   showInMenuBar: boolean;
-  showNotifications: boolean;
+  showNotifications: boolean; // Legacy field for backward compatibility
+  notifications: {
+    onThemeChange: boolean;
+    onScheduledSwitch: boolean;
+  };
 }
 
 // State structure
