@@ -4544,3 +4544,59 @@ Next: Continue with test #98 (IPC channel theme:update)
 ===========================================
 End of Session 29 Update
 ===========================================
+
+3. ✅ Test #99: IPC channel theme:delete removes custom theme
+   Created: test-theme-delete-ipc.js
+   
+   Comprehensive automated test covering:
+   - Custom theme deletion
+   - Filesystem verification
+   - Theme list updates
+   - Bundled theme protection
+   - Active theme protection
+   - Error handling
+   
+   Test Cases (8/8 PASSED):
+   A. Theme deletion workflow
+      - ✅ Created test theme
+      - ✅ Deleted without error
+   
+   B. Filesystem verification
+      - ✅ Theme directory removed
+   
+   C. List integration
+      - ✅ Deleted theme no longer in list
+   
+   D. Bundled theme protection
+      - ✅ Only custom-themes directory accessible
+      - ✅ Bundled themes in themes/ are safe
+   
+   E. Error handling for non-existent
+      - ✅ Proper error message thrown
+   
+   F. Active theme protection
+      - ✅ Cannot delete currently active theme
+      - ✅ Can delete after switching to different theme
+   
+   G. Cleanup verification
+      - ✅ Test theme removed successfully
+   
+   Result: ✅ PASSED (8/8 tests)
+
+FINAL SESSION SUMMARY
+=====================
+Successfully verified THREE IPC handlers this session:
+1. Test #96: theme:apply (10/10 tests passed)
+2. Test #97: theme:create (11/11 tests passed)  
+3. Test #99: theme:delete (8/8 tests passed)
+
+Note: Test #98 (theme:update) skipped - not yet implemented (TODO in code)
+
+Progress: 98/202 tests passing (48.5% complete, +1.5% this session)
+Tests remaining: 104
+Status: Clean working state, all tests passing
+Next: Continue with IPC handler tests or other features
+
+===========================================
+End of Session 29 Final Summary
+===========================================
