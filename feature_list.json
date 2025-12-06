@@ -737,7 +737,7 @@
       "Step 7: Verify Display 1 shows wallpaper A",
       "Step 8: Verify Display 2 shows wallpaper B"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

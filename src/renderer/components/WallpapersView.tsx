@@ -1,19 +1,39 @@
 import React, { useState, useEffect } from 'react';
 
+interface Display {
+  id: string;
+  index: number;
+  name: string;
+  resolution: string;
+  isMain: boolean;
+}
+
 interface WallpaperPreviewModalProps {
   wallpaperPath: string;
   onClose: () => void;
-  onApply: (path: string) => void;
+  onApply: (path: string, displayIndex?: number) => void;
+  displays: Display[];
+  selectedDisplay: number | null;
 }
 
 const WallpaperPreviewModal: React.FC<WallpaperPreviewModalProps> = ({
   wallpaperPath,
   onClose,
   onApply,
+  displays,
+  selectedDisplay,
 }) => {
   const handleApply = async () => {
-    await onApply(wallpaperPath);
+    await onApply(wallpaperPath, selectedDisplay || undefined);
     onClose();
+  };
+
+  const getApplyButtonText = () => {
+    if (selectedDisplay === null) {
+      return displays.length > 1 ? 'Apply to All Displays' : 'Apply Wallpaper';
+    }
+    const display = displays.find(d => d.index === selectedDisplay);
+    return display ? `Apply to ${display.name}` : 'Apply Wallpaper';
   };
 
   return (
@@ -39,7 +59,7 @@ const WallpaperPreviewModal: React.FC<WallpaperPreviewModalProps> = ({
             Cancel
           </button>
           <button className="primary-button" onClick={handleApply}>
-            Apply Wallpaper
+            {getApplyButtonText()}
           </button>
         </div>
       </div>
@@ -53,10 +73,30 @@ export const WallpapersView: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedWallpaper, setSelectedWallpaper] = useState<string | null>(null);
   const [currentTheme, setCurrentTheme] = useState<string>('');
+  const [displays, setDisplays] = useState<Display[]>([]);
+  const [selectedDisplay, setSelectedDisplay] = useState<number | null>(null);
 
   useEffect(() => {
     loadWallpapers();
+    loadDisplays();
   }, []);
+
+  const loadDisplays = async () => {
+    try {
+      const displayList = await window.electronAPI.getDisplays();
+      setDisplays(displayList);
+    } catch (err) {
+      console.error('Error loading displays:', err);
+      // Default to single display on error
+      setDisplays([{
+        id: 'display-0-0',
+        index: 1,
+        name: 'Display 1',
+        resolution: 'Unknown',
+        isMain: true,
+      }]);
+    }
+  };
 
   const loadWallpapers = async () => {
     try {
@@ -78,9 +118,9 @@ export const WallpapersView: React.FC = () => {
     }
   };
 
-  const handleApplyWallpaper = async (wallpaperPath: string) => {
+  const handleApplyWallpaper = async (wallpaperPath: string, displayIndex?: number) => {
     try {
-      await window.electronAPI.applyWallpaper(wallpaperPath);
+      await window.electronAPI.applyWallpaper(wallpaperPath, displayIndex);
     } catch (err) {
       console.error('Error applying wallpaper:', err);
       setError('Failed to apply wallpaper. Please try again.');
@@ -140,9 +180,39 @@ export const WallpapersView: React.FC = () => {
             {wallpapers.length === 1 ? 'wallpaper' : 'wallpapers'}
           </p>
         </div>
-        <button className="refresh-button" onClick={loadWallpapers}>
-          ↻ Refresh
-        </button>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          {displays.length > 1 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <label htmlFor="display-select" style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+                Target Display:
+              </label>
+              <select
+                id="display-select"
+                value={selectedDisplay || 'all'}
+                onChange={(e) => setSelectedDisplay(e.target.value === 'all' ? null : parseInt(e.target.value))}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  border: '1px solid var(--border)',
+                  backgroundColor: 'var(--background)',
+                  color: 'var(--text)',
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                }}
+              >
+                <option value="all">All Displays</option>
+                {displays.map((display) => (
+                  <option key={display.id} value={display.index}>
+                    {display.name} {display.isMain ? '(Main)' : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          <button className="refresh-button" onClick={loadWallpapers}>
+            ↻ Refresh
+          </button>
+        </div>
       </div>
 
       <div className="wallpaper-gallery">
@@ -179,6 +249,8 @@ export const WallpapersView: React.FC = () => {
           wallpaperPath={selectedWallpaper}
           onClose={() => setSelectedWallpaper(null)}
           onApply={handleApplyWallpaper}
+          displays={displays}
+          selectedDisplay={selectedDisplay}
         />
       )}
     </div>

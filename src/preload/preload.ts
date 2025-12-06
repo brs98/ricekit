@@ -15,7 +15,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Wallpaper operations
   listWallpapers: (themeName: string) => ipcRenderer.invoke('wallpaper:list', themeName),
-  applyWallpaper: (path: string) => ipcRenderer.invoke('wallpaper:apply', path),
+  applyWallpaper: (path: string, displayIndex?: number) => ipcRenderer.invoke('wallpaper:apply', path, displayIndex),
+  getDisplays: () => ipcRenderer.invoke('wallpaper:getDisplays'),
 
   // Application operations
   detectApps: () => ipcRenderer.invoke('apps:detect'),

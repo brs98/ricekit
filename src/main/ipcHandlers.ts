@@ -32,6 +32,7 @@ export function setupIpcHandlers(): void {
   // Wallpaper operations
   ipcMain.handle('wallpaper:list', handleListWallpapers);
   ipcMain.handle('wallpaper:apply', handleApplyWallpaper);
+  ipcMain.handle('wallpaper:getDisplays', handleGetDisplays);
 
   // Application operations
   ipcMain.handle('apps:detect', handleDetectApps);
@@ -637,8 +638,8 @@ async function handleListWallpapers(_event: any, themeName: string): Promise<str
 /**
  * Apply a wallpaper
  */
-async function handleApplyWallpaper(_event: any, wallpaperPath: string): Promise<void> {
-  console.log(`Applying wallpaper: ${wallpaperPath}`);
+async function handleApplyWallpaper(_event: any, wallpaperPath: string, displayIndex?: number): Promise<void> {
+  console.log(`Applying wallpaper: ${wallpaperPath}`, displayIndex !== undefined ? `to display ${displayIndex}` : 'to all displays');
 
   try {
     const { exec } = require('child_process');
@@ -650,14 +651,26 @@ async function handleApplyWallpaper(_event: any, wallpaperPath: string): Promise
       throw new Error(`Wallpaper file not found: ${wallpaperPath}`);
     }
 
-    // Use osascript to set the wallpaper on all desktops
-    const script = `
-      tell application "System Events"
-        tell every desktop
-          set picture to "${wallpaperPath}"
+    // Use osascript to set the wallpaper
+    let script: string;
+
+    if (displayIndex !== undefined && displayIndex !== null) {
+      // Set wallpaper for specific display (1-indexed)
+      script = `
+        tell application "System Events"
+          set picture of desktop ${displayIndex} to "${wallpaperPath}"
         end tell
-      end tell
-    `;
+      `;
+    } else {
+      // Set wallpaper for all displays
+      script = `
+        tell application "System Events"
+          tell every desktop
+            set picture to "${wallpaperPath}"
+          end tell
+        end tell
+      `;
+    }
 
     await execAsync(`osascript -e '${script}'`);
 
@@ -681,9 +694,13 @@ async function handleApplyWallpaper(_event: any, wallpaperPath: string): Promise
 
     // Show notification
     if (Notification.isSupported()) {
+      const body = displayIndex !== undefined && displayIndex !== null
+        ? `Wallpaper updated for Display ${displayIndex}`
+        : `Wallpaper updated for all displays`;
+
       const notification = new Notification({
         title: 'Wallpaper Applied',
-        body: `Wallpaper has been updated`,
+        body,
         silent: false,
       });
       notification.show();
@@ -693,6 +710,66 @@ async function handleApplyWallpaper(_event: any, wallpaperPath: string): Promise
   } catch (error) {
     console.error(`Error applying wallpaper:`, error);
     throw error;
+  }
+}
+
+/**
+ * Get list of connected displays
+ */
+async function handleGetDisplays(): Promise<any[]> {
+  console.log('Getting connected displays');
+
+  try {
+    const { exec } = require('child_process');
+    const { promisify } = require('util');
+    const execAsync = promisify(exec);
+
+    // Use system_profiler to get display information
+    const { stdout } = await execAsync('system_profiler SPDisplaysDataType -json');
+    const data = JSON.parse(stdout);
+
+    const displays: any[] = [];
+
+    // Parse the display data
+    if (data.SPDisplaysDataType && data.SPDisplaysDataType.length > 0) {
+      data.SPDisplaysDataType.forEach((gpu: any, gpuIndex: number) => {
+        if (gpu.spdisplays_ndrvs && Array.isArray(gpu.spdisplays_ndrvs)) {
+          gpu.spdisplays_ndrvs.forEach((display: any, displayIndex: number) => {
+            displays.push({
+              id: `display-${gpuIndex}-${displayIndex}`,
+              index: displays.length + 1,
+              name: display._name || `Display ${displays.length + 1}`,
+              resolution: display._spdisplays_resolution || 'Unknown',
+              isMain: display.spdisplays_main === 'spdisplays_yes',
+            });
+          });
+        }
+      });
+    }
+
+    // If no displays found, return at least one (the current display)
+    if (displays.length === 0) {
+      displays.push({
+        id: 'display-0-0',
+        index: 1,
+        name: 'Display 1',
+        resolution: 'Unknown',
+        isMain: true,
+      });
+    }
+
+    console.log(`Found ${displays.length} display(s):`, displays);
+    return displays;
+  } catch (error) {
+    console.error('Error getting displays:', error);
+    // Return a default display on error
+    return [{
+      id: 'display-0-0',
+      index: 1,
+      name: 'Display 1',
+      resolution: 'Unknown',
+      isMain: true,
+    }];
   }
 }
 
