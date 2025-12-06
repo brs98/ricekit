@@ -1556,7 +1556,7 @@
       "Step 7: Verify favorites are preserved",
       "Step 8: Verify last opened view (Editor) is restored"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
