@@ -1120,7 +1120,7 @@
       "Step 5: Open VS Code",
       "Step 6: Verify theme matches applied theme"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

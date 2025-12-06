@@ -244,6 +244,72 @@ async function notifyTerminalsToReload(themePath: string): Promise<void> {
 }
 
 /**
+ * Update VS Code settings.json with the current theme
+ */
+async function updateVSCodeSettings(themeName: string, themePath: string): Promise<void> {
+  console.log('Updating VS Code settings.json...');
+
+  try {
+    const homeDir = os.homedir();
+    const vscodeSettingsPath = path.join(homeDir, 'Library', 'Application Support', 'Code', 'User', 'settings.json');
+
+    // Check if VS Code settings file exists
+    if (!fs.existsSync(vscodeSettingsPath)) {
+      console.log('VS Code settings.json not found, creating it...');
+      const vscodeDir = path.dirname(vscodeSettingsPath);
+      if (!fs.existsSync(vscodeDir)) {
+        fs.mkdirSync(vscodeDir, { recursive: true });
+      }
+      // Create empty settings file
+      fs.writeFileSync(vscodeSettingsPath, '{}', 'utf-8');
+    }
+
+    // Read current settings
+    let settings: any = {};
+    try {
+      const settingsContent = fs.readFileSync(vscodeSettingsPath, 'utf-8');
+      // Handle empty file or invalid JSON
+      if (settingsContent.trim()) {
+        settings = JSON.parse(settingsContent);
+      }
+    } catch (parseError) {
+      console.warn('Failed to parse VS Code settings.json, starting with empty object:', parseError);
+      settings = {};
+    }
+
+    // Map theme name to VS Code theme name
+    // VS Code themes typically have specific naming conventions
+    // For now, we'll use a simple mapping based on common themes
+    const themeNameMapping: Record<string, string> = {
+      'tokyo-night': 'Tokyo Night',
+      'catppuccin-mocha': 'Catppuccin Mocha',
+      'catppuccin-latte': 'Catppuccin Latte',
+      'gruvbox-dark': 'Gruvbox Dark Hard',
+      'gruvbox-light': 'Gruvbox Light Hard',
+      'nord': 'Nord',
+      'dracula': 'Dracula',
+      'one-dark': 'One Dark Pro',
+      'solarized-dark': 'Solarized Dark',
+      'solarized-light': 'Solarized Light',
+      'rose-pine': 'Rosé Pine',
+    };
+
+    // Get the VS Code theme name
+    const vscodeThemeName = themeNameMapping[themeName] || 'Default Dark+';
+
+    // Update the theme setting
+    settings['workbench.colorTheme'] = vscodeThemeName;
+
+    // Write back the settings file with formatting
+    fs.writeFileSync(vscodeSettingsPath, JSON.stringify(settings, null, 2), 'utf-8');
+    console.log(`✓ VS Code theme updated to: ${vscodeThemeName}`);
+  } catch (error) {
+    console.error('Failed to update VS Code settings:', error);
+    // Don't throw - this is a non-critical error
+  }
+}
+
+/**
  * Apply a theme
  */
 export async function handleApplyTheme(_event: any, name: string): Promise<void> {
@@ -327,6 +393,17 @@ export async function handleApplyTheme(_event: any, name: string): Promise<void>
     refreshTrayMenu();
   } catch (err) {
     console.error('Failed to refresh tray menu:', err);
+  }
+
+  // Update VS Code settings if enabled
+  try {
+    if (prefs.enabledApps && prefs.enabledApps.includes('vscode')) {
+      await updateVSCodeSettings(name, theme.path);
+    } else {
+      console.log('VS Code integration disabled in preferences');
+    }
+  } catch (err) {
+    console.error('Failed to update VS Code settings:', err);
   }
 
   // Notify terminal applications to reload themes
