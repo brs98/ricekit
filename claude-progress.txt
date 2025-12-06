@@ -2904,3 +2904,202 @@ Projected Completion: ~17 more sessions
 ===========================================
 End of Session 17 Progress Report
 ===========================================
+===========================================
+MacTheme Development Progress - Session 18
+===========================================
+Date: 2025-12-06
+Agent: Implementation Agent (Session 18)
+Starting Status: 80/202 tests passing
+
+OVERVIEW
+========
+This session focused on implementing the notification preferences configuration
+feature. This allows users to separately control notifications for manual theme
+changes vs automatic/scheduled theme switches.
+
+COMPLETED TASKS
+===============
+
+1. ✅ Extended Type Definitions
+   File: src/shared/types.ts
+   - Added notifications object to Preferences interface:
+     {
+       onThemeChange: boolean,
+       onScheduledSwitch: boolean
+     }
+   - Maintained showNotifications field for backward compatibility
+
+2. ✅ Updated Default Preferences
+   File: src/main/directories.ts
+   - Initialize both notification toggles to true by default
+   - Ensures new preferences work out of the box
+
+3. ✅ Updated Notification Logic (3 locations)
+   File: src/main/ipcHandlers.ts
+
+   a) Manual Theme Application (handleApplyTheme):
+      - Checks notifications.onThemeChange before showing notification
+      - Falls back to legacy showNotifications field
+
+   b) Scheduled Theme Switching (checkScheduleAndApplyTheme):
+      - Checks notifications.onScheduledSwitch before showing notification
+      - Falls back to legacy showNotifications field
+
+   c) System Appearance Changes (handleAppearanceChange):
+      - Checks notifications.onScheduledSwitch before showing notification
+      - Falls back to legacy showNotifications field
+
+4. ✅ Updated Settings UI
+   File: src/renderer/components/SettingsView.tsx
+   - Replaced single "Show Notifications" toggle with TWO toggles:
+
+   Toggle 1: "Show Notifications on Theme Change"
+   - Description: "Display a notification when you manually apply a theme"
+   - Controls manual theme change notifications
+
+   Toggle 2: "Show Notifications on Scheduled Switch"
+   - Description: "Display a notification when themes auto-switch based on
+     schedule or system appearance"
+   - Controls automatic theme switch notifications
+
+5. ✅ Created Test Scripts
+   - test-notifications.js: Helper for testing notification preferences
+   - test-apply-theme.js: Verification script for theme application
+   - NOTIFICATION_PREFERENCES_VERIFICATION.md: Complete documentation
+
+TESTS MARKED AS PASSING
+========================
+
+Notification Preferences (1 test):
+✅ Test 70: Notification preferences can be configured
+
+TECHNICAL DETAILS
+==================
+
+Backward Compatibility Strategy:
+All notification checks use null coalescing:
+
+const shouldShow = prefs.notifications?.onThemeChange
+                   ?? prefs.showNotifications
+                   ?? true;
+
+This ensures:
+1. If new notifications.onThemeChange exists, use it
+2. Otherwise, fall back to legacy showNotifications
+3. If neither exists, default to true (show notifications)
+
+Benefits:
+- Existing preferences files work without migration
+- No breaking changes to existing functionality
+- Gradual migration path for users
+- Legacy field still functional
+
+Notification Points Updated:
+1. Manual theme changes (when user clicks "Apply Theme")
+2. Scheduled switches (based on time schedule)
+3. System appearance changes (macOS dark mode toggle)
+
+CURRENT STATE
+=============
+
+Progress: 81/202 tests passing (40.1% complete)
+
+All Major Features Working:
+- ✅ Theme browsing, search, and filtering
+- ✅ Favorites system
+- ✅ Theme application with symlinks
+- ✅ Theme editor with live preview
+- ✅ Application detection and setup wizard
+- ✅ Wallpaper system
+- ✅ Settings view
+- ✅ System appearance detection
+- ✅ Menu bar tray icon
+- ✅ Schedule-based switching
+- ✅ Theme deletion and duplication
+- ✅ Quick switcher
+- ✅ Notification preferences (NEW)
+
+Files Modified:
+- src/shared/types.ts (MODIFIED)
+- src/main/directories.ts (MODIFIED)
+- src/main/ipcHandlers.ts (MODIFIED - 3 locations)
+- src/renderer/components/SettingsView.tsx (MODIFIED)
+- NOTIFICATION_PREFERENCES_VERIFICATION.md (NEW)
+- test-notifications.js (NEW)
+- test-apply-theme.js (NEW)
+- feature_list.json (UPDATED)
+
+Commits This Session:
+- 220eaed: Implement notification preferences configuration (1 new test passing)
+
+NEXT SESSION PRIORITIES
+========================
+
+Recommended next features (prioritized by ease/impact):
+
+1. **Theme Export** (Test 73) - MEDIUM PRIORITY
+   - Create shareable theme files (.zip or custom format)
+   - Save to user-selected location
+   - Include all config files and metadata
+
+2. **Theme Import** (Test 74) - MEDIUM PRIORITY
+   - Load themes from exported files
+   - Validate theme structure
+   - Add to custom-themes directory
+
+3. **Multi-Display Wallpaper Support** (Test 58) - HIGH VALUE
+   - Detect multiple displays
+   - Allow different wallpaper per display
+   - Store per-display preferences
+
+4. **Sunrise/Sunset Auto-Switching** (Test 67) - ADVANCED
+   - Calculate sunrise/sunset times
+   - Require location permission or manual coordinates
+   - More complex than other features
+
+5. **Keyboard Shortcuts Customization** (Test 69) - MEDIUM
+   - UI for recording new shortcuts
+   - Validate shortcut combinations
+   - Update global shortcut registration
+
+CRITICAL NOTES
+==============
+
+✅ All code compiles successfully
+✅ No TypeScript errors
+✅ No runtime errors in console
+✅ Backward compatibility maintained
+✅ 81 tests passing (40.1% complete)
+✅ Clean git history
+
+Session Quality:
+- Single feature implemented completely
+- Full backward compatibility
+- Comprehensive documentation
+- Test scripts for verification
+- Clean commit with detailed message
+
+Development Velocity: Steady progress (~1 test per session this time)
+Projected Completion: ~20 more sessions at current pace
+
+LESSONS LEARNED
+===============
+
+1. **Backward Compatibility is Key**
+   - Using null coalescing operators for fallback values works well
+   - Keeping legacy fields prevents breaking existing installations
+   - Gradual migration is better than forced migration
+
+2. **Small Feature, Big Impact**
+   - This was a relatively simple feature (1 test)
+   - But it improves user experience significantly
+   - Users can now fine-tune notification behavior
+
+3. **Documentation Matters**
+   - Created comprehensive verification document
+   - Test scripts make manual testing easier
+   - Future sessions can reference this work
+
+===========================================
+End of Session 18 Progress Report
+===========================================
