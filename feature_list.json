@@ -414,7 +414,7 @@
       "Step 5: Verify colors section contains all palette colors",
       "Step 6: Verify color values match theme.json"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -425,7 +425,7 @@
       "Step 3: Verify config syntax is valid",
       "Step 4: Verify color settings match theme palette"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -437,7 +437,7 @@
       "Step 4: Verify all color keys are present",
       "Step 5: Verify RGB values are correct"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -449,7 +449,7 @@
       "Step 4: Verify workbench color customizations are present",
       "Step 5: Verify colors match theme palette"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -461,7 +461,7 @@
       "Step 4: Verify highlight groups are defined",
       "Step 5: Verify colors match theme palette"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
