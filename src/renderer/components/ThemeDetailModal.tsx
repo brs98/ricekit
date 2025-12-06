@@ -8,6 +8,7 @@ interface ThemeDetailModalProps {
   onClose: () => void;
   onApply: (themeName: string) => void;
   onToggleFavorite: (themeName: string) => void;
+  onEdit?: () => void;
   isFavorite: boolean;
 }
 
@@ -17,6 +18,7 @@ export function ThemeDetailModal({
   onClose,
   onApply,
   onToggleFavorite,
+  onEdit,
   isFavorite,
 }: ThemeDetailModalProps) {
   const [copiedColor, setCopiedColor] = useState<string | null>(null);
@@ -255,6 +257,17 @@ export function ThemeDetailModal({
           >
             {isFavorite ? '★ Favorited' : '☆ Add to Favorites'}
           </button>
+          {onEdit && (
+            <button
+              className="btn-secondary"
+              onClick={() => {
+                onEdit();
+                onClose();
+              }}
+            >
+              ✏️ Edit
+            </button>
+          )}
           <button
             className="btn-primary"
             onClick={() => {

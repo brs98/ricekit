@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import './App.css';
 import { ThemeGrid } from './components/ThemeGrid';
+import { ThemeEditor } from './components/ThemeEditor';
+import { ThemeMetadata } from '../shared/types';
 
 type FilterMode = 'all' | 'light' | 'dark' | 'favorites';
 
@@ -8,6 +10,7 @@ function App() {
   const [activeView, setActiveView] = useState('themes');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMode, setFilterMode] = useState<FilterMode>('all');
+  const [editorTheme, setEditorTheme] = useState<ThemeMetadata | undefined>(undefined);
 
   return (
     <div className="app">
@@ -91,13 +94,27 @@ function App() {
         </div>
         <div className="content-body">
           {activeView === 'themes' && (
-            <ThemeGrid searchQuery={searchQuery} filterMode={filterMode} />
+            <ThemeGrid
+              searchQuery={searchQuery}
+              filterMode={filterMode}
+              onEditTheme={(theme) => {
+                setEditorTheme(theme.metadata);
+                setActiveView('editor');
+              }}
+            />
           )}
           {activeView === 'editor' && (
-            <div className="placeholder">
-              <h3>Theme Editor</h3>
-              <p>Theme editor will be implemented here</p>
-            </div>
+            <ThemeEditor
+              initialTheme={editorTheme}
+              onSave={() => {
+                setActiveView('themes');
+                setEditorTheme(undefined);
+              }}
+              onCancel={() => {
+                setActiveView('themes');
+                setEditorTheme(undefined);
+              }}
+            />
           )}
           {activeView === 'apps' && (
             <div className="placeholder">

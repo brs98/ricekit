@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { getThemesDir } from './directories';
+import type { ThemeMetadata, ThemeColors } from '../shared/types';
 
 /**
  * Install bundled themes to the themes directory
@@ -975,4 +976,32 @@ ZSH_HIGHLIGHT_STYLES[globbing]='fg=${colors.magenta}'
 ZSH_HIGHLIGHT_STYLES[single-quoted-argument]='fg=${colors.green}'
 ZSH_HIGHLIGHT_STYLES[double-quoted-argument]='fg=${colors.green}'
 `;
+}
+
+/**
+ * Generate all config files for a theme in a directory
+ * This is used by both theme creation and bundled theme generation
+ */
+export function generateThemeConfigFiles(themeDir: string, metadata: ThemeMetadata): void {
+  // Create theme directory if it doesn't exist
+  if (!fs.existsSync(themeDir)) {
+    fs.mkdirSync(themeDir, { recursive: true });
+  }
+
+  // Write theme metadata
+  fs.writeFileSync(path.join(themeDir, 'theme.json'), JSON.stringify(metadata, null, 2));
+
+  // Generate all config files
+  fs.writeFileSync(path.join(themeDir, 'alacritty.toml'), generateAlacrittyConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'kitty.conf'), generateKittyConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'bat.conf'), generateBatConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
 }

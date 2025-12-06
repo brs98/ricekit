@@ -6,9 +6,10 @@ import { ThemeDetailModal } from './ThemeDetailModal';
 interface ThemeGridProps {
   searchQuery?: string;
   filterMode?: 'all' | 'light' | 'dark' | 'favorites';
+  onEditTheme?: (theme: Theme) => void;
 }
 
-export function ThemeGrid({ searchQuery = '', filterMode = 'all' }: ThemeGridProps) {
+export function ThemeGrid({ searchQuery = '', filterMode = 'all', onEditTheme }: ThemeGridProps) {
   const [themes, setThemes] = useState<Theme[]>([]);
   const [currentTheme, setCurrentTheme] = useState<string>('');
   const [favorites, setFavorites] = useState<string[]>([]);
@@ -152,6 +153,7 @@ export function ThemeGrid({ searchQuery = '', filterMode = 'all' }: ThemeGridPro
           onClose={() => setSelectedTheme(null)}
           onApply={handleApplyTheme}
           onToggleFavorite={handleToggleFavorite}
+          onEdit={onEditTheme ? () => onEditTheme(selectedTheme) : undefined}
           isFavorite={favorites.includes(selectedTheme.name)}
         />
       )}

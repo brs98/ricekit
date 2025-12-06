@@ -189,7 +189,35 @@ async function handleApplyTheme(_event: any, name: string): Promise<void> {
  */
 async function handleCreateTheme(_event: any, data: ThemeMetadata): Promise<void> {
   console.log(`Creating theme: ${data.name}`);
-  // TODO: Implement theme creation
+
+  const customThemesDir = getCustomThemesDir();
+
+  // Create a safe directory name from the theme name
+  const themeDirName = data.name.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+  const themeDir = path.join(customThemesDir, themeDirName);
+
+  // Check if theme already exists
+  if (fs.existsSync(themeDir)) {
+    throw new Error(`Theme "${data.name}" already exists`);
+  }
+
+  // Import the helper function from themeInstaller
+  const { generateThemeConfigFiles } = await import('./themeInstaller');
+
+  // Generate all config files
+  generateThemeConfigFiles(themeDir, data);
+
+  console.log(`Theme "${data.name}" created successfully at ${themeDir}`);
+
+  // Show notification
+  if (Notification.isSupported()) {
+    const notification = new Notification({
+      title: 'Theme Created',
+      body: `${data.name} has been created successfully`,
+      silent: false,
+    });
+    notification.show();
+  }
 }
 
 /**
