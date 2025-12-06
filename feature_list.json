@@ -475,7 +475,7 @@
       "Step 6: Verify tokyo-night original is unchanged",
       "Step 7: Verify new custom theme exists in custom-themes"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -501,7 +501,7 @@
       "Step 6: Verify changes are discarded",
       "Step 7: Verify editor returns to clean state"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { ThemeMetadata, ThemeColors } from '../../shared/types';
+import { Theme, ThemeMetadata, ThemeColors } from '../../shared/types';
 
 interface ThemeEditorProps {
   initialTheme?: ThemeMetadata;
+  sourceTheme?: Theme;  // Optional: full theme object to check if built-in
   onSave?: () => void;
   onCancel?: () => void;
 }
@@ -183,10 +184,14 @@ const defaultMetadata: ThemeMetadata = {
   colors: defaultColors,
 };
 
-export function ThemeEditor({ initialTheme, onSave, onCancel }: ThemeEditorProps) {
+export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: ThemeEditorProps) {
   const [metadata, setMetadata] = useState<ThemeMetadata>(initialTheme || defaultMetadata);
   const [selectedColor, setSelectedColor] = useState<keyof ThemeColors | null>(null);
   const [saving, setSaving] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [showSaveAsDialog, setShowSaveAsDialog] = useState(false);
+  const [newThemeName, setNewThemeName] = useState('');
+  const [hasChanges, setHasChanges] = useState(false);
   const [selectedPreset, setSelectedPreset] = useState<string>('');
 
   // Update when initialTheme changes
@@ -215,6 +220,7 @@ export function ThemeEditor({ initialTheme, onSave, onCancel }: ThemeEditorProps
         [colorKey]: value,
       },
     });
+    setHasChanges(true);
   };
 
   const updateMetadataField = (field: keyof Omit<ThemeMetadata, 'colors'>, value: string) => {
@@ -222,12 +228,47 @@ export function ThemeEditor({ initialTheme, onSave, onCancel }: ThemeEditorProps
       ...metadata,
       [field]: value,
     });
+    setHasChanges(true);
   };
 
   const handleSave = async () => {
+    // If editing a built-in theme, show save-as dialog
+    if (sourceTheme && !sourceTheme.isCustom) {
+      setShowSaveAsDialog(true);
+      return;
+    }
+
+    // Otherwise save directly
     try {
       setSaving(true);
       await window.electronAPI.createTheme(metadata);
+      setHasChanges(false);
+      if (onSave) onSave();
+    } catch (error) {
+      console.error('Failed to save theme:', error);
+      alert('Failed to save theme. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveAs = async () => {
+    if (!newThemeName.trim()) {
+      alert('Please enter a theme name');
+      return;
+    }
+
+    try {
+      setSaving(true);
+      // Create a new theme with the modified colors but new name
+      const newMetadata: ThemeMetadata = {
+        ...metadata,
+        name: newThemeName.trim(),
+      };
+      await window.electronAPI.createTheme(newMetadata);
+      setHasChanges(false);
+      setShowSaveAsDialog(false);
+      setNewThemeName('');
       if (onSave) onSave();
     } catch (error) {
       console.error('Failed to save theme:', error);
@@ -238,6 +279,25 @@ export function ThemeEditor({ initialTheme, onSave, onCancel }: ThemeEditorProps
   };
 
   const handleCancel = () => {
+    // If there are unsaved changes, show confirmation dialog
+    if (hasChanges) {
+      setShowCancelConfirm(true);
+      return;
+    }
+
+    // Otherwise cancel immediately
+    if (onCancel) {
+      onCancel();
+    } else {
+      // Reset to initial or default
+      setMetadata(initialTheme || defaultMetadata);
+      setHasChanges(false);
+    }
+  };
+
+  const confirmCancel = () => {
+    setShowCancelConfirm(false);
+    setHasChanges(false);
     if (onCancel) {
       onCancel();
     } else {
@@ -545,6 +605,86 @@ export function ThemeEditor({ initialTheme, onSave, onCancel }: ThemeEditorProps
           </div>
         </div>
       </div>
+
+      {/* Cancel Confirmation Dialog */}
+      {showCancelConfirm && (
+        <div className="modal-overlay" onClick={() => setShowCancelConfirm(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Discard Changes?</h3>
+              <button
+                className="modal-close"
+                onClick={() => setShowCancelConfirm(false)}
+              >
+                ×
+              </button>
+            </div>
+            <div className="modal-body">
+              <p>You have unsaved changes. Are you sure you want to discard them?</p>
+            </div>
+            <div className="modal-actions">
+              <button
+                className="btn btn-secondary"
+                onClick={() => setShowCancelConfirm(false)}
+              >
+                Keep Editing
+              </button>
+              <button className="btn btn-danger" onClick={confirmCancel}>
+                Discard Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Save As Dialog for Built-in Themes */}
+      {showSaveAsDialog && (
+        <div className="modal-overlay" onClick={() => setShowSaveAsDialog(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Save as Custom Theme</h3>
+              <button
+                className="modal-close"
+                onClick={() => setShowSaveAsDialog(false)}
+              >
+                ×
+              </button>
+            </div>
+            <div className="modal-body">
+              <p>
+                You're editing a built-in theme. To preserve the original, your changes will be saved as a new custom theme.
+              </p>
+              <div className="form-group">
+                <label htmlFor="new-theme-name">New Theme Name</label>
+                <input
+                  id="new-theme-name"
+                  type="text"
+                  value={newThemeName}
+                  onChange={(e) => setNewThemeName(e.target.value)}
+                  className="form-input"
+                  placeholder={`${metadata.name} (Custom)`}
+                  autoFocus
+                />
+              </div>
+            </div>
+            <div className="modal-actions">
+              <button
+                className="btn btn-secondary"
+                onClick={() => setShowSaveAsDialog(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={handleSaveAs}
+                disabled={saving || !newThemeName.trim()}
+              >
+                {saving ? 'Saving...' : 'Save as New Theme'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

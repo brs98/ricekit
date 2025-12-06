@@ -698,6 +698,46 @@ body {
   }
 }
 
+.btn-danger {
+  flex: 1;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  background: #ff3b30;
+  color: white;
+  cursor: pointer;
+  transition: all 200ms ease;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #c92a22;
+  transform: translateY(-1px);
+}
+
+.btn-danger:disabled {
+  background: rgba(255, 59, 48, 0.2);
+  color: #ff3b30;
+  cursor: not-allowed;
+  transform: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  .btn-danger {
+    background: #ff453a;
+  }
+
+  .btn-danger:hover:not(:disabled) {
+    background: #d43a30;
+  }
+
+  .btn-danger:disabled {
+    background: rgba(255, 69, 58, 0.3);
+    color: #ff6961;
+  }
+}
+
 .btn-secondary {
   flex: 1;
   padding: 12px 24px;

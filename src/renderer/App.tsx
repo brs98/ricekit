@@ -5,7 +5,7 @@ import { ThemeEditor } from './components/ThemeEditor';
 import { ApplicationsView } from './components/ApplicationsView';
 import { WallpapersView } from './components/WallpapersView';
 import { SettingsView } from './components/SettingsView';
-import { ThemeMetadata } from '../shared/types';
+import { Theme } from '../shared/types';
 
 type FilterMode = 'all' | 'light' | 'dark' | 'favorites';
 
@@ -13,7 +13,7 @@ function App() {
   const [activeView, setActiveView] = useState('themes');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMode, setFilterMode] = useState<FilterMode>('all');
-  const [editorTheme, setEditorTheme] = useState<ThemeMetadata | undefined>(undefined);
+  const [editorTheme, setEditorTheme] = useState<Theme | undefined>(undefined);
 
   return (
     <div className="app">
@@ -101,14 +101,15 @@ function App() {
               searchQuery={searchQuery}
               filterMode={filterMode}
               onEditTheme={(theme) => {
-                setEditorTheme(theme.metadata);
+                setEditorTheme(theme);
                 setActiveView('editor');
               }}
             />
           )}
           {activeView === 'editor' && (
             <ThemeEditor
-              initialTheme={editorTheme}
+              initialTheme={editorTheme?.metadata}
+              sourceTheme={editorTheme}
               onSave={() => {
                 setActiveView('themes');
                 setEditorTheme(undefined);
