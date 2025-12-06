@@ -11,6 +11,9 @@ import {
   getPreferencesPath,
   getStatePath,
   getCurrentDir,
+  ensureDirectories,
+  ensurePreferences,
+  ensureState,
 } from './directories';
 import type { Theme, ThemeMetadata, Preferences, State } from '../shared/types';
 
@@ -364,6 +367,11 @@ async function updateVSCodeSettings(themeName: string, themePath: string): Promi
 export async function handleApplyTheme(_event: any, name: string): Promise<void> {
   console.log(`Applying theme: ${name}`);
 
+  // Ensure all required directories exist
+  ensureDirectories();
+  ensureState();
+  ensurePreferences();
+
   // Find the theme
   const theme = await handleGetTheme(null, name);
   if (!theme) {
@@ -481,6 +489,7 @@ export async function handleApplyTheme(_event: any, name: string): Promise<void>
 async function handleCreateTheme(_event: any, data: ThemeMetadata): Promise<void> {
   console.log(`Creating theme: ${data.name}`);
 
+  ensureDirectories();
   const customThemesDir = getCustomThemesDir();
 
   // Create a safe directory name from the theme name
@@ -1458,6 +1467,8 @@ async function handleRefreshApp(_event: any, appName: string): Promise<void> {
  * Get user preferences
  */
 async function handleGetPreferences(): Promise<Preferences> {
+  ensureDirectories();
+  ensurePreferences();
   const prefsPath = getPreferencesPath();
   const prefsContent = fs.readFileSync(prefsPath, 'utf-8');
   return JSON.parse(prefsContent);
@@ -1467,6 +1478,8 @@ async function handleGetPreferences(): Promise<Preferences> {
  * Set user preferences
  */
 async function handleSetPreferences(_event: any, prefs: Preferences): Promise<void> {
+  ensureDirectories();
+  ensurePreferences();
   const prefsPath = getPreferencesPath();
 
   // Read old preferences to detect changes
@@ -1899,6 +1912,8 @@ async function handleGetSunriseSunset(): Promise<{ sunrise: string; sunset: stri
  * Get current application state
  */
 async function handleGetState(): Promise<State> {
+  ensureDirectories();
+  ensureState();
   const statePath = getStatePath();
   const stateContent = fs.readFileSync(statePath, 'utf-8');
   return JSON.parse(stateContent);
