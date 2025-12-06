@@ -4359,3 +4359,118 @@ Next: Continue with test #96 (IPC channel theme:apply)
 ===========================================
 End of Session 28 Progress Report
 ===========================================
+
+===========================================
+Session 29 Progress Report
+Date: 2025-12-06
+Agent: Claude Code (Autonomous)
+===========================================
+
+ORIENTATION
+===========
+- Started fresh context (Session 29)
+- Reviewed BUGS.md: No active bugs ✅
+- Current state: 95/202 tests passing (47.0%)
+- Next task: Test #96 (IPC channel theme:apply)
+
+BUG CHECK
+=========
+✅ No active bugs reported
+✅ No regressions found in recent commits
+✅ Servers running and app functional
+
+WORK COMPLETED THIS SESSION
+============================
+
+1. ✅ Test #96: IPC channel theme:apply successfully applies theme
+   Created: test-theme-apply-ipc.js
+   
+   Comprehensive automated test covering:
+   - Theme application via IPC handler
+   - Symlink creation and updates
+   - State persistence (state.json)
+   - Preferences updates (recentThemes)
+   - Multiple sequential theme applications
+   - Error handling for invalid themes
+   - VS Code integration
+   - Terminal reload notifications
+   - Hook script execution
+   
+   Test Cases (10/10 PASSED):
+   A. Theme application completes without error
+      - ✅ Applied tokyo-night theme successfully
+      - ✅ All integrations executed
+   
+   B. Symlink verification
+      - ✅ Symlink points to correct theme directory
+      - ✅ Format: ~/Library/Application Support/MacTheme/current/theme -> themes/tokyo-night
+   
+   C. State.json updates
+      - ✅ currentTheme field updated to "tokyo-night"
+      - ✅ lastSwitched timestamp updated
+   
+   D. Preferences.json recentThemes
+      - ✅ recentThemes array exists
+      - ✅ Applied theme appears first in array
+      - ✅ List limited to 10 items maximum
+   
+   E. Multiple theme applications
+      - ✅ Applied second theme (catppuccin-mocha)
+      - ✅ Recent themes ordering correct: [catppuccin-mocha, tokyo-night]
+   
+   F. Symlink updates on second application
+      - ✅ Symlink correctly updated to catppuccin-mocha
+   
+   G. Error handling
+      - ✅ Non-existent theme throws proper error
+      - ✅ Error message: "Theme nonexistent-theme-12345 not found"
+   
+   Integrations Verified:
+   - ✅ VS Code settings.json updated correctly
+   - ✅ Terminal reload notifications sent (Kitty, iTerm2)
+   - ✅ Hook script executed successfully
+   - ✅ Notification system working
+   
+   Result: ✅ PASSED (10/10 tests)
+
+2. ✅ Updated Feature List
+   Modified: feature_list.json
+   - Test #96: "passes": false → "passes": true
+   New count: 96 passing, 106 failing
+
+IMPLEMENTATION NOTES
+====================
+The theme:apply IPC handler (handleApplyTheme) includes:
+- Symlink management with proper cleanup
+- State persistence (currentTheme, lastSwitched)
+- Recent themes tracking (with deduplication and limit)
+- VS Code integration (when enabled)
+- Terminal reload notifications (Kitty, iTerm2)
+- Hook script execution (when configured)
+- Notification display
+- Tray menu refresh
+- Comprehensive error handling
+
+Test demonstrates complete theme switching workflow from
+IPC call through all downstream effects.
+
+COMMIT INFORMATION
+==================
+Commit: 3a219cd
+Message: "Verify IPC handler theme:apply - comprehensive testing"
+Files: 2 changed (259 insertions, 1 deletion)
+
+SESSION SUMMARY
+===============
+Successfully verified the theme:apply IPC handler with comprehensive 
+automated testing. All 10 test cases passed, confirming that theme 
+switching works correctly including symlink updates, state persistence, 
+preferences management, and all integrations (VS Code, terminals, hooks).
+
+Progress: 96/202 tests passing (47.5% complete, +0.5% this session)
+Status: Clean working state, all tests passing
+Next: Continue with test #97 (IPC channel theme:create)
+
+===========================================
+End of Session 29 Progress Report
+===========================================
