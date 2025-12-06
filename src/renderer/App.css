@@ -1,0 +1,137 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: transparent;
+}
+
+.app {
+  display: flex;
+  height: 100vh;
+  background-color: #f5f5f7;
+  color: #1d1d1f;
+}
+
+@media (prefers-color-scheme: dark) {
+  .app {
+    background-color: #1d1d1f;
+    color: #f5f5f7;
+  }
+}
+
+.sidebar {
+  width: 240px;
+  background: rgba(242, 242, 247, 0.8);
+  backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  padding-top: 52px; /* Space for traffic lights */
+}
+
+@media (prefers-color-scheme: dark) {
+  .sidebar {
+    background: rgba(28, 28, 30, 0.8);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
+
+.sidebar-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+  .sidebar-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 8px;
+}
+
+.nav-item {
+  width: 100%;
+  padding: 10px 16px;
+  margin-bottom: 4px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  text-align: left;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 200ms ease;
+  color: inherit;
+}
+
+.nav-item:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+@media (prefers-color-scheme: dark) {
+  .nav-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
+
+.nav-item.active {
+  background: rgba(0, 122, 255, 0.15);
+  color: #007aff;
+  font-weight: 500;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.content-header {
+  padding: 20px 32px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+  .content-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
+
+.content-body {
+  flex: 1;
+  padding: 32px;
+  overflow-y: auto;
+}
+
+.placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  opacity: 0.6;
+}
+
+.placeholder h3 {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.placeholder p {
+  font-size: 15px;
+  color: #86868b;
+}
