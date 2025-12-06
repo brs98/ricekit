@@ -2434,3 +2434,93 @@ Progress Summary: 67/202 tests passing (33% complete)
 ===========================================
 End of Session 14 Progress Report
 ===========================================
+
+
+===========================================
+MacTheme Development Progress - Session 15
+===========================================
+Date: 2025-12-06
+Agent: Implementation Agent (Session 15)
+
+PROGRESS SUMMARY
+================
+✅ Tests Passing: 74/202 (37% complete)
+📝 Tests Remaining: 128/202
+🎯 This Session: Schedule-based switching + theme deletion/duplication
+📈 Progress: +7 tests (67 → 74)
+
+COMPLETED THIS SESSION
+======================
+
+1. ✅ Schedule-Based Theme Switching
+   - checkScheduleAndApplyTheme() function in ipcHandlers.ts
+   - Checks schedule every 60 seconds via setInterval
+   - Handles normal and midnight-crossing schedules
+   - Auto-switches to light/dark themes at configured times
+   - Shows notifications on scheduled switches
+   - UI already complete in SettingsView
+
+2. ✅ Theme Deletion System
+   - handleDeleteTheme() with safety checks
+   - Only allows deleting custom themes
+   - Prevents deleting active theme
+   - Delete button in ThemeDetailModal (custom themes only)
+   - Confirmation dialog with warning message
+   - Recursively removes theme directory
+
+3. ✅ Theme Duplication System
+   - handleDuplicateTheme() with smart naming
+   - Generates unique names (Copy, Copy 2, etc.)
+   - Copies all files including wallpapers
+   - Duplicate button in ThemeDetailModal (all themes)
+   - Dialog with editable name input
+   - Works with bundled and custom themes
+
+4. ✅ Confirmation Dialog Styles
+   - Added 87 lines of CSS for dialogs
+   - Full dark mode support
+   - Backdrop blur and overlay
+   - Text input styling with focus states
+
+5. ✅ Wired Handlers to ThemeGrid
+   - Auto-refreshes after delete/duplicate
+   - Cleans up favorites on deletion
+   - Error handling with user alerts
+
+TESTS MARKED AS PASSING
+========================
+✅ Test 68: Schedule-based theme switching can be configured
+✅ Test 69: Scheduled theme switching executes at correct times
+✅ Test 103: Delete custom theme removes it from custom-themes
+✅ Test 104: Built-in themes cannot be deleted
+✅ Test 105: Duplicate theme creates copy in custom-themes
+✅ Test 106: Duplicate prompt dialog with editable name
+✅ Test 107: Duplicate includes all config files
+
+FILES MODIFIED
+==============
+- src/main/ipcHandlers.ts (130+ lines)
+- src/main/main.ts (8 lines)
+- src/renderer/components/ThemeDetailModal.tsx (140+ lines)
+- src/renderer/components/ThemeGrid.tsx (40+ lines)
+- src/renderer/App.css (87 lines)
+- src/shared/types.ts, src/preload/preload.ts
+- feature_list.json (7 tests marked passing)
+
+COMMITS
+=======
+- 2358654: Schedule-based theme switching (2 tests)
+- 027ebcb: Theme deletion and duplication (5 tests)
+
+NEXT PRIORITIES
+===============
+1. Sunrise/sunset auto-switching (MEDIUM)
+2. Keyboard shortcuts & quick switcher (MEDIUM)
+3. Recent themes UI display (LOW)
+4. Theme import/export (MEDIUM)
+
+Progress Summary: 74/202 tests passing (37% complete)
+
+===========================================
+End of Session 15 Progress Report
+===========================================
