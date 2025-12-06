@@ -870,7 +870,7 @@
       "Step 5: Verify shortcut is updated",
       "Step 6: Test new shortcut works to open quick switcher"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { Preferences, Theme } from '../../shared/types';
+import { ShortcutRecorder } from './ShortcutRecorder';
 
 export function SettingsView() {
   const [preferences, setPreferences] = useState<Preferences | null>(null);
@@ -536,12 +537,10 @@ export function SettingsView() {
                 Global shortcut to open quick theme switcher
               </p>
             </div>
-            <input
-              type="text"
-              className="setting-input"
+            <ShortcutRecorder
               value={preferences.keyboardShortcuts.quickSwitcher}
-              onChange={(e) => updatePreference('keyboardShortcuts', {
-                quickSwitcher: e.target.value
+              onChange={(shortcut) => updatePreference('keyboardShortcuts', {
+                quickSwitcher: shortcut
               })}
               placeholder="Cmd+Shift+T"
             />

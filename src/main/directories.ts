@@ -77,7 +77,7 @@ export function ensurePreferences(): void {
       favorites: [],
       recentThemes: [],
       keyboardShortcuts: {
-        quickSwitcher: 'CommandOrControl+Shift+T',
+        quickSwitcher: 'Cmd+Shift+T',
       },
       autoSwitch: {
         enabled: false,

@@ -1090,6 +1090,17 @@ async function handleSetPreferences(_event: any, prefs: Preferences): Promise<vo
       console.error('Failed to update tray visibility:', err);
     }
   }
+
+  // Check if keyboard shortcut changed
+  if (oldPrefs.keyboardShortcuts.quickSwitcher !== prefs.keyboardShortcuts.quickSwitcher) {
+    try {
+      const { updateQuickSwitcherShortcut } = await import('./main');
+      updateQuickSwitcherShortcut(prefs.keyboardShortcuts.quickSwitcher);
+      console.log(`Keyboard shortcut updated to: ${prefs.keyboardShortcuts.quickSwitcher}`);
+    } catch (err) {
+      console.error('Failed to update keyboard shortcut:', err);
+    }
+  }
 }
 
 /**

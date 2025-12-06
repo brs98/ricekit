@@ -145,6 +145,40 @@ export function updateTrayVisibility(show: boolean) {
   }
 }
 
+/**
+ * Convert shortcut string to Electron accelerator format
+ * Example: "Cmd+Shift+T" -> "CommandOrControl+Shift+T"
+ */
+function convertShortcutToAccelerator(shortcut: string): string {
+  return shortcut.replace(/Cmd/g, 'CommandOrControl');
+}
+
+/**
+ * Export function to update the quick switcher keyboard shortcut
+ */
+export function updateQuickSwitcherShortcut(shortcut: string) {
+  // Unregister all shortcuts first
+  globalShortcut.unregisterAll();
+
+  // Convert the shortcut to Electron format
+  const accelerator = convertShortcutToAccelerator(shortcut);
+
+  // Register new shortcut
+  const ret = globalShortcut.register(accelerator, () => {
+    console.log('Quick switcher shortcut triggered:', shortcut);
+    toggleQuickSwitcher();
+  });
+
+  if (!ret) {
+    console.error('Failed to register new shortcut:', shortcut);
+  } else {
+    console.log('Quick switcher shortcut updated to:', shortcut);
+  }
+
+  // Verify shortcut is registered
+  console.log('Shortcut registered:', globalShortcut.isRegistered(accelerator));
+}
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
@@ -301,20 +335,29 @@ app.whenReady().then(() => {
   // Also check immediately on startup
   checkScheduleAndApplyTheme();
 
-  // Register global keyboard shortcut for quick switcher
-  const ret = globalShortcut.register('CommandOrControl+Shift+T', () => {
-    console.log('Quick switcher shortcut triggered');
-    toggleQuickSwitcher();
-  });
+  // Register global keyboard shortcut for quick switcher from preferences
+  try {
+    const prefsPath = getPreferencesPath();
+    const prefs = JSON.parse(fs.readFileSync(prefsPath, 'utf-8'));
+    const shortcut = prefs.keyboardShortcuts?.quickSwitcher || 'Cmd+Shift+T';
+    const accelerator = shortcut.replace(/Cmd/g, 'CommandOrControl');
 
-  if (!ret) {
-    console.error('Global shortcut registration failed');
-  } else {
-    console.log('Quick switcher shortcut registered: Cmd+Shift+T');
+    const ret = globalShortcut.register(accelerator, () => {
+      console.log('Quick switcher shortcut triggered');
+      toggleQuickSwitcher();
+    });
+
+    if (!ret) {
+      console.error('Global shortcut registration failed');
+    } else {
+      console.log('Quick switcher shortcut registered:', shortcut);
+    }
+
+    // Verify shortcut is registered
+    console.log('Shortcut registered:', globalShortcut.isRegistered(accelerator));
+  } catch (err) {
+    console.error('Failed to register keyboard shortcut:', err);
   }
-
-  // Verify shortcut is registered
-  console.log('Shortcut registered:', globalShortcut.isRegistered('CommandOrControl+Shift+T'));
 
   app.on('activate', () => {
     // On macOS, re-create window when dock icon is clicked and no windows are open
