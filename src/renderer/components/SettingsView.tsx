@@ -507,6 +507,68 @@ export function SettingsView() {
 
           <div className="setting-item">
             <div className="setting-info">
+              <label className="setting-label">Backup Preferences</label>
+              <p className="setting-description">
+                Export your settings to a JSON file for safekeeping or migration
+              </p>
+            </div>
+            <button
+              className="secondary-button"
+              onClick={async () => {
+                try {
+                  setSaving(true);
+                  const backupPath = await window.electronAPI.backupPreferences();
+                  if (backupPath) {
+                    alert(`Preferences backed up successfully to:\n${backupPath}`);
+                  }
+                } catch (error: any) {
+                  console.error('Failed to backup preferences:', error);
+                  alert(`Failed to backup preferences: ${error.message}`);
+                } finally {
+                  setSaving(false);
+                }
+              }}
+              disabled={saving}
+            >
+              {saving ? 'Backing up...' : 'Backup...'}
+            </button>
+          </div>
+
+          <div className="setting-item">
+            <div className="setting-info">
+              <label className="setting-label">Restore Preferences</label>
+              <p className="setting-description">
+                Import settings from a backup file
+              </p>
+            </div>
+            <button
+              className="secondary-button"
+              onClick={async () => {
+                try {
+                  if (!confirm('Restoring preferences will overwrite your current settings. Continue?')) {
+                    return;
+                  }
+                  setSaving(true);
+                  const restored = await window.electronAPI.restorePreferences();
+                  if (restored) {
+                    alert('Preferences restored successfully! Reloading...');
+                    await loadPreferences();
+                  }
+                } catch (error: any) {
+                  console.error('Failed to restore preferences:', error);
+                  alert(`Failed to restore preferences: ${error.message}`);
+                } finally {
+                  setSaving(false);
+                }
+              }}
+              disabled={saving}
+            >
+              {saving ? 'Restoring...' : 'Restore...'}
+            </button>
+          </div>
+
+          <div className="setting-item">
+            <div className="setting-info">
               <label className="setting-label">Export Themes</label>
               <p className="setting-description">
                 Create a backup of your themes to share or restore later

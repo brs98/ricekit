@@ -935,7 +935,7 @@
       "Step 5: Open backup file",
       "Step 6: Verify it contains all preferences from preferences.json"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -949,7 +949,7 @@
       "Step 6: Click Restore",
       "Step 7: Verify settings return to backed-up state"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

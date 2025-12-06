@@ -42,6 +42,8 @@ export function setupIpcHandlers(): void {
   // Preferences operations
   ipcMain.handle('preferences:get', handleGetPreferences);
   ipcMain.handle('preferences:set', handleSetPreferences);
+  ipcMain.handle('preferences:backup', handleBackupPreferences);
+  ipcMain.handle('preferences:restore', handleRestorePreferences);
 
   // System operations
   ipcMain.handle('system:appearance', handleGetSystemAppearance);
@@ -1086,6 +1088,109 @@ async function handleSetPreferences(_event: any, prefs: Preferences): Promise<vo
     } catch (err) {
       console.error('Failed to update tray visibility:', err);
     }
+  }
+}
+
+/**
+ * Backup preferences to a user-selected file
+ */
+async function handleBackupPreferences(): Promise<string | null> {
+  try {
+    // Show save dialog to let user choose backup location
+    const { filePath } = await dialog.showSaveDialog({
+      title: 'Backup Preferences',
+      defaultPath: path.join(os.homedir(), 'Downloads', 'mactheme-preferences-backup.json'),
+      filters: [
+        { name: 'JSON Files', extensions: ['json'] },
+        { name: 'All Files', extensions: ['*'] }
+      ],
+      properties: ['createDirectory', 'showOverwriteConfirmation']
+    });
+
+    if (!filePath) {
+      // User cancelled
+      return null;
+    }
+
+    // Read current preferences
+    const prefsPath = getPreferencesPath();
+    const prefsContent = fs.readFileSync(prefsPath, 'utf-8');
+    const prefs = JSON.parse(prefsContent);
+
+    // Add metadata to backup
+    const backup = {
+      version: '1.0',
+      timestamp: new Date().toISOString(),
+      preferences: prefs
+    };
+
+    // Write to backup file
+    fs.writeFileSync(filePath, JSON.stringify(backup, null, 2));
+    console.log('Preferences backed up to:', filePath);
+
+    return filePath;
+  } catch (err) {
+    console.error('Failed to backup preferences:', err);
+    throw new Error('Failed to backup preferences: ' + (err as Error).message);
+  }
+}
+
+/**
+ * Restore preferences from a user-selected backup file
+ */
+async function handleRestorePreferences(): Promise<boolean> {
+  try {
+    // Show open dialog to let user select backup file
+    const { filePaths } = await dialog.showOpenDialog({
+      title: 'Restore Preferences',
+      defaultPath: os.homedir(),
+      filters: [
+        { name: 'JSON Files', extensions: ['json'] },
+        { name: 'All Files', extensions: ['*'] }
+      ],
+      properties: ['openFile']
+    });
+
+    if (!filePaths || filePaths.length === 0) {
+      // User cancelled
+      return false;
+    }
+
+    const backupPath = filePaths[0];
+
+    // Read and parse backup file
+    const backupContent = fs.readFileSync(backupPath, 'utf-8');
+    const backup = JSON.parse(backupContent);
+
+    // Validate backup structure
+    if (!backup.preferences) {
+      throw new Error('Invalid backup file: missing preferences data');
+    }
+
+    // Restore preferences
+    const prefsPath = getPreferencesPath();
+
+    // Create backup of current preferences before restoring
+    const currentBackupPath = `${prefsPath}.pre-restore-${Date.now()}.bak`;
+    fs.copyFileSync(prefsPath, currentBackupPath);
+    console.log(`Created safety backup at: ${currentBackupPath}`);
+
+    // Write restored preferences
+    fs.writeFileSync(prefsPath, JSON.stringify(backup.preferences, null, 2));
+    console.log('Preferences restored from:', backupPath);
+
+    // Update tray visibility if showInMenuBar changed
+    try {
+      const { updateTrayVisibility } = await import('./main');
+      updateTrayVisibility(backup.preferences.showInMenuBar || false);
+    } catch (err) {
+      console.error('Failed to update tray visibility after restore:', err);
+    }
+
+    return true;
+  } catch (err) {
+    console.error('Failed to restore preferences:', err);
+    throw new Error('Failed to restore preferences: ' + (err as Error).message);
   }
 }
 

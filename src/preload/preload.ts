@@ -26,6 +26,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Preferences operations
   getPreferences: () => ipcRenderer.invoke('preferences:get'),
   setPreferences: (prefs: any) => ipcRenderer.invoke('preferences:set', prefs),
+  backupPreferences: () => ipcRenderer.invoke('preferences:backup'),
+  restorePreferences: () => ipcRenderer.invoke('preferences:restore'),
 
   // System operations
   getSystemAppearance: () => ipcRenderer.invoke('system:appearance'),
