@@ -2,6 +2,7 @@ import { useState } from 'react';
 import './App.css';
 import { ThemeGrid } from './components/ThemeGrid';
 import { ThemeEditor } from './components/ThemeEditor';
+import { ApplicationsView } from './components/ApplicationsView';
 import { ThemeMetadata } from '../shared/types';
 
 type FilterMode = 'all' | 'light' | 'dark' | 'favorites';
@@ -117,10 +118,7 @@ function App() {
             />
           )}
           {activeView === 'apps' && (
-            <div className="placeholder">
-              <h3>Applications</h3>
-              <p>Application manager will be implemented here</p>
-            </div>
+            <ApplicationsView />
           )}
           {activeView === 'wallpapers' && (
             <div className="placeholder">

@@ -1100,3 +1100,329 @@ body {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   }
 }
+
+/* ===========================
+   Applications View Styles
+   =========================== */
+
+.apps-view {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 16px 0;
+}
+
+.apps-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 24px;
+}
+
+.apps-description {
+  font-size: 14px;
+  color: #636366;
+  margin: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .apps-description {
+    color: #98989d;
+  }
+}
+
+.refresh-button {
+  padding: 8px 16px;
+  background: rgba(0, 122, 255, 0.1);
+  color: #007aff;
+  border: 1px solid rgba(0, 122, 255, 0.2);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 200ms ease;
+}
+
+.refresh-button:hover {
+  background: rgba(0, 122, 255, 0.15);
+  border-color: rgba(0, 122, 255, 0.3);
+}
+
+.apps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  padding: 0 24px;
+}
+
+.app-category {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.category-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #1d1d1f;
+}
+
+@media (prefers-color-scheme: dark) {
+  .category-title {
+    color: #f5f5f7;
+  }
+}
+
+.category-icon {
+  font-size: 20px;
+}
+
+.category-count {
+  font-size: 14px;
+  font-weight: 400;
+  color: #636366;
+  margin-left: 4px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .category-count {
+    color: #98989d;
+  }
+}
+
+.app-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 16px;
+}
+
+.app-card {
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 200ms ease;
+}
+
+.app-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.15);
+}
+
+.app-card.not-installed {
+  opacity: 0.6;
+}
+
+@media (prefers-color-scheme: dark) {
+  .app-card {
+    background: #2c2c2e;
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .app-card:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+}
+
+.app-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.app-name {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  color: #1d1d1f;
+}
+
+@media (prefers-color-scheme: dark) {
+  .app-name {
+    color: #f5f5f7;
+  }
+}
+
+.app-badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.badge-installed {
+  background: rgba(52, 199, 89, 0.15);
+  color: #34c759;
+}
+
+.badge-not-found {
+  background: rgba(142, 142, 147, 0.15);
+  color: #8e8e93;
+}
+
+.badge-configured {
+  background: rgba(0, 122, 255, 0.15);
+  color: #007aff;
+}
+
+.badge-needs-setup {
+  background: rgba(255, 159, 10, 0.15);
+  color: #ff9f0a;
+}
+
+.app-card-body {
+  flex: 1;
+}
+
+.app-config-path {
+  font-size: 12px;
+  color: #636366;
+  margin: 0;
+  font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+  word-break: break-all;
+}
+
+@media (prefers-color-scheme: dark) {
+  .app-config-path {
+    color: #98989d;
+  }
+}
+
+.config-label {
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+.app-card-actions {
+  display: flex;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.setup-button {
+  flex: 1;
+  padding: 10px 16px;
+  background: #007aff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 200ms ease;
+}
+
+.setup-button:hover {
+  background: #0051d5;
+}
+
+.setup-button:active {
+  transform: scale(0.98);
+}
+
+.secondary-button {
+  flex: 1;
+  padding: 10px 16px;
+  background: rgba(0, 0, 0, 0.05);
+  color: #1d1d1f;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 200ms ease;
+}
+
+.secondary-button:hover {
+  background: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.15);
+}
+
+@media (prefers-color-scheme: dark) {
+  .secondary-button {
+    background: rgba(255, 255, 255, 0.1);
+    color: #f5f5f7;
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+
+  .secondary-button:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+}
+
+.primary-button {
+  flex: 1;
+  padding: 10px 16px;
+  background: #007aff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 200ms ease;
+}
+
+.primary-button:hover {
+  background: #0051d5;
+}
+
+.primary-button:active {
+  transform: scale(0.98);
+}
+
+.install-guide-button {
+  flex: 1;
+  padding: 10px 16px;
+  background: rgba(142, 142, 147, 0.15);
+  color: #8e8e93;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: not-allowed;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 64px 24px;
+}
+
+.empty-state p {
+  margin: 8px 0;
+  color: #636366;
+}
+
+.empty-state-hint {
+  font-size: 14px;
+  color: #8e8e93;
+}
+
+@media (prefers-color-scheme: dark) {
+  .empty-state p {
+    color: #98989d;
+  }
+
+  .empty-state-hint {
+    color: #636366;
+  }
+}

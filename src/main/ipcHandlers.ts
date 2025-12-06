@@ -274,8 +274,188 @@ async function handleApplyWallpaper(_event: any, wallpaperPath: string): Promise
  */
 async function handleDetectApps(): Promise<any[]> {
   console.log('Detecting installed applications');
-  // TODO: Implement app detection
-  return [];
+
+  const apps = [
+    // Terminals
+    {
+      name: 'alacritty',
+      displayName: 'Alacritty',
+      category: 'terminal',
+      paths: [
+        '/Applications/Alacritty.app',
+        path.join(process.env.HOME || '', 'Applications', 'Alacritty.app'),
+      ],
+      configPath: path.join(process.env.HOME || '', '.config', 'alacritty', 'alacritty.toml'),
+    },
+    {
+      name: 'kitty',
+      displayName: 'Kitty',
+      category: 'terminal',
+      paths: [
+        '/Applications/kitty.app',
+        path.join(process.env.HOME || '', 'Applications', 'kitty.app'),
+      ],
+      configPath: path.join(process.env.HOME || '', '.config', 'kitty', 'kitty.conf'),
+    },
+    {
+      name: 'iterm2',
+      displayName: 'iTerm2',
+      category: 'terminal',
+      paths: [
+        '/Applications/iTerm.app',
+        path.join(process.env.HOME || '', 'Applications', 'iTerm.app'),
+      ],
+      configPath: path.join(process.env.HOME || '', 'Library', 'Preferences', 'com.googlecode.iterm2.plist'),
+    },
+    {
+      name: 'warp',
+      displayName: 'Warp',
+      category: 'terminal',
+      paths: [
+        '/Applications/Warp.app',
+        path.join(process.env.HOME || '', 'Applications', 'Warp.app'),
+      ],
+      configPath: path.join(process.env.HOME || '', '.warp', 'themes'),
+    },
+    {
+      name: 'hyper',
+      displayName: 'Hyper',
+      category: 'terminal',
+      paths: [
+        '/Applications/Hyper.app',
+        path.join(process.env.HOME || '', 'Applications', 'Hyper.app'),
+      ],
+      configPath: path.join(process.env.HOME || '', '.hyper.js'),
+    },
+
+    // Editors
+    {
+      name: 'vscode',
+      displayName: 'Visual Studio Code',
+      category: 'editor',
+      paths: [
+        '/Applications/Visual Studio Code.app',
+        path.join(process.env.HOME || '', 'Applications', 'Visual Studio Code.app'),
+      ],
+      configPath: path.join(process.env.HOME || '', 'Library', 'Application Support', 'Code', 'User', 'settings.json'),
+    },
+    {
+      name: 'neovim',
+      displayName: 'Neovim',
+      category: 'editor',
+      paths: [
+        '/usr/local/bin/nvim',
+        '/opt/homebrew/bin/nvim',
+      ],
+      configPath: path.join(process.env.HOME || '', '.config', 'nvim'),
+    },
+    {
+      name: 'sublime',
+      displayName: 'Sublime Text',
+      category: 'editor',
+      paths: [
+        '/Applications/Sublime Text.app',
+        path.join(process.env.HOME || '', 'Applications', 'Sublime Text.app'),
+      ],
+      configPath: path.join(process.env.HOME || '', 'Library', 'Application Support', 'Sublime Text', 'Packages', 'User'),
+    },
+
+    // CLI Tools
+    {
+      name: 'bat',
+      displayName: 'bat',
+      category: 'cli',
+      paths: [
+        '/usr/local/bin/bat',
+        '/opt/homebrew/bin/bat',
+      ],
+      configPath: path.join(process.env.HOME || '', '.config', 'bat', 'config'),
+    },
+    {
+      name: 'delta',
+      displayName: 'delta',
+      category: 'cli',
+      paths: [
+        '/usr/local/bin/delta',
+        '/opt/homebrew/bin/delta',
+      ],
+      configPath: path.join(process.env.HOME || '', '.gitconfig'),
+    },
+    {
+      name: 'starship',
+      displayName: 'Starship',
+      category: 'cli',
+      paths: [
+        '/usr/local/bin/starship',
+        '/opt/homebrew/bin/starship',
+      ],
+      configPath: path.join(process.env.HOME || '', '.config', 'starship.toml'),
+    },
+    {
+      name: 'fzf',
+      displayName: 'fzf',
+      category: 'cli',
+      paths: [
+        '/usr/local/bin/fzf',
+        '/opt/homebrew/bin/fzf',
+      ],
+      configPath: path.join(process.env.HOME || '', '.fzf.bash'),
+    },
+    {
+      name: 'lazygit',
+      displayName: 'lazygit',
+      category: 'cli',
+      paths: [
+        '/usr/local/bin/lazygit',
+        '/opt/homebrew/bin/lazygit',
+      ],
+      configPath: path.join(process.env.HOME || '', '.config', 'lazygit', 'config.yml'),
+    },
+
+    // Launchers
+    {
+      name: 'raycast',
+      displayName: 'Raycast',
+      category: 'launcher',
+      paths: [
+        '/Applications/Raycast.app',
+        path.join(process.env.HOME || '', 'Applications', 'Raycast.app'),
+      ],
+      configPath: path.join(process.env.HOME || '', 'Library', 'Application Support', 'Raycast'),
+    },
+    {
+      name: 'alfred',
+      displayName: 'Alfred',
+      category: 'launcher',
+      paths: [
+        '/Applications/Alfred 5.app',
+        '/Applications/Alfred 4.app',
+        path.join(process.env.HOME || '', 'Applications', 'Alfred 5.app'),
+      ],
+      configPath: path.join(process.env.HOME || '', 'Library', 'Application Support', 'Alfred'),
+    },
+  ];
+
+  // Check which apps are installed and configured
+  const detectedApps = apps.map(app => {
+    // Check if app is installed
+    const isInstalled = app.paths.some(p => fs.existsSync(p));
+
+    // Check if config file exists (means it might be configured)
+    const isConfigured = fs.existsSync(app.configPath);
+
+    return {
+      name: app.name,
+      displayName: app.displayName,
+      category: app.category,
+      isInstalled,
+      isConfigured: isInstalled && isConfigured,
+      configPath: app.configPath,
+    };
+  });
+
+  console.log(`Detected ${detectedApps.filter(a => a.isInstalled).length} installed apps`);
+  return detectedApps;
 }
 
 /**

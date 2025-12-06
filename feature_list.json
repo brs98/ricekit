@@ -515,7 +515,7 @@
       "Step 6: Count launchers (Raycast, Alfred)",
       "Step 7: Verify total matches specification"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -527,7 +527,7 @@
       "Step 4: Verify 'Installed' badge for apps that exist on system",
       "Step 5: Verify 'Not Found' badge for apps not installed"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -539,7 +539,7 @@
       "Step 4: For configured app, verify checkmark or confirmation indicator",
       "Step 5: For unconfigured app, verify setup button is available"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
