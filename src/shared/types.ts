@@ -93,6 +93,7 @@ export interface ElectronAPI {
   createTheme: (data: ThemeMetadata) => Promise<void>;
   updateTheme: (name: string, data: ThemeMetadata) => Promise<void>;
   deleteTheme: (name: string) => Promise<void>;
+  duplicateTheme: (name: string) => Promise<void>;
   exportTheme: (name: string, path: string) => Promise<void>;
   importTheme: (path: string) => Promise<void>;
   listWallpapers: (themeName: string) => Promise<string[]>;

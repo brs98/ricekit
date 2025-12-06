@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   createTheme: (data: any) => ipcRenderer.invoke('theme:create', data),
   updateTheme: (name: string, data: any) => ipcRenderer.invoke('theme:update', name, data),
   deleteTheme: (name: string) => ipcRenderer.invoke('theme:delete', name),
+  duplicateTheme: (name: string) => ipcRenderer.invoke('theme:duplicate', name),
   exportTheme: (name: string, path: string) => ipcRenderer.invoke('theme:export', name, path),
   importTheme: (path: string) => ipcRenderer.invoke('theme:import', path),
 

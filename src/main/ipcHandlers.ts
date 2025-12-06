@@ -22,6 +22,7 @@ export function setupIpcHandlers(): void {
   ipcMain.handle('theme:create', handleCreateTheme);
   ipcMain.handle('theme:update', handleUpdateTheme);
   ipcMain.handle('theme:delete', handleDeleteTheme);
+  ipcMain.handle('theme:duplicate', handleDuplicateTheme);
   ipcMain.handle('theme:export', handleExportTheme);
   ipcMain.handle('theme:import', handleImportTheme);
 
@@ -261,7 +262,121 @@ async function handleUpdateTheme(_event: any, name: string, data: ThemeMetadata)
  */
 async function handleDeleteTheme(_event: any, name: string): Promise<void> {
   console.log(`Deleting theme: ${name}`);
-  // TODO: Implement theme deletion
+
+  try {
+    // Only allow deletion of custom themes
+    const customThemesDir = getCustomThemesDir();
+    const themeDir = path.join(customThemesDir, name);
+
+    // Check if theme exists in custom themes directory
+    if (!fs.existsSync(themeDir)) {
+      throw new Error('Theme not found in custom themes directory');
+    }
+
+    // Check if this is the currently active theme
+    const state = await handleGetState();
+    if (state.currentTheme === name) {
+      throw new Error('Cannot delete the currently active theme. Please switch to a different theme first.');
+    }
+
+    // Delete the theme directory recursively
+    fs.rmSync(themeDir, { recursive: true, force: true });
+    console.log(`Successfully deleted theme: ${name}`);
+
+    // Show notification
+    if (Notification.isSupported()) {
+      const notification = new Notification({
+        title: 'Theme Deleted',
+        body: `${name} has been removed`,
+        silent: false,
+      });
+      notification.show();
+    }
+  } catch (error) {
+    console.error('Error deleting theme:', error);
+    throw error;
+  }
+}
+
+/**
+ * Duplicate a theme (creates a copy in custom-themes)
+ */
+async function handleDuplicateTheme(_event: any, sourceThemeName: string): Promise<void> {
+  console.log(`Duplicating theme: ${sourceThemeName}`);
+
+  try {
+    // Find the source theme
+    const themesDir = getThemesDir();
+    const customThemesDir = getCustomThemesDir();
+
+    let sourceThemeDir: string;
+    if (fs.existsSync(path.join(themesDir, sourceThemeName))) {
+      sourceThemeDir = path.join(themesDir, sourceThemeName);
+    } else if (fs.existsSync(path.join(customThemesDir, sourceThemeName))) {
+      sourceThemeDir = path.join(customThemesDir, sourceThemeName);
+    } else {
+      throw new Error('Source theme not found');
+    }
+
+    // Read source theme metadata
+    const sourceMetadataPath = path.join(sourceThemeDir, 'theme.json');
+    const sourceMetadata = JSON.parse(fs.readFileSync(sourceMetadataPath, 'utf-8'));
+
+    // Generate new theme name
+    let copyNumber = 1;
+    let newThemeName = `${sourceMetadata.name} (Copy)`;
+    let newThemeDir = path.join(customThemesDir, `${sourceThemeName}-copy`);
+
+    while (fs.existsSync(newThemeDir)) {
+      copyNumber++;
+      newThemeName = `${sourceMetadata.name} (Copy ${copyNumber})`;
+      newThemeDir = path.join(customThemesDir, `${sourceThemeName}-copy-${copyNumber}`);
+    }
+
+    // Create new theme directory
+    fs.mkdirSync(newThemeDir, { recursive: true });
+
+    // Copy all files from source theme
+    const files = fs.readdirSync(sourceThemeDir);
+    for (const file of files) {
+      const sourcePath = path.join(sourceThemeDir, file);
+      const destPath = path.join(newThemeDir, file);
+
+      const stat = fs.statSync(sourcePath);
+      if (stat.isDirectory()) {
+        // Recursively copy directories (like wallpapers)
+        fs.cpSync(sourcePath, destPath, { recursive: true });
+      } else {
+        fs.copyFileSync(sourcePath, destPath);
+      }
+    }
+
+    // Update metadata in the copy
+    const newMetadata = {
+      ...sourceMetadata,
+      name: newThemeName,
+      author: `${sourceMetadata.author} (duplicated)`,
+    };
+    fs.writeFileSync(
+      path.join(newThemeDir, 'theme.json'),
+      JSON.stringify(newMetadata, null, 2)
+    );
+
+    console.log(`Successfully duplicated theme to: ${newThemeName}`);
+
+    // Show notification
+    if (Notification.isSupported()) {
+      const notification = new Notification({
+        title: 'Theme Duplicated',
+        body: `Created ${newThemeName}`,
+        silent: false,
+      });
+      notification.show();
+    }
+  } catch (error) {
+    console.error('Error duplicating theme:', error);
+    throw error;
+  }
 }
 
 /**

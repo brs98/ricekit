@@ -80,6 +80,35 @@ export function ThemeGrid({ searchQuery = '', filterMode = 'all', onEditTheme }:
     }
   };
 
+  const handleDeleteTheme = async (themeName: string) => {
+    try {
+      await window.electronAPI.deleteTheme(themeName);
+      // Reload themes to update the grid
+      await loadThemes();
+      // Remove from favorites if it was favorited
+      if (favorites.includes(themeName)) {
+        const prefs = await window.electronAPI.getPreferences();
+        const newFavorites = favorites.filter(f => f !== themeName);
+        setFavorites(newFavorites);
+        await window.electronAPI.setPreferences({ ...prefs, favorites: newFavorites });
+      }
+    } catch (err) {
+      console.error('Failed to delete theme:', err);
+      alert(err instanceof Error ? err.message : 'Failed to delete theme. Please try again.');
+    }
+  };
+
+  const handleDuplicateTheme = async (themeName: string) => {
+    try {
+      await window.electronAPI.duplicateTheme(themeName);
+      // Reload themes to show the new duplicate
+      await loadThemes();
+    } catch (err) {
+      console.error('Failed to duplicate theme:', err);
+      alert('Failed to duplicate theme. Please try again.');
+    }
+  };
+
   // Filter themes based on search and filter mode
   const filteredThemes = themes.filter((theme) => {
     // Search filter
@@ -154,6 +183,8 @@ export function ThemeGrid({ searchQuery = '', filterMode = 'all', onEditTheme }:
           onApply={handleApplyTheme}
           onToggleFavorite={handleToggleFavorite}
           onEdit={onEditTheme ? () => onEditTheme(selectedTheme) : undefined}
+          onDelete={handleDeleteTheme}
+          onDuplicate={handleDuplicateTheme}
           isFavorite={favorites.includes(selectedTheme.name)}
         />
       )}

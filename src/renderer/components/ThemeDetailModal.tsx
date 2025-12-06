@@ -9,6 +9,8 @@ interface ThemeDetailModalProps {
   onApply: (themeName: string) => void;
   onToggleFavorite: (themeName: string) => void;
   onEdit?: () => void;
+  onDelete?: (themeName: string) => void;
+  onDuplicate?: (themeName: string) => void;
   isFavorite: boolean;
 }
 
@@ -19,12 +21,17 @@ export function ThemeDetailModal({
   onApply,
   onToggleFavorite,
   onEdit,
+  onDelete,
+  onDuplicate,
   isFavorite,
 }: ThemeDetailModalProps) {
   const [copiedColor, setCopiedColor] = useState<string | null>(null);
   const [wallpapers, setWallpapers] = useState<string[]>([]);
   const [selectedWallpaper, setSelectedWallpaper] = useState<string | null>(null);
   const [wallpapersLoading, setWallpapersLoading] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
+  const [duplicateName, setDuplicateName] = useState('');
 
   // Load wallpapers when modal opens
   useEffect(() => {
@@ -50,6 +57,35 @@ export function ThemeDetailModal({
       setTimeout(() => setCopiedColor(null), 2000);
     } catch (err) {
       console.error('Failed to copy color:', err);
+    }
+  };
+
+  const handleDeleteClick = () => {
+    if (theme.isCustom && onDelete) {
+      setShowDeleteConfirm(true);
+    }
+  };
+
+  const handleConfirmDelete = () => {
+    if (onDelete) {
+      onDelete(theme.name);
+      setShowDeleteConfirm(false);
+      onClose();
+    }
+  };
+
+  const handleDuplicateClick = () => {
+    if (onDuplicate) {
+      setDuplicateName(`${theme.metadata.name} (Copy)`);
+      setShowDuplicateDialog(true);
+    }
+  };
+
+  const handleConfirmDuplicate = () => {
+    if (onDuplicate && duplicateName.trim()) {
+      onDuplicate(theme.name);
+      setShowDuplicateDialog(false);
+      onClose();
     }
   };
 
@@ -330,6 +366,14 @@ export function ThemeDetailModal({
           >
             {isFavorite ? '★ Favorited' : '☆ Add to Favorites'}
           </button>
+          {onDuplicate && (
+            <button
+              className="btn-secondary"
+              onClick={handleDuplicateClick}
+            >
+              📋 Duplicate
+            </button>
+          )}
           {onEdit && (
             <button
               className="btn-secondary"
@@ -339,6 +383,14 @@ export function ThemeDetailModal({
               }}
             >
               ✏️ Edit
+            </button>
+          )}
+          {theme.isCustom && onDelete && (
+            <button
+              className="btn-danger"
+              onClick={handleDeleteClick}
+            >
+              🗑️ Delete
             </button>
           )}
           <button
@@ -352,6 +404,57 @@ export function ThemeDetailModal({
             {isActive ? 'Currently Active' : 'Apply Theme'}
           </button>
         </div>
+
+        {/* Delete Confirmation Dialog */}
+        {showDeleteConfirm && (
+          <div className="confirmation-overlay" onClick={() => setShowDeleteConfirm(false)}>
+            <div className="confirmation-dialog" onClick={(e) => e.stopPropagation()}>
+              <h3>Delete Theme?</h3>
+              <p>
+                Are you sure you want to delete <strong>{theme.metadata.name}</strong>?
+                This action cannot be undone.
+              </p>
+              <div className="confirmation-actions">
+                <button className="btn-secondary" onClick={() => setShowDeleteConfirm(false)}>
+                  Cancel
+                </button>
+                <button className="btn-danger" onClick={handleConfirmDelete}>
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Duplicate Dialog */}
+        {showDuplicateDialog && (
+          <div className="confirmation-overlay" onClick={() => setShowDuplicateDialog(false)}>
+            <div className="confirmation-dialog" onClick={(e) => e.stopPropagation()}>
+              <h3>Duplicate Theme</h3>
+              <p>Create a copy of <strong>{theme.metadata.name}</strong></p>
+              <input
+                type="text"
+                className="dialog-input"
+                value={duplicateName}
+                onChange={(e) => setDuplicateName(e.target.value)}
+                placeholder="New theme name"
+                autoFocus
+              />
+              <div className="confirmation-actions">
+                <button className="btn-secondary" onClick={() => setShowDuplicateDialog(false)}>
+                  Cancel
+                </button>
+                <button
+                  className="btn-primary"
+                  onClick={handleConfirmDuplicate}
+                  disabled={!duplicateName.trim()}
+                >
+                  Create Duplicate
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
