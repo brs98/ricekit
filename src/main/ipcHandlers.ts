@@ -147,6 +147,55 @@ async function handleGetTheme(_event: any, name: string): Promise<Theme | null> 
 /**
  * Notify running terminal applications to reload their themes
  */
+/**
+ * Execute user-defined hook script if configured
+ */
+async function executeHookScript(themeName: string, hookScriptPath: string): Promise<void> {
+  console.log(`Executing hook script: ${hookScriptPath}`);
+
+  // Expand ~ to home directory
+  const expandedPath = hookScriptPath.startsWith('~')
+    ? path.join(os.homedir(), hookScriptPath.slice(1))
+    : hookScriptPath;
+
+  // Check if hook script exists
+  if (!fs.existsSync(expandedPath)) {
+    console.error(`Hook script not found: ${expandedPath}`);
+    throw new Error(`Hook script not found: ${expandedPath}`);
+  }
+
+  // Check if hook script is executable
+  try {
+    fs.accessSync(expandedPath, fs.constants.X_OK);
+  } catch (err) {
+    console.error(`Hook script is not executable: ${expandedPath}`);
+    throw new Error(`Hook script is not executable: ${expandedPath}. Run: chmod +x ${expandedPath}`);
+  }
+
+  // Execute the hook script with theme name as argument
+  return new Promise((resolve, reject) => {
+    exec(`"${expandedPath}" "${themeName}"`, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`Hook script execution failed: ${error.message}`);
+        console.error(`stderr: ${stderr}`);
+        reject(new Error(`Hook script failed: ${error.message}`));
+        return;
+      }
+
+      if (stdout) {
+        console.log(`Hook script output: ${stdout.trim()}`);
+      }
+
+      if (stderr) {
+        console.log(`Hook script stderr: ${stderr.trim()}`);
+      }
+
+      console.log('✓ Hook script executed successfully');
+      resolve();
+    });
+  });
+}
+
 async function notifyTerminalsToReload(themePath: string): Promise<void> {
   console.log('Notifying terminals to reload themes...');
 
@@ -411,6 +460,18 @@ export async function handleApplyTheme(_event: any, name: string): Promise<void>
     await notifyTerminalsToReload(theme.path);
   } catch (err) {
     console.error('Failed to notify terminals:', err);
+  }
+
+  // Execute user-defined hook script if configured
+  try {
+    if (prefs.hookScript && prefs.hookScript.trim() !== '') {
+      await executeHookScript(name, prefs.hookScript);
+    } else {
+      console.log('No hook script configured');
+    }
+  } catch (err) {
+    console.error('Failed to execute hook script:', err);
+    // Don't throw - hook script failure shouldn't block theme application
   }
 }
 

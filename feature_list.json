@@ -1133,7 +1133,7 @@
       "Step 5: Verify hook script is executed",
       "Step 6: Verify hook script receives theme name as argument"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

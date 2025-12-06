@@ -80,6 +80,7 @@ export interface Preferences {
     onThemeChange: boolean;
     onScheduledSwitch: boolean;
   };
+  hookScript?: string; // Optional path to user-defined hook script
 }
 
 // State structure
