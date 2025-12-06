@@ -761,6 +761,87 @@ export async function handleAppearanceChange(): Promise<void> {
 }
 
 /**
+ * Check schedule and apply theme if needed
+ * Called periodically to check if theme should switch based on schedule
+ */
+export async function checkScheduleAndApplyTheme(): Promise<void> {
+  try {
+    // Get preferences to check if schedule-based auto-switching is enabled
+    const prefs = await handleGetPreferences();
+
+    // Check if auto-switching based on schedule is enabled
+    if (!prefs.autoSwitch?.enabled || prefs.autoSwitch?.mode !== 'schedule') {
+      return;
+    }
+
+    // Check if schedule is configured
+    if (!prefs.schedule?.light || !prefs.schedule?.dark) {
+      console.warn('Schedule times not configured');
+      return;
+    }
+
+    // Get current time
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    const currentTimeMinutes = currentHour * 60 + currentMinute;
+
+    // Parse schedule times (format: "HH:MM")
+    const lightTimeParts = prefs.schedule.light.split(':');
+    const lightTimeMinutes = parseInt(lightTimeParts[0]) * 60 + parseInt(lightTimeParts[1]);
+
+    const darkTimeParts = prefs.schedule.dark.split(':');
+    const darkTimeMinutes = parseInt(darkTimeParts[0]) * 60 + parseInt(darkTimeParts[1]);
+
+    // Determine which theme should be active based on current time
+    let shouldUseDarkTheme: boolean;
+
+    if (lightTimeMinutes < darkTimeMinutes) {
+      // Normal case: light time is in the morning, dark time is in the evening
+      // Example: light at 06:00, dark at 18:00
+      shouldUseDarkTheme = currentTimeMinutes >= darkTimeMinutes || currentTimeMinutes < lightTimeMinutes;
+    } else {
+      // Inverted case: light time is after dark time (crossing midnight)
+      // Example: light at 18:00, dark at 06:00
+      shouldUseDarkTheme = currentTimeMinutes >= darkTimeMinutes && currentTimeMinutes < lightTimeMinutes;
+    }
+
+    // Get the appropriate theme
+    const themeToApply = shouldUseDarkTheme
+      ? prefs.defaultDarkTheme
+      : prefs.defaultLightTheme;
+
+    if (!themeToApply) {
+      console.warn(`No default ${shouldUseDarkTheme ? 'dark' : 'light'} theme configured`);
+      return;
+    }
+
+    // Get current state to avoid unnecessary theme switches
+    const state = await handleGetState();
+    if (state.currentTheme === themeToApply) {
+      // Already using the correct theme
+      return;
+    }
+
+    // Apply the theme
+    console.log(`Schedule-based auto-switching to ${shouldUseDarkTheme ? 'dark' : 'light'} theme: ${themeToApply}`);
+    await handleApplyTheme(null, themeToApply);
+
+    // Show notification
+    if (Notification.isSupported()) {
+      const notification = new Notification({
+        title: 'Theme Auto-Switched',
+        body: `Scheduled switch to ${themeToApply}`,
+        silent: false,
+      });
+      notification.show();
+    }
+  } catch (error) {
+    console.error('Error checking schedule:', error);
+  }
+}
+
+/**
  * Get current application state
  */
 async function handleGetState(): Promise<State> {

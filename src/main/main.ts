@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import { initializeApp, getPreferencesPath, getStatePath } from './directories';
 import { installBundledThemes } from './themeInstaller';
-import { setupIpcHandlers, handleAppearanceChange } from './ipcHandlers';
+import { setupIpcHandlers, handleAppearanceChange, checkScheduleAndApplyTheme } from './ipcHandlers';
 
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
@@ -216,6 +216,14 @@ app.whenReady().then(() => {
 
   // Create main window
   createWindow();
+
+  // Setup schedule-based auto-switching check (runs every minute)
+  setInterval(() => {
+    checkScheduleAndApplyTheme();
+  }, 60 * 1000); // Check every 60 seconds
+
+  // Also check immediately on startup
+  checkScheduleAndApplyTheme();
 
   app.on('activate', () => {
     // On macOS, re-create window when dock icon is clicked and no windows are open

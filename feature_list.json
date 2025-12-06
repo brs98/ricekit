@@ -833,7 +833,7 @@
       "Step 5: Save settings",
       "Step 6: Verify schedule is saved in preferences.json"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -845,7 +845,7 @@
       "Step 4: Verify theme switches automatically at scheduled time",
       "Step 5: Verify notification appears for scheduled switch"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
