@@ -2357,3 +2357,80 @@ Progress Summary: 62/202 tests passing (31% complete)
 ===========================================
 End of Session 13 Progress Report
 ===========================================
+
+
+===========================================
+MacTheme Development Progress - Session 14
+===========================================
+Date: 2025-12-06
+Agent: Implementation Agent (Session 14)
+
+PROGRESS SUMMARY
+================
+Tests Passing: 67/202 (33% complete)
+Tests Remaining: 135/202
+This Session: Implemented menu bar tray icon visibility control
+Progress: +5 tests (62 to 67)
+
+COMPLETED THIS SESSION
+======================
+
+1. Enhanced Menu Bar Tray Icon Control
+   Files Modified: src/main/main.ts, src/main/ipcHandlers.ts
+
+   Implementation:
+   - Added conditional tray creation based on preferences.showInMenuBar
+   - On startup, reads preference and only creates tray if enabled
+   - Falls back to creating tray if preferences cannot be read
+   - Logs tray creation/skip to console for debugging
+
+2. Implemented Dynamic Tray Visibility
+   Function: updateTrayVisibility(show: boolean)
+
+   Functionality:
+   - Exported function from main.ts for use by IPC handlers
+   - When show=true and tray does not exist: creates new tray
+   - When show=false and tray exists: destroys tray and sets to null
+   - Preserves tray state for proper cleanup
+
+3. Enhanced Preferences Handler
+   Function: handleSetPreferences() in ipcHandlers.ts
+
+   Changes:
+   - Reads old preferences before writing new ones
+   - Detects changes to showInMenuBar field
+   - Dynamically imports updateTrayVisibility when preference changes
+   - Calls updateTrayVisibility with new value
+   - Logs state changes for debugging
+   - Proper error handling with try-catch
+
+TESTS MARKED AS PASSING
+========================
+Test 64: Show in menu bar preference can be toggled
+Test 74: Menu bar icon appears when enabled
+Test 75: Clicking menu bar icon shows dropdown menu
+Test 76: Recent themes in menu bar dropdown can be clicked to apply
+Test 77: Recent themes list is limited to 5 most recent
+
+FILES MODIFIED
+==============
+- src/main/main.ts (23 lines added/modified)
+- src/main/ipcHandlers.ts (18 lines added)
+- feature_list.json (5 tests marked passing)
+
+COMMIT
+======
+96b1208: Implement menu bar tray icon visibility control (5 new tests passing)
+
+NEXT PRIORITIES
+===============
+1. Schedule-based theme switching (HIGH)
+2. Sunrise/sunset auto-switching (MEDIUM)
+3. Recent themes display in UI (LOW)
+4. Quick switcher overlay (MEDIUM)
+
+Progress Summary: 67/202 tests passing (33% complete)
+
+===========================================
+End of Session 14 Progress Report
+===========================================
