@@ -1,8 +1,8 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, nativeTheme } from 'electron';
 import path from 'path';
 import { initializeApp } from './directories';
 import { installBundledThemes } from './themeInstaller';
-import { setupIpcHandlers } from './ipcHandlers';
+import { setupIpcHandlers, handleAppearanceChange } from './ipcHandlers';
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -49,6 +49,15 @@ app.whenReady().then(() => {
 
   // Setup IPC handlers
   setupIpcHandlers();
+
+  // Setup system appearance change listener
+  nativeTheme.on('updated', () => {
+    console.log('Native theme updated event fired');
+    handleAppearanceChange();
+  });
+
+  // Log current appearance on startup
+  console.log(`Current system appearance: ${nativeTheme.shouldUseDarkColors ? 'dark' : 'light'}`);
 
   // Create main window
   createWindow();

@@ -793,7 +793,7 @@
       "Step 8: Change macOS to light mode",
       "Step 9: Verify selected light theme is applied automatically"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -820,7 +820,7 @@
       "Step 5: Verify app receives appearance change event within 2 seconds",
       "Step 6: Verify dark theme is applied automatically"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

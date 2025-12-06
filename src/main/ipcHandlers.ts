@@ -1,6 +1,7 @@
-import { ipcMain, Notification } from 'electron';
+import { ipcMain, Notification, nativeTheme } from 'electron';
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 import {
   getThemesDir,
   getCustomThemesDir,
@@ -659,8 +660,61 @@ async function handleSetPreferences(_event: any, prefs: Preferences): Promise<vo
  * Get system appearance (light/dark mode)
  */
 async function handleGetSystemAppearance(): Promise<'light' | 'dark'> {
-  // TODO: Implement actual system appearance detection
-  return 'dark';
+  // Use Electron's nativeTheme to detect system appearance
+  return nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
+}
+
+/**
+ * Apply theme automatically based on system appearance
+ * Called when system appearance changes
+ */
+export async function handleAppearanceChange(): Promise<void> {
+  try {
+    // Get preferences to check if auto-switching is enabled
+    const prefs = await handleGetPreferences();
+
+    // Check if auto-switching based on system appearance is enabled
+    if (!prefs.autoSwitch?.enabled || prefs.autoSwitch?.mode !== 'system') {
+      return;
+    }
+
+    // Get current system appearance
+    const appearance = await handleGetSystemAppearance();
+    console.log(`System appearance changed to: ${appearance}`);
+
+    // Get the appropriate theme based on appearance
+    const themeToApply = appearance === 'dark'
+      ? prefs.defaultDarkTheme
+      : prefs.defaultLightTheme;
+
+    if (!themeToApply) {
+      console.warn(`No default ${appearance} theme configured`);
+      return;
+    }
+
+    // Get current state to avoid unnecessary theme switches
+    const state = await handleGetState();
+    if (state.currentTheme === themeToApply) {
+      console.log(`Already using theme: ${themeToApply}`);
+      return;
+    }
+
+    // Apply the theme
+    console.log(`Auto-switching to ${appearance} theme: ${themeToApply}`);
+    await handleApplyTheme(null, themeToApply);
+
+    // Show notification
+    if (Notification.isSupported()) {
+      const notification = new Notification({
+        title: 'Theme Auto-Switched',
+        body: `Switched to ${appearance} theme: ${themeToApply}`,
+        silent: false,
+      });
+      notification.show();
+    }
+  } catch (error) {
+    console.error('Error handling appearance change:', error);
+  }
 }
 
 /**
