@@ -777,7 +777,7 @@
       "Step 5: Disable toggle",
       "Step 6: Verify menu bar icon disappears"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -960,7 +960,7 @@
       "Step 3: Verify MacTheme icon is visible",
       "Step 4: Verify icon color reflects current theme's accent color"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -974,7 +974,7 @@
       "Step 6: Verify menu contains 'Preferences' option",
       "Step 7: Verify menu contains 'Quit' option"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -987,7 +987,7 @@
       "Step 5: Verify theme is applied immediately",
       "Step 6: Verify notification appears"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -999,7 +999,7 @@
       "Step 4: Verify only 5 themes are shown",
       "Step 5: Verify they are the 5 most recently applied themes in order"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

@@ -129,7 +129,7 @@ async function handleGetTheme(_event: any, name: string): Promise<Theme | null> 
 /**
  * Apply a theme
  */
-async function handleApplyTheme(_event: any, name: string): Promise<void> {
+export async function handleApplyTheme(_event: any, name: string): Promise<void> {
   console.log(`Applying theme: ${name}`);
 
   // Find the theme
@@ -172,6 +172,25 @@ async function handleApplyTheme(_event: any, name: string): Promise<void> {
   state.lastSwitched = Date.now();
   fs.writeFileSync(statePath, JSON.stringify(state, null, 2));
 
+  // Update recent themes in preferences
+  const prefsPath = getPreferencesPath();
+  const prefs: Preferences = JSON.parse(fs.readFileSync(prefsPath, 'utf-8'));
+
+  // Add to recent themes (remove if already exists to avoid duplicates)
+  if (!prefs.recentThemes) {
+    prefs.recentThemes = [];
+  }
+  prefs.recentThemes = prefs.recentThemes.filter(t => t !== name);
+  prefs.recentThemes.unshift(name); // Add to beginning
+
+  // Keep only last 10 recent themes
+  if (prefs.recentThemes.length > 10) {
+    prefs.recentThemes = prefs.recentThemes.slice(0, 10);
+  }
+
+  fs.writeFileSync(prefsPath, JSON.stringify(prefs, null, 2));
+  console.log(`Updated recent themes: ${prefs.recentThemes.slice(0, 5).join(', ')}`);
+
   console.log(`Theme ${name} applied successfully`);
 
   // Show notification
@@ -182,6 +201,14 @@ async function handleApplyTheme(_event: any, name: string): Promise<void> {
       silent: false,
     });
     notification.show();
+  }
+
+  // Update tray menu with new recent themes
+  try {
+    const { refreshTrayMenu } = await import('./main');
+    refreshTrayMenu();
+  } catch (err) {
+    console.error('Failed to refresh tray menu:', err);
   }
 }
 
@@ -652,8 +679,24 @@ async function handleGetPreferences(): Promise<Preferences> {
  */
 async function handleSetPreferences(_event: any, prefs: Preferences): Promise<void> {
   const prefsPath = getPreferencesPath();
+
+  // Read old preferences to detect changes
+  const oldPrefs = JSON.parse(fs.readFileSync(prefsPath, 'utf-8')) as Preferences;
+
+  // Write new preferences
   fs.writeFileSync(prefsPath, JSON.stringify(prefs, null, 2));
   console.log('Preferences updated');
+
+  // Check if showInMenuBar preference changed
+  if (oldPrefs.showInMenuBar !== prefs.showInMenuBar) {
+    try {
+      const { updateTrayVisibility } = await import('./main');
+      updateTrayVisibility(prefs.showInMenuBar);
+      console.log(`Menu bar icon ${prefs.showInMenuBar ? 'shown' : 'hidden'}`);
+    } catch (err) {
+      console.error('Failed to update tray visibility:', err);
+    }
+  }
 }
 
 /**
