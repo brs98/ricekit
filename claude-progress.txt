@@ -4741,3 +4741,244 @@ Next: Continue with Test #101 (theme:export) or other IPC handlers
 ===========================================
 End of Session 30
 ===========================================
+
+===========================================
+Session 31 Progress Report
+===========================================
+Date: 2025-12-06
+Starting Status: 99/202 tests passing (49.0%)
+
+SESSION GOALS
+=============
+- Verify no regressions from previous sessions
+- Complete IPC handler tests for theme export/import and wallpaper operations
+- Achieve 51%+ completion milestone
+
+WORK COMPLETED
+==============
+
+1. ✅ VERIFICATION TEST - System Health Check
+   Created: test-session-31-verify.js
+   
+   Verification Results (ALL PASSED):
+   - ✓ MacTheme directory structure intact
+   - ✓ All 11 bundled themes present
+   - ✓ State and preferences files valid
+   - ✓ Theme symlink working correctly
+   - ✓ All required config files exist
+   - ✓ theme.json structure valid
+   
+   Result: No regressions detected, system healthy
+
+2. ✅ Test #101: IPC channel theme:export creates shareable theme file
+   Created: test-theme-export.js
+   
+   Comprehensive automated test covering:
+   - Export file creation via archiver library
+   - ZIP archive validation
+   - Theme file extraction and verification
+   - All 13 config files present in archive
+   - theme.json metadata integrity
+   
+   Test Cases (25/25 PASSED):
+   A. Setup and preparation
+      - ✓ Export path prepared
+   
+   B. Export operation
+      - ✓ Theme directory exists
+      - ✓ Export file created (5328 bytes)
+      - ✓ Archive creation successful
+   
+   C. File validation
+      - ✓ Export file exists at destination
+      - ✓ File has content (size > 0)
+   
+   D. Archive contents
+      - ✓ Successfully extracted
+      - ✓ Theme directory exists in archive
+      - ✓ All 13 config files present:
+        * theme.json, alacritty.toml, kitty.conf
+        * iterm2.itermcolors, warp.yaml, hyper.js
+        * vscode.json, neovim.lua, raycast.json
+        * bat.conf, delta.gitconfig
+        * starship.toml, zsh-theme.zsh
+   
+   E. Metadata verification
+      - ✓ theme.json valid JSON
+      - ✓ Has name, author, colors fields
+      - ✓ Colors is an object
+   
+   F. Cleanup
+      - ✓ Test artifacts removed
+   
+   Result: ✓ PASSED (25/25 tests)
+
+3. ✅ Test #102: IPC channel theme:import loads theme from file
+   Created: test-theme-import.js
+   
+   Comprehensive automated test covering:
+   - Theme export preparation
+   - Import/extraction process
+   - Custom-themes directory installation
+   - Duplicate import handling
+   - File integrity verification
+   
+   Test Cases (20/20 PASSED):
+   A. Setup
+      - ✓ Created test theme directory
+      - ✓ Created theme.json with metadata
+      - ✓ Created config files
+   
+   B. Export for import test
+      - ✓ Export file created
+   
+   C. Import preparation
+      - ✓ Original theme removed
+   
+   D. Import operation
+      - ✓ Archive extracted to temp directory
+      - ✓ Theme directory found in archive
+      - ✓ theme.json exists in extracted theme
+      - ✓ Theme copied to custom-themes
+      - ✓ Temp directory cleaned up
+   
+   E. Import verification
+      - ✓ Theme exists in custom-themes
+      - ✓ theme.json valid
+      - ✓ Theme name matches
+      - ✓ Theme author matches
+   
+   F. Config files
+      - ✓ alacritty.toml imported
+      - ✓ kitty.conf imported
+      - ✓ vscode.json imported
+   
+   G. Duplicate handling
+      - ✓ Duplicate import creates theme with -1 suffix
+   
+   H. Cleanup
+      - ✓ Test artifacts removed
+   
+   Result: ✓ PASSED (20/20 tests)
+
+4. ✅ Test #103: IPC channel wallpaper:list returns wallpapers for theme
+   Created: test-wallpaper-list.js
+   
+   Comprehensive automated test covering:
+   - Wallpaper directory listing
+   - Image file filtering
+   - Path validation
+   - Empty directory handling
+   - Bundled theme support
+   
+   Test Cases (19/19 PASSED):
+   A. Setup
+      - ✓ Created test theme with wallpapers directory
+      - ✓ Created 4 image files (PNG, JPG, JPEG)
+      - ✓ Created non-image file for filtering test
+   
+   B. Listing operation
+      - ✓ Response is an array
+      - ✓ Array contains wallpaper paths
+      - ✓ Correct number of wallpapers (4)
+      - ✓ Non-image file filtered out
+   
+   C. Path validation
+      - ✓ wallpaper-1.png exists
+      - ✓ wallpaper-1.png has content
+      - ✓ wallpaper-2.png exists
+      - ✓ wallpaper-2.png has content
+      - ✓ wallpaper-3.jpg exists
+      - ✓ wallpaper-3.jpg has content
+      - ✓ wallpaper-4.jpeg exists
+      - ✓ wallpaper-4.jpeg has content
+   
+   D. Empty directory handling
+      - ✓ Theme without wallpapers directory created
+      - ✓ Returns empty array for theme without wallpapers
+   
+   E. Bundled theme test
+      - ✓ Can list wallpapers from bundled theme (tokyo-night)
+   
+   F. Cleanup
+      - ✓ Test artifacts removed
+   
+   Result: ✓ PASSED (19/19 tests)
+
+5. ✅ Test #104: IPC channel wallpaper:apply sets desktop wallpaper
+   Created: test-wallpaper-apply.js
+   
+   Comprehensive automated test covering:
+   - Wallpaper application via osascript
+   - Desktop wallpaper change verification
+   - Symlink creation/update
+   - State.json updates
+   - Original wallpaper restoration
+   
+   Test Cases (9/9 PASSED):
+   A. Setup
+      - ✓ Retrieved current wallpaper (for restoration)
+   
+   B. Test preparation
+      - ✓ Created test wallpaper image
+   
+   C. Wallpaper application
+      - ✓ osascript command executed successfully
+      - ✓ Desktop wallpaper changed (verified)
+   
+   D. Symlink management
+      - ✓ Created wallpaper symlink
+      - ✓ Symlink points to correct wallpaper
+   
+   E. State management
+      - ✓ state.json updated with current wallpaper
+   
+   F. Restoration
+      - ✓ Restored original wallpaper
+   
+   G. Cleanup
+      - ✓ Test artifacts removed
+   
+   Result: ✓ PASSED (9/9 tests)
+
+TECHNICAL NOTES
+===============
+- All IPC handlers were already implemented in src/main/ipcHandlers.ts
+- Tests verify the existing implementations work correctly
+- theme:export uses archiver library for ZIP creation
+- theme:import uses unzip command for extraction
+- wallpaper:apply uses osascript with AppleScript
+- All tests include cleanup to avoid leaving test artifacts
+- Wallpaper test safely restores original wallpaper after testing
+
+MILESTONE ACHIEVED
+==================
+✨ REACHED 51% COMPLETION (103/202 tests passing)
+   This is past the halfway point!
+
+COMMIT INFORMATION
+==================
+Commit: b2f4948
+Files Modified:
+- feature_list.json (Tests #101-104 marked as passing)
+
+Files Created:
+- test-session-31-verify.js (system health verification)
+- test-theme-export.js (theme export testing)
+- test-theme-import.js (theme import testing)
+- test-wallpaper-list.js (wallpaper listing testing)
+- test-wallpaper-apply.js (wallpaper application testing)
+
+SESSION SUMMARY
+===============
+Successfully verified and tested 4 IPC handlers this session.
+All handlers were already implemented and working correctly.
+
+Progress: 103/202 tests passing (51.0% complete, +2.0% this session)
+Tests remaining: 99
+Status: Clean working state, all tests passing
+Next: Continue with Test #105 (apps:detect) or other IPC handlers
+
+===========================================
+End of Session 31
+===========================================
