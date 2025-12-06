@@ -8,7 +8,7 @@
       "Step 3: Verify window has native macOS appearance with title bar",
       "Step 4: Verify no console errors during launch"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -21,7 +21,7 @@
       "Step 5: Verify ~/Library/Application Support/MacTheme/current directory exists",
       "Step 6: Verify preferences.json and state.json files are created"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -41,7 +41,7 @@
       "Step 12: Verify solarized-light theme exists",
       "Step 13: Verify rose-pine theme exists"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -62,7 +62,7 @@
       "Step 13: Verify zsh-theme.zsh exists",
       "Step 14: Verify theme.json exists with valid metadata"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -74,7 +74,7 @@
       "Step 4: Verify color values are valid hex codes",
       "Step 5: Repeat verification for all 11 bundled themes"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -88,7 +88,7 @@
       "Step 6: Verify 'Wallpapers' navigation item exists",
       "Step 7: Verify 'Settings' navigation item exists"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

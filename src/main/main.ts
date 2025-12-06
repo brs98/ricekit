@@ -1,5 +1,8 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
+import { initializeApp } from './directories';
+import { installBundledThemes } from './themeInstaller';
+import { setupIpcHandlers } from './ipcHandlers';
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -21,7 +24,10 @@ function createWindow() {
   });
 
   // In development, load from Vite dev server
-  if (process.env.NODE_ENV === 'development') {
+  // We detect dev mode by checking if we're running from a dev location
+  const isDev = !app.isPackaged;
+
+  if (isDev) {
     mainWindow.loadURL('http://localhost:5173');
     mainWindow.webContents.openDevTools();
   } else {
@@ -36,6 +42,15 @@ function createWindow() {
 
 // This method will be called when Electron has finished initialization
 app.whenReady().then(() => {
+  // Initialize application directories and files
+  console.log('=== MacTheme Starting ===');
+  initializeApp();
+  installBundledThemes();
+
+  // Setup IPC handlers
+  setupIpcHandlers();
+
+  // Create main window
   createWindow();
 
   app.on('activate', () => {
