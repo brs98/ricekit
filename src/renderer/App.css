@@ -827,6 +827,66 @@ body {
   min-height: 60px;
 }
 
+/* Preset Selector */
+.preset-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.preset-select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  background: white;
+  color: #1d1d1f;
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 200ms ease;
+}
+
+.preset-select:hover {
+  border-color: rgba(0, 122, 255, 0.4);
+}
+
+.preset-select:focus {
+  outline: none;
+  border-color: #007aff;
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+  .preset-select {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #f5f5f7;
+  }
+
+  .preset-select:hover {
+    border-color: rgba(10, 132, 255, 0.4);
+  }
+
+  .preset-select:focus {
+    border-color: #0a84ff;
+    box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.1);
+  }
+}
+
+.preset-hint {
+  font-size: 12px;
+  color: #86868b;
+  margin: 0;
+  line-height: 1.4;
+}
+
+@media (prefers-color-scheme: dark) {
+  .preset-hint {
+    color: #98989d;
+  }
+}
+
 .color-inputs {
   display: flex;
   flex-direction: column;
