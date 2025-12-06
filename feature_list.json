@@ -1301,7 +1301,7 @@
       "Step 3: Verify each app has installation status",
       "Step 4: Verify detection checks correct paths for each app"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1312,7 +1312,7 @@
       "Step 3: Verify import statement is added correctly",
       "Step 4: Verify backup of original config is created"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1323,7 +1323,7 @@
       "Step 3: Verify reload command is sent to Kitty",
       "Step 4: Verify Kitty updates its colors"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

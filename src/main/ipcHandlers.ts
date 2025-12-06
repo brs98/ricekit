@@ -1382,10 +1382,76 @@ async function handleSetupApp(_event: any, appName: string): Promise<void> {
 
 /**
  * Refresh an application's theme
+ * Sends reload signal to supported applications
  */
 async function handleRefreshApp(_event: any, appName: string): Promise<void> {
   console.log(`Refreshing app: ${appName}`);
-  // TODO: Implement app refresh
+
+  try {
+    switch (appName.toLowerCase()) {
+      case 'kitty':
+        // Kitty supports remote control via socket
+        // Send reload config command to all running Kitty instances
+        try {
+          execSync('kitty @ --to unix:/tmp/kitty set-colors --all --configured', {
+            stdio: 'pipe',
+            timeout: 5000,
+          });
+          console.log('Kitty theme refreshed successfully');
+        } catch (error: any) {
+          // If socket doesn't exist or kitty isn't running, that's ok
+          if (error.message.includes('No such file') || error.message.includes('Connection refused')) {
+            console.log('Kitty is not running or remote control is not enabled');
+          } else {
+            throw error;
+          }
+        }
+        break;
+
+      case 'iterm2':
+        // iTerm2 can be refreshed via AppleScript
+        try {
+          execSync(`osascript -e 'tell application "iTerm2" to tell current session of current window to reload profile'`, {
+            stdio: 'pipe',
+            timeout: 5000,
+          });
+          console.log('iTerm2 theme refreshed successfully');
+        } catch (error: any) {
+          if (error.message.includes('not running')) {
+            console.log('iTerm2 is not running');
+          } else {
+            throw error;
+          }
+        }
+        break;
+
+      case 'alacritty':
+        // Alacritty watches config file, so just touching it triggers reload
+        const alacrittyConfig = path.join(os.homedir(), '.config', 'alacritty', 'alacritty.toml');
+        if (fs.existsSync(alacrittyConfig)) {
+          const now = new Date();
+          fs.utimesSync(alacrittyConfig, now, now);
+          console.log('Alacritty config touched - will auto-reload');
+        } else {
+          console.log('Alacritty config not found');
+        }
+        break;
+
+      case 'vscode':
+        console.log('VS Code requires manual reload (Cmd+R) to apply theme changes');
+        break;
+
+      case 'neovim':
+        console.log('Neovim requires manual reload (:source $MYVIMRC) to apply theme changes');
+        break;
+
+      default:
+        console.log(`App refresh not supported for ${appName}`);
+    }
+  } catch (error: any) {
+    console.error(`Failed to refresh ${appName}:`, error);
+    throw new Error(`Failed to refresh ${appName}: ${error.message}`);
+  }
 }
 
 /**
