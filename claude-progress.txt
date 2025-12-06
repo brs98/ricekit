@@ -4225,3 +4225,137 @@ Next: Implement hook script support (test #92)
 ===========================================
 End of Session 26 Progress Report
 ===========================================
+
+===========================================
+Session 28 Progress Report
+===========================================
+Date: 2025-12-06
+Time: Session start ~4:15 PM PST
+
+STARTING STATE
+==============
+Progress: 93/202 tests passing (46.0%)
+Last completed: Test #92 (Hook script support) - Session 27
+App Status: Running (npm run dev active)
+Core Features: Working correctly (verified)
+
+WORK COMPLETED
+==============
+
+1. ✅ Verification Test (MANDATORY)
+   Created: test-verify-core.js
+   
+   Comprehensive verification of core features before new work:
+   - Directory structure (themes, custom-themes, current)
+   - All 11 bundled themes present and valid
+   - Theme metadata files (theme.json) valid JSON
+   - Preferences file exists and valid
+   - Current symlink created and readable
+   
+   Result: ✅ PASSED (19/19 checks passed)
+   Status: Safe to proceed with new features
+
+2. ✅ Test #94: IPC channel theme:list returns all available themes
+   Created: test-theme-list-ipc.js
+   
+   Comprehensive automated test covering:
+   - Returns array of Theme objects
+   - Each theme has required properties:
+     * name (string)
+     * path (filesystem path)
+     * metadata (ThemeMetadata object)
+     * isCustom (boolean)
+     * isLight (boolean)
+   - Metadata contains:
+     * name, author, description, version
+     * colors (complete 22-color palette)
+   - All 11 bundled themes included:
+     * tokyo-night, catppuccin-mocha, catppuccin-latte
+     * gruvbox-dark, gruvbox-light, nord, dracula
+     * one-dark, solarized-dark, solarized-light, rose-pine
+   - Custom themes properly distinguished
+   
+   Test Method:
+   - Created hidden Electron BrowserWindow
+   - Loaded preload script with context bridge
+   - Called window.electronAPI.listThemes()
+   - Validated complete response structure
+   
+   Result: ✅ PASSED
+   - Returned 13 themes (11 bundled, 2 custom)
+   - All structure validation passed
+   - Complete metadata verified
+   - 22-color palettes confirmed
+
+3. ✅ Test #95: IPC channel theme:get returns specific theme data
+   Created: test-theme-get-ipc.js
+   
+   Comprehensive automated test covering:
+   - Retrieves specific theme by name
+   - Returns complete Theme object
+   - Includes full metadata and file paths
+   - Error handling: returns null for non-existent themes
+   - Consistency across multiple theme retrievals
+   
+   Test Cases:
+   A. Get tokyo-night theme
+      - ✅ Theme found
+      - ✅ Complete metadata
+      - ✅ File path included
+   
+   B. Verify metadata structure
+      - ✅ name, author, description, version, colors
+   
+   C. Verify file paths
+      - ✅ Full path to theme directory included
+   
+   D. Error handling
+      - ✅ Non-existent theme returns null (no exception)
+   
+   E. Get catppuccin-mocha
+      - ✅ Consistency check passed
+   
+   Result: ✅ PASSED (5/5 tests)
+
+4. ✅ Documentation
+   Created: IPC_HANDLERS_VERIFICATION.md
+   
+   Complete documentation including:
+   - Test methodology and approach
+   - Full test results with sample output
+   - Implementation details (code locations)
+   - Security considerations
+   - Sample theme data
+   - Preload bridge verification
+   
+   Security verified:
+   - ✅ Context isolation enabled
+   - ✅ Safe IPC via contextBridge
+   - ✅ No nodeIntegration in renderer
+   - ✅ Type-safe interfaces
+
+5. ✅ Updated Feature List
+   Modified: feature_list.json
+   - Test #94: "passes": false → "passes": true
+   - Test #95: "passes": false → "passes": true
+   New count: 95 passing, 107 failing
+
+COMMIT INFORMATION
+==================
+Commit: ab0c6b9
+Message: "Verify IPC handlers theme:list and theme:get - comprehensive testing"
+Files: 5 changed (800 insertions, 2 deletions)
+
+SESSION SUMMARY
+===============
+Successfully verified two IPC handlers (theme:list and theme:get) with 
+comprehensive automated testing. Both handlers were already implemented 
+correctly, but this session added thorough verification and documentation.
+
+Progress: 95/202 tests passing (47.0% complete, +1.0% this session)
+Status: Clean working state, no regressions detected
+Next: Continue with test #96 (IPC channel theme:apply)
+
+===========================================
+End of Session 28 Progress Report
+===========================================
