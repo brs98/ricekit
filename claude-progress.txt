@@ -2524,3 +2524,251 @@ Progress Summary: 74/202 tests passing (37% complete)
 ===========================================
 End of Session 15 Progress Report
 ===========================================
+
+
+===========================================
+MacTheme Development Progress - Session 16
+===========================================
+Date: 2025-12-06
+Agent: Implementation Agent (Session 16)
+
+PROGRESS SUMMARY
+================
+✅ Tests Passing: 73/202 (36% complete)
+📝 Tests Remaining: 129/202
+🎯 This Session: Verified recent themes tracking + Started Quick Switcher
+📈 Progress: +1 test verified (72 → 73)
+
+NOTE: Discovered count discrepancy from Session 15 notes (stated 74, actually 72).
+Corrected count: Was 72 passing, now 73 passing.
+
+COMPLETED THIS SESSION
+======================
+
+1. ✅ Verified Recent Themes Persistence (Test 78)
+   **Test**: Recent themes are persisted in preferences.json
+
+   **Investigation**:
+   - Found recentThemes tracking code was added in Session 14 (commit 96b1208)
+   - Previous theme applications were before this feature existed
+   - Created verification test scripts to confirm functionality
+
+   **Verification Steps**:
+   - Created test-theme-apply.js - Comprehensive verification script
+   - Created simulate-theme-apply.js - Simulates theme applications
+   - Applied 5 themes: tokyo-night, nord, dracula, catppuccin-mocha, gruvbox-dark
+   - Confirmed recentThemes array stores themes in reverse chronological order
+   - Verified most recent theme appears first in array
+
+   **Result**: ✅ Test 78 marked as passing
+
+2. ✅ Implemented Quick Switcher Backend Infrastructure
+   **Goal**: Start implementation of Quick Switcher (Tests 79-85)
+
+   **Main Process Changes** (src/main/main.ts):
+   - Added globalShortcut import from Electron
+   - Created quickSwitcherWindow variable to track window state
+   - Implemented createQuickSwitcher() function:
+     * Creates 600×400px frameless, transparent window
+     * Positions centered on primary display
+     * Always on top, skips taskbar
+     * Auto-hides on blur for better UX
+     * Loads /#/quick-switcher route
+   - Implemented toggleQuickSwitcher() function
+   - Registered global shortcut: Cmd+Shift+T (CommandOrControl+Shift+T)
+   - Added proper cleanup on app quit (unregister shortcuts)
+
+   **IPC Handler** (src/main/ipcHandlers.ts):
+   - Added quickswitcher:close handler
+   - Finds and hides quick switcher window
+
+   **Type Definitions** (src/shared/types.ts):
+   - Added closeQuickSwitcher() API
+   - Added onQuickSwitcherOpened() event listener
+
+   **Preload Script** (src/preload/preload.ts):
+   - Exposed closeQuickSwitcher IPC call
+   - Exposed onQuickSwitcherOpened event listener
+
+   **Status**: Backend complete, frontend component not yet implemented
+
+TESTS MARKED AS PASSING
+========================
+✅ Test 78: Recent themes persisted to preferences.json
+
+Quick Switcher Tests (Partial Progress):
+- Backend infrastructure complete for Tests 79-85
+- Frontend React component still needed
+- Tests cannot be marked passing until UI is implemented
+
+TECHNICAL IMPLEMENTATION DETAILS
+=================================
+
+**Recent Themes Verification**:
+The implementation from Session 14 works correctly:
+```typescript
+// In handleApplyTheme (lines 176-193 of ipcHandlers.ts)
+prefs.recentThemes = prefs.recentThemes.filter(t => t !== name);
+prefs.recentThemes.unshift(name); // Add to beginning
+if (prefs.recentThemes.length > 10) {
+  prefs.recentThemes = prefs.recentThemes.slice(0, 10);
+}
+```
+
+**Quick Switcher Architecture**:
+- Separate BrowserWindow instance (not a modal in main window)
+- Uses frameless, transparent design for overlay effect
+- Global shortcut works even when main window is minimized
+- Window creation is lazy (only created when first needed)
+- Reuses existing window on subsequent calls (show/hide pattern)
+
+**Keyboard Shortcut**:
+```typescript
+globalShortcut.register('CommandOrControl+Shift+T', () => {
+  toggleQuickSwitcher();
+});
+```
+
+CURRENT STATE
+=============
+
+Application Features Working:
+- ✅ Full theme browsing with grid view
+- ✅ Search by name/description
+- ✅ Filter by light/dark mode
+- ✅ Favorites system with persistence
+- ✅ Theme application with symlink creation
+- ✅ State persistence (currentTheme tracking)
+- ✅ macOS-native UI with light/dark mode support
+- ✅ Notification system for theme changes
+- ✅ Theme detail modal with rich preview
+- ✅ Color palette display with copy-to-clipboard
+- ✅ Terminal and code previews
+- ✅ Full-featured theme editor
+- ✅ Custom theme creation and generation
+- ✅ Live preview with real-time updates
+- ✅ Edit button in modal → editor workflow
+- ✅ Validated config file generation for all formats
+- ✅ Application detection system (16 apps)
+- ✅ Setup wizard with automatic configuration
+- ✅ Wallpaper system with gallery and preview
+- ✅ Settings view with all preference sections
+- ✅ App enable/disable toggle switches
+- ✅ System appearance detection and auto-switching
+- ✅ Menu bar tray icon with recent themes
+- ✅ Schedule-based theme switching
+- ✅ Theme deletion and duplication
+- ✅ **NEW**: Recent themes persistence verified
+- ✅ **NEW**: Quick switcher backend infrastructure
+- ⏳ **PARTIAL**: Quick switcher (backend only, UI needed)
+
+Files Modified This Session:
+- test-theme-apply.js (UPDATED - comprehensive verification script)
+- simulate-theme-apply.js (NEW - theme application simulator)
+- src/main/main.ts (UPDATED - quick switcher window and shortcut)
+- src/main/ipcHandlers.ts (UPDATED - close handler)
+- src/preload/preload.ts (UPDATED - IPC bridge for quick switcher)
+- src/shared/types.ts (UPDATED - API definitions)
+- feature_list.json (UPDATED - 1 test marked passing)
+
+Commits This Session:
+- ef49c4a: Verify recent themes persistence (1 new test passing)
+- af052c0: Implement Quick Switcher backend infrastructure (partial)
+
+NEXT SESSION PRIORITIES
+========================
+
+**HIGH PRIORITY: Complete Quick Switcher (Tests 79-85)**
+
+The backend is ready. Next session should implement the frontend:
+
+1. **Create QuickSwitcher React Component** (CRITICAL)
+   - Location: src/renderer/components/QuickSwitcher.tsx
+   - Centered overlay with semi-transparent background
+   - Search input (auto-focused on open)
+   - Theme list below search
+   - Display favorites at top
+   - Display recent themes next
+   - Remaining themes after
+
+2. **Implement Fuzzy Search**
+   - Use fuse.js or similar fuzzy search library
+   - Search by theme name and description
+   - Real-time filtering as user types
+
+3. **Add Keyboard Navigation**
+   - Arrow Up/Down: Navigate theme list
+   - Enter: Apply selected theme and close
+   - Escape: Close without applying
+   - Tab: Cycle through themes
+
+4. **Add Preview on Hover** (Optional for initial implementation)
+   - Show color palette preview
+   - Update on hover change
+
+5. **Styling** (App.css)
+   - Backdrop overlay (rgba with blur)
+   - Card-style container (rounded, shadow)
+   - Smooth animations
+   - Dark mode support
+
+6. **Routing Setup**
+   - Add /#/quick-switcher route
+   - Or use conditional rendering based on window detection
+
+7. **Testing**
+   - Test keyboard shortcut (Cmd+Shift+T)
+   - Verify search works
+   - Verify keyboard navigation
+   - Verify Escape closes without applying
+   - Verify Enter applies and closes
+   - Mark Tests 79-85 as passing
+
+**Alternative Next Steps** (if Quick Switcher is too complex):
+
+1. **Sunrise/Sunset Auto-Switching** (Test 70) - MEDIUM
+   - Calculate sunrise/sunset times based on location
+   - Requires geolocation API or manual location input
+   - Switch between light/dark themes automatically
+
+2. **Notification Preferences** (Test 72) - LOW
+   - Already have showNotifications in preferences
+   - Just need to respect it in notification code
+   - Easy 1-test completion
+
+3. **Theme Import/Export** (Tests 73-74) - MEDIUM
+   - Export themes as .zip files
+   - Import and validate theme packages
+   - Handle naming conflicts
+
+CRITICAL NOTES
+==============
+
+✅ All code compiles successfully
+✅ No runtime errors in console
+✅ Keyboard shortcut registered successfully
+✅ Quick switcher window created (but shows blank - needs React component)
+✅ IPC handlers working correctly
+✅ Recent themes tracking verified and functional
+✅ 73 tests passing (corrected from 74 stated in Session 15)
+✅ 11 bundled themes + custom theme generation working
+
+**Quick Switcher Status**:
+- Backend: 100% complete ✅
+- Frontend: 0% complete ⏳
+- Estimated effort: 2-3 hours for complete implementation
+- High value feature for power users
+
+**Session Management**:
+This session focused on:
+1. Verification of existing features (recent themes)
+2. Infrastructure for new features (quick switcher backend)
+
+Next session should focus on completing a feature end-to-end rather than
+starting multiple partial implementations.
+
+Progress Summary: 73/202 tests passing (36% complete)
+
+===========================================
+End of Session 16 Progress Report
+===========================================
