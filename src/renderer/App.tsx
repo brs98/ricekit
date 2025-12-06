@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './App.css';
 import { ThemeGrid } from './components/ThemeGrid';
 import { ThemeEditor } from './components/ThemeEditor';
 import { ApplicationsView } from './components/ApplicationsView';
 import { WallpapersView } from './components/WallpapersView';
 import { SettingsView } from './components/SettingsView';
+import { QuickSwitcher } from './components/QuickSwitcher';
 import { Theme } from '../shared/types';
 
 type FilterMode = 'all' | 'light' | 'dark' | 'favorites';
@@ -14,6 +15,20 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMode, setFilterMode] = useState<FilterMode>('all');
   const [editorTheme, setEditorTheme] = useState<Theme | undefined>(undefined);
+  const [isQuickSwitcher, setIsQuickSwitcher] = useState(false);
+
+  // Detect if this is the quick switcher window
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash === '#/quick-switcher') {
+      setIsQuickSwitcher(true);
+    }
+  }, []);
+
+  // If this is the quick switcher, render only that component
+  if (isQuickSwitcher) {
+    return <QuickSwitcher />;
+  }
 
   return (
     <div className="app">

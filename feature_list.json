@@ -1023,7 +1023,7 @@
       "Step 4: Verify overlay appears centered on screen",
       "Step 5: Verify overlay has semi-transparent background"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1035,7 +1035,7 @@
       "Step 4: Verify favorites are shown at top of list",
       "Step 5: Verify recent themes are shown next"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1047,7 +1047,7 @@
       "Step 4: Clear and type 'dark'",
       "Step 5: Verify themes with 'dark' in name or tag are shown"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1059,7 +1059,7 @@
       "Step 4: Hover over different theme",
       "Step 5: Verify preview updates to new theme"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1072,7 +1072,7 @@
       "Step 5: Verify quick switcher closes",
       "Step 6: Verify notification appears"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1084,7 +1084,7 @@
       "Step 4: Verify quick switcher closes",
       "Step 5: Verify theme was not changed"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1930,7 +1930,7 @@
       "Step 6: Press arrow down multiple times to reach last theme",
       "Step 7: Verify selection wraps to first theme"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
