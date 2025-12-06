@@ -1334,7 +1334,7 @@
       "Step 3: Verify values match preferences.json",
       "Step 4: Verify no sensitive data is exposed"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1345,7 +1345,7 @@
       "Step 3: Verify preferences.json is updated",
       "Step 4: Verify UI reflects new preferences"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1358,7 +1358,7 @@
       "Step 5: Call IPC again",
       "Step 6: Verify response is 'light'"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
