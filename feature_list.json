@@ -1466,7 +1466,7 @@
       "Step 4: Stop timer when notification appears",
       "Step 5: Verify elapsed time is less than 1 second"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
