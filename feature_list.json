@@ -1245,7 +1245,7 @@
       "Step 4: Verify theme directory is removed",
       "Step 5: Verify error when trying to delete built-in theme"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
