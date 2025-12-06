@@ -1417,7 +1417,7 @@
       "Step 4: Verify invalid theme is skipped or flagged",
       "Step 5: Verify error message is logged"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
