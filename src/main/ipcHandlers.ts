@@ -257,8 +257,40 @@ async function handleImportTheme(_event: any, importPath: string): Promise<void>
  */
 async function handleListWallpapers(_event: any, themeName: string): Promise<string[]> {
   console.log(`Listing wallpapers for theme: ${themeName}`);
-  // TODO: Implement wallpaper listing
-  return [];
+
+  try {
+    const themesDir = getThemesDir();
+    const customThemesDir = getCustomThemesDir();
+
+    // Try bundled themes first
+    let themePath = path.join(themesDir, themeName);
+    if (!fs.existsSync(themePath)) {
+      // Try custom themes
+      themePath = path.join(customThemesDir, themeName);
+    }
+
+    const wallpapersDir = path.join(themePath, 'wallpapers');
+
+    if (!fs.existsSync(wallpapersDir)) {
+      console.log(`No wallpapers directory found for theme: ${themeName}`);
+      return [];
+    }
+
+    const files = fs.readdirSync(wallpapersDir);
+    const imageFiles = files.filter(file => {
+      const ext = path.extname(file).toLowerCase();
+      return ['.png', '.jpg', '.jpeg', '.heic', '.webp'].includes(ext);
+    });
+
+    // Return full paths to the wallpaper files
+    const wallpaperPaths = imageFiles.map(file => path.join(wallpapersDir, file));
+
+    console.log(`Found ${wallpaperPaths.length} wallpapers for theme: ${themeName}`);
+    return wallpaperPaths;
+  } catch (error) {
+    console.error(`Error listing wallpapers for theme ${themeName}:`, error);
+    return [];
+  }
 }
 
 /**
@@ -266,7 +298,61 @@ async function handleListWallpapers(_event: any, themeName: string): Promise<str
  */
 async function handleApplyWallpaper(_event: any, wallpaperPath: string): Promise<void> {
   console.log(`Applying wallpaper: ${wallpaperPath}`);
-  // TODO: Implement wallpaper application via osascript
+
+  try {
+    const { exec } = require('child_process');
+    const { promisify } = require('util');
+    const execAsync = promisify(exec);
+
+    // Check if wallpaper file exists
+    if (!fs.existsSync(wallpaperPath)) {
+      throw new Error(`Wallpaper file not found: ${wallpaperPath}`);
+    }
+
+    // Use osascript to set the wallpaper on all desktops
+    const script = `
+      tell application "System Events"
+        tell every desktop
+          set picture to "${wallpaperPath}"
+        end tell
+      end tell
+    `;
+
+    await execAsync(`osascript -e '${script}'`);
+
+    // Create symlink to current wallpaper
+    const currentDir = getCurrentDir();
+    const wallpaperSymlink = path.join(currentDir, 'wallpaper');
+
+    // Remove existing symlink if it exists
+    if (fs.existsSync(wallpaperSymlink)) {
+      fs.unlinkSync(wallpaperSymlink);
+    }
+
+    // Create new symlink
+    fs.symlinkSync(wallpaperPath, wallpaperSymlink);
+
+    // Update state with current wallpaper
+    const statePath = getStatePath();
+    const state: State = JSON.parse(fs.readFileSync(statePath, 'utf-8'));
+    state.currentWallpaper = wallpaperPath;
+    fs.writeFileSync(statePath, JSON.stringify(state, null, 2));
+
+    // Show notification
+    if (Notification.isSupported()) {
+      const notification = new Notification({
+        title: 'Wallpaper Applied',
+        body: `Wallpaper has been updated`,
+        silent: false,
+      });
+      notification.show();
+    }
+
+    console.log(`Wallpaper applied successfully: ${wallpaperPath}`);
+  } catch (error) {
+    console.error(`Error applying wallpaper:`, error);
+    throw error;
+  }
 }
 
 /**

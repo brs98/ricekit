@@ -663,7 +663,7 @@
       "Step 4: Verify wallpaper thumbnails are shown in grid",
       "Step 5: Count displayed wallpapers matches theme's wallpapers directory"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -675,7 +675,7 @@
       "Step 4: Verify wallpaper is displayed at higher resolution",
       "Step 5: Verify Apply button is visible in preview"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -688,7 +688,7 @@
       "Step 5: Check macOS desktop",
       "Step 6: Verify wallpaper has been changed to selected image"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -699,7 +699,7 @@
       "Step 3: Verify no errors are thrown",
       "Step 4: Verify wallpaper changes on all displays or selected display"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -711,7 +711,7 @@
       "Step 4: Restart application",
       "Step 5: Verify selected wallpaper is marked as active"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -722,7 +722,7 @@
       "Step 3: Verify symlink exists",
       "Step 4: Verify symlink points to selected wallpaper in theme directory"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

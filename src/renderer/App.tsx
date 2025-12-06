@@ -3,6 +3,7 @@ import './App.css';
 import { ThemeGrid } from './components/ThemeGrid';
 import { ThemeEditor } from './components/ThemeEditor';
 import { ApplicationsView } from './components/ApplicationsView';
+import { WallpapersView } from './components/WallpapersView';
 import { ThemeMetadata } from '../shared/types';
 
 type FilterMode = 'all' | 'light' | 'dark' | 'favorites';
@@ -121,10 +122,7 @@ function App() {
             <ApplicationsView />
           )}
           {activeView === 'wallpapers' && (
-            <div className="placeholder">
-              <h3>Wallpapers</h3>
-              <p>Wallpaper manager will be implemented here</p>
-            </div>
+            <WallpapersView />
           )}
           {activeView === 'settings' && (
             <div className="placeholder">
