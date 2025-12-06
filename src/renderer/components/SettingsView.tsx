@@ -8,6 +8,9 @@ export function SettingsView() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [systemAppearance, setSystemAppearance] = useState<'light' | 'dark'>('light');
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [selectedThemesForExport, setSelectedThemesForExport] = useState<string[]>([]);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     loadPreferences();
@@ -82,6 +85,46 @@ export function SettingsView() {
       schedule: { ...preferences.schedule, ...updates } as Preferences['schedule']
     };
     savePreferences(updated);
+  }
+
+  async function handleExportThemes() {
+    if (selectedThemesForExport.length === 0) {
+      alert('Please select at least one theme to export');
+      return;
+    }
+
+    try {
+      setExporting(true);
+
+      // For simplicity, if multiple themes are selected, export them one by one
+      // In a more advanced version, we could create a single archive with all themes
+      for (const themeName of selectedThemesForExport) {
+        console.log(`Exporting theme: ${themeName}`);
+        const exportPath = await window.electronAPI.exportTheme(themeName);
+        console.log(`Theme exported to: ${exportPath}`);
+      }
+
+      alert(`Successfully exported ${selectedThemesForExport.length} theme(s)`);
+      setShowExportDialog(false);
+      setSelectedThemesForExport([]);
+    } catch (error: any) {
+      console.error('Failed to export themes:', error);
+      if (error.message !== 'Export canceled') {
+        alert(`Failed to export themes: ${error.message}`);
+      }
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  function toggleThemeSelection(themeName: string) {
+    setSelectedThemesForExport(prev => {
+      if (prev.includes(themeName)) {
+        return prev.filter(t => t !== themeName);
+      } else {
+        return [...prev, themeName];
+      }
+    });
   }
 
   if (loading) {
@@ -444,12 +487,12 @@ export function SettingsView() {
             <div className="setting-info">
               <label className="setting-label">Export Themes</label>
               <p className="setting-description">
-                Create a backup of all your custom themes
+                Create a backup of your themes to share or restore later
               </p>
             </div>
             <button
               className="secondary-button"
-              onClick={() => alert('Export functionality coming soon')}
+              onClick={() => setShowExportDialog(true)}
             >
               Export...
             </button>
@@ -494,6 +537,66 @@ export function SettingsView() {
       {saving && (
         <div className="save-indicator">
           Saving...
+        </div>
+      )}
+
+      {/* Export Themes Dialog */}
+      {showExportDialog && (
+        <div className="modal-overlay" onClick={() => !exporting && setShowExportDialog(false)}>
+          <div className="modal-content export-dialog" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Export Themes</h3>
+              <button
+                className="close-button"
+                onClick={() => setShowExportDialog(false)}
+                disabled={exporting}
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <p className="dialog-description">
+                Select themes to export. Each theme will be saved as a .mactheme file.
+              </p>
+
+              <div className="theme-selection-list">
+                {themes.map(theme => (
+                  <label key={theme.name} className="theme-checkbox-item">
+                    <input
+                      type="checkbox"
+                      checked={selectedThemesForExport.includes(theme.name)}
+                      onChange={() => toggleThemeSelection(theme.name)}
+                      disabled={exporting}
+                    />
+                    <span className="theme-checkbox-label">
+                      <span className="theme-name">{theme.metadata.name}</span>
+                      {theme.isCustom && (
+                        <span className="theme-badge custom">Custom</span>
+                      )}
+                    </span>
+                  </label>
+                ))}
+              </div>
+
+              <div className="dialog-actions">
+                <button
+                  className="secondary-button"
+                  onClick={() => setShowExportDialog(false)}
+                  disabled={exporting}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="primary-button"
+                  onClick={handleExportThemes}
+                  disabled={exporting || selectedThemesForExport.length === 0}
+                >
+                  {exporting ? 'Exporting...' : `Export ${selectedThemesForExport.length || ''} Theme${selectedThemesForExport.length !== 1 ? 's' : ''}`}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

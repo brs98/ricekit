@@ -1,7 +1,8 @@
-import { ipcMain, Notification, nativeTheme } from 'electron';
+import { ipcMain, Notification, nativeTheme, dialog } from 'electron';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
+import archiver from 'archiver';
 import {
   getThemesDir,
   getCustomThemesDir,
@@ -392,10 +393,82 @@ async function handleDuplicateTheme(_event: any, sourceThemeName: string): Promi
 
 /**
  * Export a theme to a file
+ * If exportPath is null/undefined, shows a save dialog
+ * Returns the path where the theme was exported
  */
-async function handleExportTheme(_event: any, name: string, exportPath: string): Promise<void> {
-  console.log(`Exporting theme ${name} to ${exportPath}`);
-  // TODO: Implement theme export
+async function handleExportTheme(_event: any, name: string, exportPath?: string): Promise<string> {
+  console.log(`Exporting theme ${name}`);
+
+  try {
+    const themesDir = getThemesDir();
+    const customThemesDir = getCustomThemesDir();
+
+    // Find the theme directory
+    let themePath = path.join(themesDir, name);
+    if (!fs.existsSync(themePath)) {
+      themePath = path.join(customThemesDir, name);
+      if (!fs.existsSync(themePath)) {
+        throw new Error(`Theme "${name}" not found`);
+      }
+    }
+
+    // If no export path provided, show save dialog
+    if (!exportPath) {
+      const { BrowserWindow } = await import('electron');
+      const mainWindow = BrowserWindow.getAllWindows()[0];
+
+      const result = await dialog.showSaveDialog(mainWindow, {
+        title: 'Export Theme',
+        defaultPath: `${name}.mactheme`,
+        filters: [
+          { name: 'MacTheme Files', extensions: ['mactheme', 'zip'] },
+          { name: 'All Files', extensions: ['*'] }
+        ],
+        properties: ['createDirectory', 'showOverwriteConfirmation']
+      });
+
+      if (result.canceled || !result.filePath) {
+        throw new Error('Export canceled');
+      }
+
+      exportPath = result.filePath;
+    }
+
+    // Ensure the export path has an extension
+    if (!exportPath.endsWith('.mactheme') && !exportPath.endsWith('.zip')) {
+      exportPath += '.mactheme';
+    }
+
+    // Create a zip archive
+    await new Promise<void>((resolve, reject) => {
+      const output = fs.createWriteStream(exportPath!);
+      const archive = archiver('zip', {
+        zlib: { level: 9 } // Maximum compression
+      });
+
+      output.on('close', () => {
+        console.log(`Theme exported: ${archive.pointer()} bytes written to ${exportPath}`);
+        resolve();
+      });
+
+      archive.on('error', (err) => {
+        reject(err);
+      });
+
+      archive.pipe(output);
+
+      // Add the entire theme directory to the archive
+      archive.directory(themePath, name);
+
+      archive.finalize();
+    });
+
+    console.log(`Successfully exported theme "${name}" to ${exportPath}`);
+    return exportPath;
+  } catch (error) {
+    console.error('Failed to export theme:', error);
+    throw error;
+  }
 }
 
 /**
