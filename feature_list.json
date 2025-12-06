@@ -1208,7 +1208,7 @@
       "Step 4: Verify state.json is updated",
       "Step 5: Verify wallpaper is applied if theme has wallpapers"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
