@@ -1616,6 +1616,18 @@ async function handleGetSystemAppearance(): Promise<'light' | 'dark'> {
  */
 export async function handleAppearanceChange(): Promise<void> {
   try {
+    // Get current system appearance
+    const appearance = await handleGetSystemAppearance();
+    console.log(`System appearance changed to: ${appearance}`);
+
+    // Notify all renderer windows about the appearance change
+    // This allows components to react to appearance changes via onAppearanceChange callback
+    const { BrowserWindow } = await import('electron');
+    const allWindows = BrowserWindow.getAllWindows();
+    allWindows.forEach(window => {
+      window.webContents.send('system:appearance-changed', appearance);
+    });
+
     // Get preferences to check if auto-switching is enabled
     const prefs = await handleGetPreferences();
 
@@ -1623,10 +1635,6 @@ export async function handleAppearanceChange(): Promise<void> {
     if (!prefs.autoSwitch?.enabled || prefs.autoSwitch?.mode !== 'system') {
       return;
     }
-
-    // Get current system appearance
-    const appearance = await handleGetSystemAppearance();
-    console.log(`System appearance changed to: ${appearance}`);
 
     // Get the appropriate theme based on appearance
     const themeToApply = appearance === 'dark'

@@ -1369,7 +1369,7 @@
       "Step 3: Verify callback is triggered",
       "Step 4: Verify callback receives new appearance value"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
