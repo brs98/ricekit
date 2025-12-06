@@ -1256,7 +1256,7 @@
       "Step 3: Verify exported file exists at destination",
       "Step 4: Verify exported file contains all theme files"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1268,7 +1268,7 @@
       "Step 4: Verify theme is added to custom-themes",
       "Step 5: Verify theme appears in UI"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1279,7 +1279,7 @@
       "Step 3: Verify paths point to valid image files",
       "Step 4: Verify empty array for themes without wallpapers"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1290,7 +1290,7 @@
       "Step 3: Verify osascript command is executed",
       "Step 4: Verify desktop wallpaper changes"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
