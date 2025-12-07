@@ -1916,7 +1916,7 @@
       "Step 4: Verify tokyo-night and nord are listed in favorites",
       "Step 5: Verify they appear before other themes"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

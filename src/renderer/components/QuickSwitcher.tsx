@@ -179,51 +179,121 @@ export function QuickSwitcher() {
               No themes found matching "{searchQuery}"
             </div>
           ) : (
-            filteredThemes.map((theme, index) => {
-              const isFavorite = preferences?.favorites.includes(theme.metadata.name);
-              const isRecent = preferences?.recentThemes.includes(theme.metadata.name);
-              const isCurrent = state?.currentTheme === theme.metadata.name;
-              const isSelected = index === selectedIndex;
+            <>
+              {/* Favorites Section */}
+              {(() => {
+                const favoriteThemes = filteredThemes.filter(theme =>
+                  preferences?.favorites.includes(theme.metadata.name)
+                );
+                const otherThemes = filteredThemes.filter(theme =>
+                  !preferences?.favorites.includes(theme.metadata.name)
+                );
 
-              return (
-                <div
-                  key={theme.metadata.name}
-                  className={`quick-switcher-item ${isSelected ? 'selected' : ''} ${isCurrent ? 'current' : ''}`}
-                  onClick={() => handleApplyTheme(theme)}
-                  onMouseEnter={() => setSelectedIndex(index)}
-                >
-                  <div className="quick-switcher-item-header">
-                    <span className="quick-switcher-item-name">
-                      {isFavorite && '★ '}
-                      {theme.metadata.name}
-                      {isCurrent && ' (current)'}
-                    </span>
-                    {isRecent && !isFavorite && (
-                      <span className="quick-switcher-item-badge">Recent</span>
+                return (
+                  <>
+                    {favoriteThemes.length > 0 && (
+                      <>
+                        <div className="quick-switcher-section-header">Favorites</div>
+                        {favoriteThemes.map((theme, localIndex) => {
+                          const index = filteredThemes.indexOf(theme);
+                          const isRecent = preferences?.recentThemes.includes(theme.metadata.name);
+                          const isCurrent = state?.currentTheme === theme.metadata.name;
+                          const isSelected = index === selectedIndex;
+
+                          return (
+                            <div
+                              key={theme.metadata.name}
+                              className={`quick-switcher-item ${isSelected ? 'selected' : ''} ${isCurrent ? 'current' : ''}`}
+                              onClick={() => handleApplyTheme(theme)}
+                              onMouseEnter={() => setSelectedIndex(index)}
+                            >
+                              <div className="quick-switcher-item-header">
+                                <span className="quick-switcher-item-name">
+                                  ★ {theme.metadata.name}
+                                  {isCurrent && ' (current)'}
+                                </span>
+                              </div>
+                              <div className="quick-switcher-item-description">
+                                {theme.metadata.description}
+                              </div>
+                              <div className="quick-switcher-item-colors">
+                                {[
+                                  theme.metadata.colors.background,
+                                  theme.metadata.colors.red,
+                                  theme.metadata.colors.green,
+                                  theme.metadata.colors.yellow,
+                                  theme.metadata.colors.blue,
+                                  theme.metadata.colors.magenta,
+                                ].map((color, i) => (
+                                  <div
+                                    key={i}
+                                    className="quick-switcher-color-swatch"
+                                    style={{ backgroundColor: color }}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </>
                     )}
-                  </div>
-                  <div className="quick-switcher-item-description">
-                    {theme.metadata.description}
-                  </div>
-                  <div className="quick-switcher-item-colors">
-                    {[
-                      theme.metadata.colors.background,
-                      theme.metadata.colors.red,
-                      theme.metadata.colors.green,
-                      theme.metadata.colors.yellow,
-                      theme.metadata.colors.blue,
-                      theme.metadata.colors.magenta,
-                    ].map((color, i) => (
-                      <div
-                        key={i}
-                        className="quick-switcher-color-swatch"
-                        style={{ backgroundColor: color }}
-                      />
-                    ))}
-                  </div>
-                </div>
-              );
-            })
+
+                    {/* Other Themes Section */}
+                    {otherThemes.length > 0 && (
+                      <>
+                        {favoriteThemes.length > 0 && (
+                          <div className="quick-switcher-section-header">All Themes</div>
+                        )}
+                        {otherThemes.map((theme, localIndex) => {
+                          const index = filteredThemes.indexOf(theme);
+                          const isRecent = preferences?.recentThemes.includes(theme.metadata.name);
+                          const isCurrent = state?.currentTheme === theme.metadata.name;
+                          const isSelected = index === selectedIndex;
+
+                          return (
+                            <div
+                              key={theme.metadata.name}
+                              className={`quick-switcher-item ${isSelected ? 'selected' : ''} ${isCurrent ? 'current' : ''}`}
+                              onClick={() => handleApplyTheme(theme)}
+                              onMouseEnter={() => setSelectedIndex(index)}
+                            >
+                              <div className="quick-switcher-item-header">
+                                <span className="quick-switcher-item-name">
+                                  {theme.metadata.name}
+                                  {isCurrent && ' (current)'}
+                                </span>
+                                {isRecent && (
+                                  <span className="quick-switcher-item-badge">Recent</span>
+                                )}
+                              </div>
+                              <div className="quick-switcher-item-description">
+                                {theme.metadata.description}
+                              </div>
+                              <div className="quick-switcher-item-colors">
+                                {[
+                                  theme.metadata.colors.background,
+                                  theme.metadata.colors.red,
+                                  theme.metadata.colors.green,
+                                  theme.metadata.colors.yellow,
+                                  theme.metadata.colors.blue,
+                                  theme.metadata.colors.magenta,
+                                ].map((color, i) => (
+                                  <div
+                                    key={i}
+                                    className="quick-switcher-color-swatch"
+                                    style={{ backgroundColor: color }}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </>
+                    )}
+                  </>
+                );
+              })()}
+            </>
           )}
         </div>
         <div className="quick-switcher-footer">
