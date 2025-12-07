@@ -1779,7 +1779,7 @@
       "Step 3: Verify config format is valid for bat",
       "Step 4: Test config with bat command"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1790,7 +1790,7 @@
       "Step 3: Verify git config syntax is valid",
       "Step 4: Verify delta-specific settings are present"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1801,7 +1801,7 @@
       "Step 3: Verify zsh syntax is valid",
       "Step 4: Test script sources correctly in zsh"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1813,7 +1813,7 @@
       "Step 4: Verify Raycast theme structure is correct",
       "Step 5: Test theme in Raycast if possible"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
