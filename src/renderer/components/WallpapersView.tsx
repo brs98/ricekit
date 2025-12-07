@@ -75,7 +75,7 @@ interface WallpaperSchedule {
 }
 
 interface ScheduleModalProps {
-  wallpapers: string[];
+  wallpapers: WallpaperItem[];
   currentSchedules: WallpaperSchedule[];
   onClose: () => void;
   onSave: (schedules: WallpaperSchedule[]) => void;
@@ -90,7 +90,7 @@ const ScheduleModal: React.FC<ScheduleModalProps> = ({ wallpapers, currentSchedu
       {
         timeStart: '06:00',
         timeEnd: '12:00',
-        wallpaperPath: wallpapers[0] || '',
+        wallpaperPath: wallpapers[0]?.original || '',
         name: 'Morning',
       },
     ]);
@@ -239,8 +239,8 @@ const ScheduleModal: React.FC<ScheduleModalProps> = ({ wallpapers, currentSchedu
                   }}
                 >
                   {wallpapers.map((wallpaper) => (
-                    <option key={wallpaper} value={wallpaper}>
-                      {getWallpaperName(wallpaper)}
+                    <option key={wallpaper.original} value={wallpaper.original}>
+                      {getWallpaperName(wallpaper.original)}
                     </option>
                   ))}
                 </select>
@@ -279,8 +279,13 @@ const ScheduleModal: React.FC<ScheduleModalProps> = ({ wallpapers, currentSchedu
   );
 };
 
+interface WallpaperItem {
+  original: string;
+  thumbnail: string;
+}
+
 export const WallpapersView: React.FC = () => {
-  const [wallpapers, setWallpapers] = useState<string[]>([]);
+  const [wallpapers, setWallpapers] = useState<WallpaperItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedWallpaper, setSelectedWallpaper] = useState<string | null>(null);
@@ -394,9 +399,9 @@ export const WallpapersView: React.FC = () => {
       const state = await window.electronAPI.getState();
       setCurrentTheme(state.currentTheme);
 
-      // Load wallpapers for current theme
-      const wallpaperPaths = await window.electronAPI.listWallpapers(state.currentTheme);
-      setWallpapers(wallpaperPaths);
+      // Load wallpapers with thumbnails for better performance
+      const wallpaperItems = await window.electronAPI.listWallpapersWithThumbnails(state.currentTheme);
+      setWallpapers(wallpaperItems);
     } catch (err) {
       console.error('Error loading wallpapers:', err);
       setError('Failed to load wallpapers. Please try again.');
@@ -625,21 +630,22 @@ export const WallpapersView: React.FC = () => {
       </div>
 
       <div className="wallpaper-gallery">
-        {wallpapers.map((wallpaperPath, index) => {
-          const fileName = wallpaperPath.split('/').pop() || 'Unknown';
+        {wallpapers.map((wallpaper, index) => {
+          const fileName = wallpaper.original.split('/').pop() || 'Unknown';
           const displayName = fileName.replace(/\.[^.]+$/, '').replace(/-/g, ' ');
 
           return (
             <div
               key={index}
               className="wallpaper-card"
-              onClick={() => setSelectedWallpaper(wallpaperPath)}
+              onClick={() => setSelectedWallpaper(wallpaper.original)}
             >
               <div className="wallpaper-thumbnail">
                 <img
-                  src={`file://${wallpaperPath}`}
+                  src={`file://${wallpaper.thumbnail}`}
                   alt={displayName}
                   className="wallpaper-image"
+                  loading="lazy"
                 />
                 <div className="wallpaper-overlay">
                   <button className="wallpaper-apply-button">Apply</button>

@@ -116,8 +116,11 @@ export interface ElectronAPI {
   importTheme: (path: string) => Promise<void>;
   importThemeFromUrl: (url: string) => Promise<void>;
   listWallpapers: (themeName: string) => Promise<string[]>;
+  listWallpapersWithThumbnails: (themeName: string) => Promise<Array<{ original: string; thumbnail: string }>>;
   applyWallpaper: (path: string, displayIndex?: number) => Promise<void>;
   getDisplays: () => Promise<Array<{ id: string; index: number; name: string; resolution: string; isMain: boolean }>>;
+  clearThumbnailCache: () => Promise<void>;
+  getThumbnailCacheStats: () => Promise<{ count: number; sizeBytes: number; sizeMB: number }>;
   detectApps: () => Promise<AppInfo[]>;
   setupApp: (appName: string) => Promise<void>;
   refreshApp: (appName: string) => Promise<void>;

@@ -18,6 +18,7 @@ import {
 } from './directories';
 import type { Theme, ThemeMetadata, Preferences, State } from '../shared/types';
 import { logger } from './logger';
+import { generateThumbnails, clearOldThumbnails, getThumbnailCacheStats } from './thumbnails';
 
 /**
  * Setup all IPC handlers
@@ -37,8 +38,11 @@ export function setupIpcHandlers(): void {
 
   // Wallpaper operations
   ipcMain.handle('wallpaper:list', handleListWallpapers);
+  ipcMain.handle('wallpaper:listWithThumbnails', handleListWallpapersWithThumbnails);
   ipcMain.handle('wallpaper:apply', handleApplyWallpaper);
   ipcMain.handle('wallpaper:getDisplays', handleGetDisplays);
+  ipcMain.handle('wallpaper:clearThumbnailCache', handleClearThumbnailCache);
+  ipcMain.handle('wallpaper:getThumbnailCacheStats', handleGetThumbnailCacheStats);
 
   // Application operations
   ipcMain.handle('apps:detect', handleDetectApps);
@@ -1187,6 +1191,71 @@ async function handleListWallpapers(_event: any, themeName: string): Promise<str
   } catch (error) {
     console.error(`Error listing wallpapers for theme ${themeName}:`, error);
     return [];
+  }
+}
+
+/**
+ * List wallpapers with thumbnails for better performance
+ * Returns an array of objects with original path and thumbnail path
+ */
+async function handleListWallpapersWithThumbnails(_event: any, themeName: string): Promise<Array<{ original: string; thumbnail: string }>> {
+  logger.info(`Listing wallpapers with thumbnails for theme: ${themeName}`);
+
+  try {
+    // Get all wallpaper paths
+    const wallpaperPaths = await handleListWallpapers(_event, themeName);
+
+    if (wallpaperPaths.length === 0) {
+      return [];
+    }
+
+    // Generate thumbnails
+    logger.info(`Generating thumbnails for ${wallpaperPaths.length} wallpapers...`);
+    const thumbnailMap = await generateThumbnails(wallpaperPaths);
+
+    // Build result array
+    const result = wallpaperPaths.map((originalPath) => ({
+      original: originalPath,
+      thumbnail: thumbnailMap.get(originalPath) || originalPath,
+    }));
+
+    logger.info(`Successfully generated ${result.length} thumbnails`);
+    return result;
+  } catch (error) {
+    logger.error(`Error listing wallpapers with thumbnails for theme ${themeName}:`, error);
+    // Fallback: return original paths
+    const wallpaperPaths = await handleListWallpapers(_event, themeName);
+    return wallpaperPaths.map((path) => ({ original: path, thumbnail: path }));
+  }
+}
+
+/**
+ * Clear thumbnail cache
+ */
+async function handleClearThumbnailCache(): Promise<void> {
+  try {
+    logger.info('Clearing thumbnail cache...');
+    clearOldThumbnails();
+    logger.info('Thumbnail cache cleared successfully');
+  } catch (error) {
+    logger.error('Error clearing thumbnail cache:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get thumbnail cache statistics
+ */
+async function handleGetThumbnailCacheStats(): Promise<{ count: number; sizeBytes: number; sizeMB: number }> {
+  try {
+    const stats = getThumbnailCacheStats();
+    return {
+      ...stats,
+      sizeMB: Math.round((stats.sizeBytes / (1024 * 1024)) * 100) / 100,
+    };
+  } catch (error) {
+    logger.error('Error getting thumbnail cache stats:', error);
+    return { count: 0, sizeBytes: 0, sizeMB: 0 };
   }
 }
 
