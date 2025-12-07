@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { Preferences, Theme } from '../../shared/types';
 import { ShortcutRecorder } from './ShortcutRecorder';
+import { AboutDialog } from './AboutDialog';
 
 export function SettingsView() {
   const [preferences, setPreferences] = useState<Preferences | null>(null);
@@ -15,6 +16,7 @@ export function SettingsView() {
   const [importing, setImporting] = useState(false);
   const [sunriseSunset, setSunriseSunset] = useState<{ sunrise: string; sunset: string; location: string } | null>(null);
   const [loadingSunTimes, setLoadingSunTimes] = useState(false);
+  const [showAboutDialog, setShowAboutDialog] = useState(false);
 
   useEffect(() => {
     loadPreferences();
@@ -663,6 +665,26 @@ export function SettingsView() {
             </button>
           </div>
         </section>
+
+        {/* About Section */}
+        <section className="settings-section">
+          <h3 className="section-title">About</h3>
+
+          <div className="setting-item">
+            <div className="setting-info">
+              <label className="setting-label">About MacTheme</label>
+              <p className="setting-description">
+                View application information, version, and credits
+              </p>
+            </div>
+            <button
+              className="secondary-button"
+              onClick={() => setShowAboutDialog(true)}
+            >
+              About...
+            </button>
+          </div>
+        </section>
       </div>
 
       {saving && (
@@ -730,6 +752,12 @@ export function SettingsView() {
           </div>
         </div>
       )}
+
+      {/* About Dialog */}
+      <AboutDialog
+        isOpen={showAboutDialog}
+        onClose={() => setShowAboutDialog(false)}
+      />
     </div>
   );
 }

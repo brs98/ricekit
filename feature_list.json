@@ -1631,7 +1631,7 @@
       "Step 5: Verify version number is displayed",
       "Step 6: Verify credits/links are displayed"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

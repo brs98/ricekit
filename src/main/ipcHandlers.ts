@@ -1,4 +1,4 @@
-import { ipcMain, Notification, nativeTheme, dialog } from 'electron';
+import { ipcMain, Notification, nativeTheme, dialog, shell } from 'electron';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
@@ -51,6 +51,7 @@ export function setupIpcHandlers(): void {
   // System operations
   ipcMain.handle('system:appearance', handleGetSystemAppearance);
   ipcMain.handle('system:getSunriseSunset', handleGetSunriseSunset);
+  ipcMain.handle('system:openExternal', handleOpenExternal);
 
   // State operations
   ipcMain.handle('state:get', handleGetState);
@@ -1690,6 +1691,18 @@ async function handleRestorePreferences(): Promise<boolean> {
 async function handleGetSystemAppearance(): Promise<'light' | 'dark'> {
   // Use Electron's nativeTheme to detect system appearance
   return nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
+}
+
+/**
+ * Open a URL in the default external browser
+ */
+async function handleOpenExternal(_event: any, url: string): Promise<void> {
+  try {
+    await shell.openExternal(url);
+  } catch (error: any) {
+    console.error('Failed to open external URL:', error);
+    throw new Error(`Failed to open URL: ${error.message}`);
+  }
 }
 
 /**

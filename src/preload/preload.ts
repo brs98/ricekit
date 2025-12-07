@@ -44,4 +44,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onQuickSwitcherOpened: (callback: () => void) => {
     ipcRenderer.on('quick-switcher-opened', () => callback());
   },
+
+  // Utility operations
+  openExternal: (url: string) => ipcRenderer.invoke('system:openExternal', url),
 });
