@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   duplicateTheme: (name: string) => ipcRenderer.invoke('theme:duplicate', name),
   exportTheme: (name: string, path?: string) => ipcRenderer.invoke('theme:export', name, path),
   importTheme: (path: string) => ipcRenderer.invoke('theme:import', path),
+  importThemeFromUrl: (url: string) => ipcRenderer.invoke('theme:importFromUrl', url),
 
   // Wallpaper operations
   listWallpapers: (themeName: string) => ipcRenderer.invoke('wallpaper:list', themeName),

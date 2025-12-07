@@ -102,6 +102,7 @@ export interface ElectronAPI {
   duplicateTheme: (name: string) => Promise<void>;
   exportTheme: (name: string, path?: string) => Promise<string>;
   importTheme: (path: string) => Promise<void>;
+  importThemeFromUrl: (url: string) => Promise<void>;
   listWallpapers: (themeName: string) => Promise<string[]>;
   applyWallpaper: (path: string, displayIndex?: number) => Promise<void>;
   getDisplays: () => Promise<Array<{ id: string; index: number; name: string; resolution: string; isMain: boolean }>>;
@@ -118,6 +119,7 @@ export interface ElectronAPI {
   getState: () => Promise<State>;
   closeQuickSwitcher: () => Promise<void>;
   onQuickSwitcherOpened: (callback: () => void) => void;
+  openExternal: (url: string) => Promise<void>;
 }
 
 declare global {

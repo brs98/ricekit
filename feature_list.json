@@ -1570,7 +1570,7 @@
       "Step 6: Verify theme is downloaded and installed",
       "Step 7: Verify new theme appears in grid"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

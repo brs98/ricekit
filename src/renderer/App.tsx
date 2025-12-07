@@ -18,6 +18,9 @@ function App() {
   const [editorTheme, setEditorTheme] = useState<Theme | undefined>(undefined);
   const [isQuickSwitcher, setIsQuickSwitcher] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showImportUrlModal, setShowImportUrlModal] = useState(false);
+  const [importUrl, setImportUrl] = useState('');
+  const [importing, setImporting] = useState(false);
 
   // Detect if this is the quick switcher window and check onboarding status
   useEffect(() => {
@@ -45,6 +48,29 @@ function App() {
     setShowOnboarding(false);
   }
 
+  async function handleImportFromUrl() {
+    if (!importUrl.trim()) {
+      alert('Please enter a valid URL');
+      return;
+    }
+
+    try {
+      setImporting(true);
+      await window.electronAPI.importThemeFromUrl(importUrl);
+      alert('Theme imported successfully!');
+      setShowImportUrlModal(false);
+      setImportUrl('');
+
+      // Refresh the theme grid (trigger re-render)
+      window.location.reload();
+    } catch (error: any) {
+      console.error('Failed to import theme from URL:', error);
+      alert(`Failed to import theme: ${error.message}`);
+    } finally {
+      setImporting(false);
+    }
+  }
+
   // If this is the quick switcher, render only that component
   if (isQuickSwitcher) {
     return <QuickSwitcher />;
@@ -54,6 +80,46 @@ function App() {
     <div className="app">
       {/* Onboarding modal */}
       {showOnboarding && <OnboardingModal onComplete={handleOnboardingComplete} />}
+
+      {/* Import from URL modal */}
+      {showImportUrlModal && (
+        <div className="modal-overlay" onClick={() => setShowImportUrlModal(false)}>
+          <div className="modal-content" style={{ maxWidth: '500px' }} onClick={(e) => e.stopPropagation()}>
+            <h3 className="modal-title">Import Theme from URL</h3>
+            <p className="modal-description">
+              Enter the URL of a theme file (.zip or .mactheme) to import it.
+            </p>
+            <input
+              type="url"
+              className="modal-input"
+              placeholder="https://example.com/mytheme.zip"
+              value={importUrl}
+              onChange={(e) => setImportUrl(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleImportFromUrl()}
+              autoFocus
+            />
+            <div className="modal-buttons">
+              <button
+                className="secondary-button"
+                onClick={() => {
+                  setShowImportUrlModal(false);
+                  setImportUrl('');
+                }}
+                disabled={importing}
+              >
+                Cancel
+              </button>
+              <button
+                className="primary-button"
+                onClick={handleImportFromUrl}
+                disabled={importing || !importUrl.trim()}
+              >
+                {importing ? 'Importing...' : 'Import'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="sidebar">
         <div className="sidebar-header">
@@ -128,6 +194,13 @@ function App() {
                   onClick={() => setFilterMode('favorites')}
                 >
                   ★ Favorites
+                </button>
+                <button
+                  className="filter-chip import-url-button"
+                  onClick={() => setShowImportUrlModal(true)}
+                  title="Import theme from URL"
+                >
+                  📥 Import from URL
                 </button>
               </div>
             </div>

@@ -31,6 +31,7 @@ export function setupIpcHandlers(): void {
   ipcMain.handle('theme:duplicate', handleDuplicateTheme);
   ipcMain.handle('theme:export', handleExportTheme);
   ipcMain.handle('theme:import', handleImportTheme);
+  ipcMain.handle('theme:importFromUrl', handleImportThemeFromUrl);
 
   // Wallpaper operations
   ipcMain.handle('wallpaper:list', handleListWallpapers);
@@ -994,6 +995,136 @@ async function handleImportTheme(_event: any, importPath?: string): Promise<void
   } catch (error) {
     console.error('Failed to import theme:', error);
     throw error;
+  }
+}
+
+/**
+ * Import theme from URL
+ */
+async function handleImportThemeFromUrl(_event: any, url: string): Promise<void> {
+  console.log(`Importing theme from URL: ${url}`);
+
+  try {
+    const https = await import('https');
+    const http = await import('http');
+    const execAsync = promisify(exec);
+
+    // Validate URL
+    if (!url || typeof url !== 'string') {
+      throw new Error('Invalid URL provided');
+    }
+
+    // Parse URL to determine protocol
+    let parsedUrl: URL;
+    try {
+      parsedUrl = new URL(url);
+    } catch (error) {
+      throw new Error('Invalid URL format');
+    }
+
+    // Only allow http and https protocols for security
+    if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+      throw new Error('Only HTTP and HTTPS URLs are supported');
+    }
+
+    // Create temporary directory for download
+    const tmpDir = path.join(os.tmpdir(), `mactheme-url-import-${Date.now()}`);
+    fs.mkdirSync(tmpDir, { recursive: true });
+
+    try {
+      // Download file from URL
+      const downloadPath = path.join(tmpDir, 'theme.zip');
+      console.log(`Downloading from ${url} to ${downloadPath}`);
+
+      await new Promise<void>((resolve, reject) => {
+        const file = fs.createWriteStream(downloadPath);
+        const client = parsedUrl.protocol === 'https:' ? https : http;
+
+        const request = client.get(url, (response) => {
+          // Handle redirects
+          if (response.statusCode === 301 || response.statusCode === 302) {
+            const redirectUrl = response.headers.location;
+            if (redirectUrl) {
+              console.log(`Following redirect to: ${redirectUrl}`);
+              file.close();
+
+              // Recursively handle redirect
+              const redirectClient = redirectUrl.startsWith('https:') ? https : http;
+              const redirectRequest = redirectClient.get(redirectUrl, (redirectResponse) => {
+                if (redirectResponse.statusCode !== 200) {
+                  reject(new Error(`HTTP ${redirectResponse.statusCode}: ${redirectResponse.statusMessage}`));
+                  return;
+                }
+
+                redirectResponse.pipe(file);
+
+                file.on('finish', () => {
+                  file.close();
+                  resolve();
+                });
+              });
+
+              redirectRequest.on('error', (err) => {
+                fs.unlinkSync(downloadPath);
+                reject(err);
+              });
+
+              return;
+            }
+          }
+
+          // Check for successful response
+          if (response.statusCode !== 200) {
+            reject(new Error(`HTTP ${response.statusCode}: ${response.statusMessage}`));
+            return;
+          }
+
+          response.pipe(file);
+
+          file.on('finish', () => {
+            file.close();
+            resolve();
+          });
+        });
+
+        request.on('error', (err) => {
+          fs.unlinkSync(downloadPath);
+          reject(err);
+        });
+
+        file.on('error', (err) => {
+          fs.unlinkSync(downloadPath);
+          reject(err);
+        });
+      });
+
+      console.log(`Download complete: ${downloadPath}`);
+
+      // Verify file was downloaded and is not empty
+      const stats = fs.statSync(downloadPath);
+      if (stats.size === 0) {
+        throw new Error('Downloaded file is empty');
+      }
+
+      console.log(`Downloaded file size: ${stats.size} bytes`);
+
+      // Use the existing import logic to process the downloaded file
+      await handleImportTheme(_event, downloadPath);
+
+      // Clean up temp directory
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+
+      console.log(`Successfully imported theme from URL: ${url}`);
+    } catch (downloadError) {
+      // Clean up temp directory on error
+      if (fs.existsSync(tmpDir)) {
+        fs.rmSync(tmpDir, { recursive: true, force: true });
+      }
+      throw downloadError;
+    }
+  } catch (error: any) {
+    console.error('Failed to import theme from URL:', error);
+    throw new Error(`Failed to import theme from URL: ${error.message}`);
   }
 }
 
