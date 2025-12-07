@@ -2413,7 +2413,7 @@
       "Step 4: Apply different theme",
       "Step 5: Verify titlebar updates to show new theme name"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",

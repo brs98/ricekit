@@ -132,6 +132,16 @@ export function refreshTrayMenu() {
 }
 
 /**
+ * Update the main window title to show current theme name
+ */
+export function updateWindowTitle(themeName: string) {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.setTitle(`MacTheme - ${themeName}`);
+    console.log(`Window title updated to: MacTheme - ${themeName}`);
+  }
+}
+
+/**
  * Export function to show/hide tray based on preference
  */
 export function updateTrayVisibility(show: boolean) {
@@ -196,6 +206,19 @@ function createWindow() {
     },
   });
 
+  // Set initial window title based on current theme
+  try {
+    const statePath = getStatePath();
+    const state = JSON.parse(fs.readFileSync(statePath, 'utf-8'));
+    const currentTheme = state.currentTheme || 'tokyo-night';
+    console.log(`Setting window title to: MacTheme - ${currentTheme}`);
+    mainWindow.setTitle(`MacTheme - ${currentTheme}`);
+    console.log(`Window title set successfully`);
+  } catch (err) {
+    console.error('Error setting initial window title:', err);
+    mainWindow.setTitle('MacTheme');
+  }
+
   // In development, load from Vite dev server
   // We detect dev mode by checking if we're running from a dev location
   const isDev = !app.isPackaged;
@@ -207,6 +230,20 @@ function createWindow() {
     // In production, load from built files
     mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
   }
+
+  // Set window title again after page finishes loading
+  mainWindow.webContents.once('did-finish-load', () => {
+    try {
+      const statePath = getStatePath();
+      const state = JSON.parse(fs.readFileSync(statePath, 'utf-8'));
+      const currentTheme = state.currentTheme || 'tokyo-night';
+      mainWindow?.setTitle(`MacTheme - ${currentTheme}`);
+      console.log(`Window title set after load: MacTheme - ${currentTheme}`);
+    } catch (err) {
+      console.error('Error setting window title after load:', err);
+      mainWindow?.setTitle('MacTheme');
+    }
+  });
 
   // Handle window close button - hide instead of close on macOS
   mainWindow.on('close', (event) => {

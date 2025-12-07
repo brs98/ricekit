@@ -496,8 +496,9 @@ export async function handleApplyTheme(_event: any, name: string): Promise<void>
 
     // Update tray menu with new recent themes
     try {
-      const { refreshTrayMenu } = await import('./main');
+      const { refreshTrayMenu, updateWindowTitle } = await import('./main');
       refreshTrayMenu();
+      updateWindowTitle(name);
     } catch (err) {
       console.error('Failed to refresh tray menu:', err);
     }
