@@ -80,10 +80,11 @@ export function QuickSwitcher() {
     const recentThemes = new Set(preferences.recentThemes);
 
     filtered.sort((a, b) => {
-      const aIsFavorite = favorites.has(a.metadata.name);
-      const bIsFavorite = favorites.has(b.metadata.name);
-      const aIsRecent = recentThemes.has(a.metadata.name);
-      const bIsRecent = recentThemes.has(b.metadata.name);
+      // Favorites use display names (metadata.name), recentThemes use folder names (name)
+      const aIsFavorite = favorites.has(a.metadata.name) || favorites.has(a.name);
+      const bIsFavorite = favorites.has(b.metadata.name) || favorites.has(b.name);
+      const aIsRecent = recentThemes.has(a.name);
+      const bIsRecent = recentThemes.has(b.name);
 
       // Favorites first
       if (aIsFavorite && !bIsFavorite) return -1;
@@ -93,12 +94,12 @@ export function QuickSwitcher() {
       if (aIsRecent && !bIsRecent) return -1;
       if (!aIsRecent && bIsRecent) return 1;
       if (aIsRecent && bIsRecent) {
-        const aIndex = preferences.recentThemes.indexOf(a.metadata.name);
-        const bIndex = preferences.recentThemes.indexOf(b.metadata.name);
+        const aIndex = preferences.recentThemes.indexOf(a.name);
+        const bIndex = preferences.recentThemes.indexOf(b.name);
         return aIndex - bIndex;
       }
 
-      // Then alphabetically
+      // Then alphabetically by display name
       return a.metadata.name.localeCompare(b.metadata.name);
     });
 
@@ -137,7 +138,7 @@ export function QuickSwitcher() {
   // Apply theme
   async function handleApplyTheme(theme: Theme) {
     try {
-      await window.electronAPI.applyTheme(theme.metadata.name);
+      await window.electronAPI.applyTheme(theme.name);
       window.electronAPI.closeQuickSwitcher();
     } catch (error) {
       console.error('Failed to apply theme:', error);
@@ -183,10 +184,10 @@ export function QuickSwitcher() {
               {/* Favorites Section */}
               {(() => {
                 const favoriteThemes = filteredThemes.filter(theme =>
-                  preferences?.favorites.includes(theme.metadata.name)
+                  preferences?.favorites.includes(theme.metadata.name) || preferences?.favorites.includes(theme.name)
                 );
                 const otherThemes = filteredThemes.filter(theme =>
-                  !preferences?.favorites.includes(theme.metadata.name)
+                  !preferences?.favorites.includes(theme.metadata.name) && !preferences?.favorites.includes(theme.name)
                 );
 
                 return (
@@ -194,10 +195,9 @@ export function QuickSwitcher() {
                     {favoriteThemes.length > 0 && (
                       <>
                         <div className="quick-switcher-section-header">Favorites</div>
-                        {favoriteThemes.map((theme, localIndex) => {
+                        {favoriteThemes.map((theme, _localIndex) => {
                           const index = filteredThemes.indexOf(theme);
-                          const isRecent = preferences?.recentThemes.includes(theme.metadata.name);
-                          const isCurrent = state?.currentTheme === theme.metadata.name;
+                          const isCurrent = state?.currentTheme === theme.name;
                           const isSelected = index === selectedIndex;
 
                           return (
@@ -244,10 +244,10 @@ export function QuickSwitcher() {
                         {favoriteThemes.length > 0 && (
                           <div className="quick-switcher-section-header">All Themes</div>
                         )}
-                        {otherThemes.map((theme, localIndex) => {
+                        {otherThemes.map((theme, _localIndex) => {
                           const index = filteredThemes.indexOf(theme);
-                          const isRecent = preferences?.recentThemes.includes(theme.metadata.name);
-                          const isCurrent = state?.currentTheme === theme.metadata.name;
+                          const isRecent = preferences?.recentThemes.includes(theme.name);
+                          const isCurrent = state?.currentTheme === theme.name;
                           const isSelected = index === selectedIndex;
 
                           return (

@@ -143,6 +143,13 @@ export interface ElectronAPI {
   clearLogs: () => Promise<void>;
   setDebugLogging: (enabled: boolean) => Promise<void>;
   isDebugLoggingEnabled: () => Promise<boolean>;
+  checkForUpdates: () => Promise<{
+    currentVersion: string;
+    latestVersion: string;
+    hasUpdate: boolean;
+    updateUrl?: string;
+    error?: string;
+  }>;
 }
 
 declare global {
