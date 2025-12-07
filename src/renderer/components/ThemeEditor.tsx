@@ -391,7 +391,12 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
     // Otherwise save directly
     try {
       setSaving(true);
-      await window.electronAPI.createTheme(metadata);
+      // If editing an existing custom theme, update it; otherwise create new
+      if (initialTheme && sourceTheme?.isCustom) {
+        await window.electronAPI.updateTheme(initialTheme.name, metadata);
+      } else {
+        await window.electronAPI.createTheme(metadata);
+      }
       setHasChanges(false);
       if (onSave) onSave();
     } catch (error) {
