@@ -82,6 +82,9 @@ export interface Preferences {
   };
   hookScript?: string; // Optional path to user-defined hook script
   onboardingCompleted: boolean; // Whether user has completed the onboarding wizard
+  dynamicWallpaper?: {
+    enabled: boolean; // Enable automatic wallpaper switching based on system appearance
+  };
 }
 
 // State structure

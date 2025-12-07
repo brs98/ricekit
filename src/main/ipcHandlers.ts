@@ -1896,6 +1896,43 @@ async function handleOpenHelp(_event: any): Promise<void> {
 }
 
 /**
+ * Helper function to apply dynamic wallpaper based on system appearance
+ * Looks for light.* or dark.* wallpapers in the current theme
+ */
+async function applyDynamicWallpaper(appearance: 'light' | 'dark', themeName: string): Promise<void> {
+  try {
+    const themePath = path.join(getThemesDir(), themeName);
+    const wallpapersDir = path.join(themePath, 'wallpapers');
+
+    // Check if wallpapers directory exists
+    if (!fs.existsSync(wallpapersDir)) {
+      console.log(`No wallpapers directory found for theme: ${themeName}`);
+      return;
+    }
+
+    // List all files in wallpapers directory
+    const files = fs.readdirSync(wallpapersDir);
+
+    // Look for appearance-specific wallpapers
+    // Naming convention: light.png, light.jpg, light-*.png, dark.png, dark.jpg, dark-*.png
+    const appearancePattern = new RegExp(`^${appearance}[\\.\\-]`, 'i');
+    const matchingWallpaper = files.find(file => appearancePattern.test(file));
+
+    if (!matchingWallpaper) {
+      console.log(`No ${appearance} wallpaper found for theme: ${themeName}`);
+      return;
+    }
+
+    // Apply the wallpaper
+    const wallpaperPath = path.join(wallpapersDir, matchingWallpaper);
+    console.log(`Applying dynamic ${appearance} wallpaper: ${wallpaperPath}`);
+    await handleApplyWallpaper(null, wallpaperPath);
+  } catch (error) {
+    console.error(`Error applying dynamic wallpaper:`, error);
+  }
+}
+
+/**
  * Apply theme automatically based on system appearance
  * Called when system appearance changes
  */
@@ -1915,6 +1952,13 @@ export async function handleAppearanceChange(): Promise<void> {
 
     // Get preferences to check if auto-switching is enabled
     const prefs = await handleGetPreferences();
+
+    // Check if dynamic wallpaper is enabled (even if auto-switch is off)
+    if (prefs.dynamicWallpaper?.enabled) {
+      const state = await handleGetState();
+      console.log(`Dynamic wallpaper enabled, applying ${appearance} wallpaper for current theme: ${state.currentTheme}`);
+      await applyDynamicWallpaper(appearance, state.currentTheme);
+    }
 
     // Check if auto-switching based on system appearance is enabled
     if (!prefs.autoSwitch?.enabled || prefs.autoSwitch?.mode !== 'system') {
@@ -1941,6 +1985,12 @@ export async function handleAppearanceChange(): Promise<void> {
     // Apply the theme
     console.log(`Auto-switching to ${appearance} theme: ${themeToApply}`);
     await handleApplyTheme(null, themeToApply);
+
+    // Apply dynamic wallpaper if enabled
+    if (prefs.dynamicWallpaper?.enabled) {
+      console.log(`Dynamic wallpaper enabled, applying ${appearance} wallpaper for theme: ${themeToApply}`);
+      await applyDynamicWallpaper(appearance, themeToApply);
+    }
 
     // Show notification if enabled (use onScheduledSwitch for system appearance changes)
     const shouldShowNotification = prefs.notifications?.onScheduledSwitch ?? prefs.showNotifications ?? true;

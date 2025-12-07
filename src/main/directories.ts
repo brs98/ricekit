@@ -95,6 +95,9 @@ export function getDefaultPreferences() {
       onScheduledSwitch: true,
     },
     onboardingCompleted: false,
+    dynamicWallpaper: {
+      enabled: false,
+    },
   };
 }
 
