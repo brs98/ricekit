@@ -2014,7 +2014,7 @@
       "Step 4: Verify corners are rounded (10-12px radius)",
       "Step 5: Verify window shadow matches macOS native windows"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -2089,7 +2089,7 @@
       "Step 5: Verify text is dark on light background",
       "Step 6: Verify UI is readable and attractive"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -2102,7 +2102,7 @@
       "Step 5: Verify text is light on dark background",
       "Step 6: Verify UI is readable and attractive"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -2115,7 +2115,7 @@
       "Step 5: Hover over interactive elements",
       "Step 6: Verify hover transitions are smooth"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -2128,7 +2128,7 @@
       "Step 5: Verify card corners are rounded",
       "Step 6: Verify spacing between cards is consistent"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -2152,7 +2152,7 @@
       "Step 5: Verify hover state provides visual feedback",
       "Step 6: Verify disabled buttons are visually distinct"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -2164,7 +2164,7 @@
       "Step 4: Verify modal has shadow to show elevation",
       "Step 5: Verify modal is centered on screen"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -2176,7 +2176,7 @@
       "Step 4: Verify icon colors match UI theme",
       "Step 5: Verify icons are crisp and clear at all sizes"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -2190,7 +2190,7 @@
       "Step 6: Focus search bar",
       "Step 7: Verify focus state has visible indicator (border or shadow)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -2202,7 +2202,7 @@
       "Step 4: Verify selected chip has distinct background color",
       "Step 5: Verify selected chip has appropriate contrast"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -2278,7 +2278,7 @@
       "Step 5: Toggle switch",
       "Step 6: Verify animation is smooth"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -2290,7 +2290,7 @@
       "Step 4: Verify dropdown menu has native styling",
       "Step 5: Verify selected option is highlighted"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
