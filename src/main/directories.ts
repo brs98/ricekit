@@ -87,6 +87,7 @@ export function getDefaultPreferences() {
       onThemeChange: true,
       onScheduledSwitch: true,
     },
+    onboardingCompleted: false,
   };
 }
 
@@ -105,11 +106,24 @@ export function ensurePreferences(): void {
     return;
   }
 
-  // If file exists, validate it's valid JSON
+  // If file exists, validate it's valid JSON and merge with defaults
   try {
     const content = fs.readFileSync(prefsPath, 'utf-8');
-    JSON.parse(content); // This will throw if JSON is invalid
-    // If we get here, the file is valid - no action needed
+    const existingPrefs = JSON.parse(content); // This will throw if JSON is invalid
+
+    // Merge existing preferences with defaults to add any missing fields
+    const mergedPrefs = { ...defaultPreferences, ...existingPrefs };
+
+    // Check if any new fields were added
+    const hasNewFields = Object.keys(defaultPreferences).some(
+      key => !(key in existingPrefs)
+    );
+
+    // If new fields were added, update the file
+    if (hasNewFields) {
+      fs.writeFileSync(prefsPath, JSON.stringify(mergedPrefs, null, 2));
+      console.log(`Updated preferences with new fields: ${prefsPath}`);
+    }
   } catch (error) {
     // File exists but contains invalid JSON - log error and recreate with defaults
     console.error(`Corrupted preferences file detected: ${prefsPath}`);

@@ -81,6 +81,7 @@ export interface Preferences {
     onScheduledSwitch: boolean;
   };
   hookScript?: string; // Optional path to user-defined hook script
+  onboardingCompleted: boolean; // Whether user has completed the onboarding wizard
 }
 
 // State structure

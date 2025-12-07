@@ -1503,7 +1503,7 @@
       "Step 5: Complete onboarding",
       "Step 6: Verify onboarding does not appear on subsequent launches"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1516,7 +1516,7 @@
       "Step 5: Complete onboarding",
       "Step 6: Verify tokyo-night is applied as active theme"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1529,7 +1529,7 @@
       "Step 5: Complete onboarding",
       "Step 6: Verify selected applications have been configured"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

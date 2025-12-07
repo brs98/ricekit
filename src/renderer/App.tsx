@@ -6,6 +6,7 @@ import { ApplicationsView } from './components/ApplicationsView';
 import { WallpapersView } from './components/WallpapersView';
 import { SettingsView } from './components/SettingsView';
 import { QuickSwitcher } from './components/QuickSwitcher';
+import { OnboardingModal } from './components/OnboardingModal';
 import { Theme } from '../shared/types';
 
 type FilterMode = 'all' | 'light' | 'dark' | 'favorites';
@@ -16,14 +17,33 @@ function App() {
   const [filterMode, setFilterMode] = useState<FilterMode>('all');
   const [editorTheme, setEditorTheme] = useState<Theme | undefined>(undefined);
   const [isQuickSwitcher, setIsQuickSwitcher] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
-  // Detect if this is the quick switcher window
+  // Detect if this is the quick switcher window and check onboarding status
   useEffect(() => {
     const hash = window.location.hash;
     if (hash === '#/quick-switcher') {
       setIsQuickSwitcher(true);
+    } else {
+      // Check if onboarding needs to be shown
+      checkOnboardingStatus();
     }
   }, []);
+
+  async function checkOnboardingStatus() {
+    try {
+      const prefs = await window.electronAPI.getPreferences();
+      if (!prefs.onboardingCompleted) {
+        setShowOnboarding(true);
+      }
+    } catch (error) {
+      console.error('Failed to check onboarding status:', error);
+    }
+  }
+
+  function handleOnboardingComplete() {
+    setShowOnboarding(false);
+  }
 
   // If this is the quick switcher, render only that component
   if (isQuickSwitcher) {
@@ -32,6 +52,9 @@ function App() {
 
   return (
     <div className="app">
+      {/* Onboarding modal */}
+      {showOnboarding && <OnboardingModal onComplete={handleOnboardingComplete} />}
+
       <div className="sidebar">
         <div className="sidebar-header">
           <h1 className="text-lg font-semibold">MacTheme</h1>
