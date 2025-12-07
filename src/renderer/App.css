@@ -352,7 +352,7 @@ body {
 
 .color-swatch {
   aspect-ratio: 1;
-  border-radius: 6px;
+  border-radius: 50%;
   border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
@@ -1273,7 +1273,7 @@ body {
 .palette-swatch {
   width: 60px;
   height: 60px;
-  border-radius: 8px;
+  border-radius: 50%;
   border: 1px solid rgba(0, 0, 0, 0.1);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
@@ -1318,7 +1318,7 @@ body {
 .palette-swatch-small {
   width: 32px;
   height: 32px;
-  border-radius: 6px;
+  border-radius: 50%;
   border: 1px solid rgba(0, 0, 0, 0.1);
   cursor: pointer;
   transition: all 200ms ease;
@@ -2916,7 +2916,7 @@ body {
 .quick-switcher-color-swatch {
   width: 20px;
   height: 20px;
-  border-radius: 4px;
+  border-radius: 50%;
   border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
