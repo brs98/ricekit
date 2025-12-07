@@ -1877,7 +1877,7 @@
       "Step 7: Set system time to 2pm",
       "Step 8: Verify wallpaper B is applied"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

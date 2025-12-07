@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import { initializeApp, initializeAppAfterThemes, getPreferencesPath, getStatePath } from './directories';
 import { installBundledThemes } from './themeInstaller';
-import { setupIpcHandlers, handleAppearanceChange, checkScheduleAndApplyTheme } from './ipcHandlers';
+import { setupIpcHandlers, handleAppearanceChange, checkScheduleAndApplyTheme, startWallpaperScheduler, stopWallpaperScheduler } from './ipcHandlers';
 import { logger } from './logger';
 
 let mainWindow: BrowserWindow | null = null;
@@ -435,6 +435,9 @@ if (!gotTheLock) {
   // Also check immediately on startup
   checkScheduleAndApplyTheme();
 
+  // Start wallpaper scheduler (checks and applies wallpapers based on time schedules)
+  startWallpaperScheduler();
+
   // Register global keyboard shortcut for quick switcher from preferences
   try {
     const prefsPath = getPreferencesPath();
@@ -477,5 +480,6 @@ if (!gotTheLock) {
   // Unregister shortcuts when app is about to quit
   app.on('will-quit', () => {
     globalShortcut.unregisterAll();
+    stopWallpaperScheduler();
   });
 }

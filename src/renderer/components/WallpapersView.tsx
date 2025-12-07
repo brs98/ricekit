@@ -67,6 +67,218 @@ const WallpaperPreviewModal: React.FC<WallpaperPreviewModalProps> = ({
   );
 };
 
+interface WallpaperSchedule {
+  timeStart: string;
+  timeEnd: string;
+  wallpaperPath: string;
+  name?: string;
+}
+
+interface ScheduleModalProps {
+  wallpapers: string[];
+  currentSchedules: WallpaperSchedule[];
+  onClose: () => void;
+  onSave: (schedules: WallpaperSchedule[]) => void;
+}
+
+const ScheduleModal: React.FC<ScheduleModalProps> = ({ wallpapers, currentSchedules, onClose, onSave }) => {
+  const [schedules, setSchedules] = useState<WallpaperSchedule[]>(currentSchedules);
+
+  const addSchedule = () => {
+    setSchedules([
+      ...schedules,
+      {
+        timeStart: '06:00',
+        timeEnd: '12:00',
+        wallpaperPath: wallpapers[0] || '',
+        name: 'Morning',
+      },
+    ]);
+  };
+
+  const updateSchedule = (index: number, field: keyof WallpaperSchedule, value: string) => {
+    const updated = [...schedules];
+    updated[index] = { ...updated[index], [field]: value };
+    setSchedules(updated);
+  };
+
+  const removeSchedule = (index: number) => {
+    setSchedules(schedules.filter((_, i) => i !== index));
+  };
+
+  const getWallpaperName = (path: string) => {
+    const fileName = path.split('/').pop() || 'Unknown';
+    return fileName.replace(/\.[^.]+$/, '').replace(/-/g, ' ');
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div
+        className="modal-content"
+        style={{ maxWidth: '700px', maxHeight: '80vh', overflow: 'auto' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="modal-header">
+          <h2>Wallpaper Schedule</h2>
+          <button className="close-button" onClick={onClose}>
+            ✕
+          </button>
+        </div>
+
+        <div style={{ padding: '16px' }}>
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px' }}>
+            Set different wallpapers for different times of day. Schedules are checked every minute.
+          </p>
+
+          {schedules.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
+              No schedules yet. Click "Add Schedule" to create one.
+            </div>
+          )}
+
+          {schedules.map((schedule, index) => (
+            <div
+              key={index}
+              style={{
+                padding: '16px',
+                marginBottom: '12px',
+                borderRadius: '8px',
+                border: '1px solid var(--border)',
+                backgroundColor: 'var(--background-secondary)',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                <input
+                  type="text"
+                  placeholder="Schedule name (e.g., Morning)"
+                  value={schedule.name || ''}
+                  onChange={(e) => updateSchedule(index, 'name', e.target.value)}
+                  style={{
+                    flex: 1,
+                    padding: '6px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid var(--border)',
+                    backgroundColor: 'var(--background)',
+                    color: 'var(--text)',
+                    fontSize: '13px',
+                    marginRight: '8px',
+                  }}
+                />
+                <button
+                  onClick={() => removeSchedule(index)}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid var(--border)',
+                    backgroundColor: 'var(--background)',
+                    color: 'var(--text-secondary)',
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Remove
+                </button>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                <div>
+                  <label style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                    Start Time
+                  </label>
+                  <input
+                    type="time"
+                    value={schedule.timeStart}
+                    onChange={(e) => updateSchedule(index, 'timeStart', e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '6px 12px',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border)',
+                      backgroundColor: 'var(--background)',
+                      color: 'var(--text)',
+                      fontSize: '13px',
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                    End Time
+                  </label>
+                  <input
+                    type="time"
+                    value={schedule.timeEnd}
+                    onChange={(e) => updateSchedule(index, 'timeEnd', e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '6px 12px',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border)',
+                      backgroundColor: 'var(--background)',
+                      color: 'var(--text)',
+                      fontSize: '13px',
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                  Wallpaper
+                </label>
+                <select
+                  value={schedule.wallpaperPath}
+                  onChange={(e) => updateSchedule(index, 'wallpaperPath', e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '6px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid var(--border)',
+                    backgroundColor: 'var(--background)',
+                    color: 'var(--text)',
+                    fontSize: '13px',
+                  }}
+                >
+                  {wallpapers.map((wallpaper) => (
+                    <option key={wallpaper} value={wallpaper}>
+                      {getWallpaperName(wallpaper)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          ))}
+
+          <button
+            onClick={addSchedule}
+            style={{
+              width: '100%',
+              padding: '10px',
+              borderRadius: '6px',
+              border: '1px solid var(--border)',
+              backgroundColor: 'var(--background-secondary)',
+              color: 'var(--text)',
+              fontSize: '13px',
+              cursor: 'pointer',
+              marginTop: '8px',
+            }}
+          >
+            + Add Schedule
+          </button>
+        </div>
+
+        <div className="modal-actions">
+          <button className="secondary-button" onClick={onClose}>
+            Cancel
+          </button>
+          <button className="primary-button" onClick={() => onSave(schedules)}>
+            Save Schedules
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const WallpapersView: React.FC = () => {
   const [wallpapers, setWallpapers] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -76,6 +288,9 @@ export const WallpapersView: React.FC = () => {
   const [displays, setDisplays] = useState<Display[]>([]);
   const [selectedDisplay, setSelectedDisplay] = useState<number | null>(null);
   const [dynamicWallpaperEnabled, setDynamicWallpaperEnabled] = useState(false);
+  const [scheduleEnabled, setScheduleEnabled] = useState(false);
+  const [schedules, setSchedules] = useState<WallpaperSchedule[]>([]);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
 
   useEffect(() => {
     loadWallpapers();
@@ -87,6 +302,8 @@ export const WallpapersView: React.FC = () => {
     try {
       const prefs = await window.electronAPI.getPreferences();
       setDynamicWallpaperEnabled(prefs.dynamicWallpaper?.enabled || false);
+      setScheduleEnabled(prefs.wallpaperSchedule?.enabled || false);
+      setSchedules(prefs.wallpaperSchedule?.schedules || []);
     } catch (err) {
       console.error('Error loading preferences:', err);
     }
@@ -108,6 +325,46 @@ export const WallpapersView: React.FC = () => {
     } catch (err) {
       console.error('Error toggling dynamic wallpaper:', err);
       setError('Failed to update dynamic wallpaper setting.');
+    }
+  };
+
+  const toggleSchedule = async () => {
+    try {
+      const prefs = await window.electronAPI.getPreferences();
+      const newValue = !scheduleEnabled;
+
+      await window.electronAPI.setPreferences({
+        ...prefs,
+        wallpaperSchedule: {
+          enabled: newValue,
+          schedules: schedules,
+        },
+      });
+
+      setScheduleEnabled(newValue);
+    } catch (err) {
+      console.error('Error toggling wallpaper schedule:', err);
+      setError('Failed to update wallpaper schedule setting.');
+    }
+  };
+
+  const saveSchedules = async (newSchedules: WallpaperSchedule[]) => {
+    try {
+      const prefs = await window.electronAPI.getPreferences();
+
+      await window.electronAPI.setPreferences({
+        ...prefs,
+        wallpaperSchedule: {
+          enabled: scheduleEnabled,
+          schedules: newSchedules,
+        },
+      });
+
+      setSchedules(newSchedules);
+      setShowScheduleModal(false);
+    } catch (err) {
+      console.error('Error saving wallpaper schedules:', err);
+      setError('Failed to save wallpaper schedules.');
     }
   };
 
@@ -264,6 +521,75 @@ export const WallpapersView: React.FC = () => {
               />
             </button>
           </div>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '6px 12px',
+              borderRadius: '8px',
+              backgroundColor: 'var(--background-secondary)',
+              border: '1px solid var(--border)',
+            }}
+          >
+            <label
+              htmlFor="schedule-wallpaper-toggle"
+              style={{
+                fontSize: '13px',
+                color: 'var(--text)',
+                fontWeight: 500,
+                cursor: 'pointer',
+                userSelect: 'none',
+              }}
+            >
+              Scheduling
+            </label>
+            <button
+              id="schedule-wallpaper-toggle"
+              onClick={toggleSchedule}
+              style={{
+                width: '40px',
+                height: '22px',
+                borderRadius: '11px',
+                border: 'none',
+                backgroundColor: scheduleEnabled ? 'var(--accent)' : 'var(--background-tertiary)',
+                position: 'relative',
+                cursor: 'pointer',
+                transition: 'background-color 0.2s ease',
+              }}
+              title={scheduleEnabled ? 'Wallpaper changes based on time schedules' : 'Click to enable wallpaper scheduling'}
+            >
+              <div
+                style={{
+                  width: '18px',
+                  height: '18px',
+                  borderRadius: '50%',
+                  backgroundColor: '#fff',
+                  position: 'absolute',
+                  top: '2px',
+                  left: scheduleEnabled ? '20px' : '2px',
+                  transition: 'left 0.2s ease',
+                  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.3)',
+                }}
+              />
+            </button>
+          </div>
+          {scheduleEnabled && (
+            <button
+              onClick={() => setShowScheduleModal(true)}
+              style={{
+                padding: '6px 12px',
+                borderRadius: '6px',
+                border: '1px solid var(--border)',
+                backgroundColor: 'var(--background-secondary)',
+                color: 'var(--text)',
+                fontSize: '13px',
+                cursor: 'pointer',
+              }}
+            >
+              Manage Schedules {schedules.length > 0 && `(${schedules.length})`}
+            </button>
+          )}
           {displays.length > 1 && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <label htmlFor="display-select" style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
@@ -334,6 +660,15 @@ export const WallpapersView: React.FC = () => {
           onApply={handleApplyWallpaper}
           displays={displays}
           selectedDisplay={selectedDisplay}
+        />
+      )}
+
+      {showScheduleModal && (
+        <ScheduleModal
+          wallpapers={wallpapers}
+          currentSchedules={schedules}
+          onClose={() => setShowScheduleModal(false)}
+          onSave={saveSchedules}
         />
       )}
     </div>

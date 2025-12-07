@@ -85,6 +85,15 @@ export interface Preferences {
   dynamicWallpaper?: {
     enabled: boolean; // Enable automatic wallpaper switching based on system appearance
   };
+  wallpaperSchedule?: {
+    enabled: boolean; // Enable wallpaper scheduling by time of day
+    schedules: Array<{
+      timeStart: string; // Time in HH:MM format (24-hour)
+      timeEnd: string;   // Time in HH:MM format (24-hour)
+      wallpaperPath: string; // Full path to wallpaper
+      name?: string; // Optional display name for the schedule
+    }>;
+  };
 }
 
 // State structure

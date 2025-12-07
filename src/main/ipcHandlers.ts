@@ -1732,6 +1732,20 @@ async function handleSetPreferences(_event: any, prefs: Preferences): Promise<vo
       console.error('Failed to update keyboard shortcut:', err);
     }
   }
+
+  // Check if wallpaper schedule changed - restart scheduler to pick up new schedules
+  const oldScheduleEnabled = oldPrefs.wallpaperSchedule?.enabled || false;
+  const newScheduleEnabled = prefs.wallpaperSchedule?.enabled || false;
+  const oldSchedulesJson = JSON.stringify(oldPrefs.wallpaperSchedule?.schedules || []);
+  const newSchedulesJson = JSON.stringify(prefs.wallpaperSchedule?.schedules || []);
+
+  if (oldScheduleEnabled !== newScheduleEnabled || oldSchedulesJson !== newSchedulesJson) {
+    logger.info('Wallpaper schedule preferences changed, restarting scheduler');
+    stopWallpaperScheduler();
+    if (newScheduleEnabled) {
+      startWallpaperScheduler();
+    }
+  }
 }
 
 /**
@@ -2336,4 +2350,124 @@ async function handleSetDebugEnabled(_event: any, enabled: boolean): Promise<voi
  */
 async function handleIsDebugEnabled(): Promise<boolean> {
   return logger.isDebugEnabled();
+}
+
+/**
+ * Wallpaper Scheduler Service
+ * Automatically applies wallpapers based on time of day schedules
+ */
+let wallpaperSchedulerInterval: NodeJS.Timeout | null = null;
+
+/**
+ * Start the wallpaper scheduler
+ */
+export function startWallpaperScheduler(): void {
+  // Clear existing interval if any
+  if (wallpaperSchedulerInterval) {
+    clearInterval(wallpaperSchedulerInterval);
+  }
+
+  // Check every minute
+  wallpaperSchedulerInterval = setInterval(async () => {
+    try {
+      await checkAndApplyScheduledWallpaper();
+    } catch (error) {
+      logger.error('Error in wallpaper scheduler', error);
+    }
+  }, 60000); // 60000ms = 1 minute
+
+  // Run immediately on start
+  checkAndApplyScheduledWallpaper().catch(error => {
+    logger.error('Error in initial wallpaper scheduler check', error);
+  });
+
+  logger.info('Wallpaper scheduler started');
+}
+
+/**
+ * Stop the wallpaper scheduler
+ */
+export function stopWallpaperScheduler(): void {
+  if (wallpaperSchedulerInterval) {
+    clearInterval(wallpaperSchedulerInterval);
+    wallpaperSchedulerInterval = null;
+    logger.info('Wallpaper scheduler stopped');
+  }
+}
+
+/**
+ * Check if a wallpaper should be applied based on current time and schedules
+ */
+async function checkAndApplyScheduledWallpaper(): Promise<void> {
+  try {
+    // Get preferences
+    const prefs = await handleGetPreferences();
+
+    // Check if wallpaper scheduling is enabled
+    if (!prefs.wallpaperSchedule?.enabled || !prefs.wallpaperSchedule.schedules.length) {
+      return;
+    }
+
+    // Get current time in HH:MM format
+    const now = new Date();
+    const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+    logger.debug(`Checking wallpaper schedule at ${currentTime}`);
+
+    // Find the active schedule for current time
+    for (const schedule of prefs.wallpaperSchedule.schedules) {
+      if (isTimeInRange(currentTime, schedule.timeStart, schedule.timeEnd)) {
+        // Check if this wallpaper is already applied
+        const state = await handleGetState();
+        if (state.currentWallpaper === schedule.wallpaperPath) {
+          logger.debug(`Scheduled wallpaper already applied: ${schedule.wallpaperPath}`);
+          return;
+        }
+
+        // Apply the scheduled wallpaper
+        logger.info(`Applying scheduled wallpaper: ${schedule.wallpaperPath} (${schedule.name || 'Unnamed'})`);
+        await handleApplyWallpaper(null, schedule.wallpaperPath);
+
+        // Show notification if enabled
+        if (prefs.notifications?.onScheduledSwitch) {
+          const { Notification } = await import('electron');
+          const notification = new Notification({
+            title: 'Scheduled Wallpaper Applied',
+            body: `Applied ${schedule.name || 'wallpaper'} for ${schedule.timeStart} - ${schedule.timeEnd}`,
+          });
+          notification.show();
+        }
+
+        return; // Exit after applying the first matching schedule
+      }
+    }
+
+    logger.debug('No matching wallpaper schedule found for current time');
+  } catch (error) {
+    logger.error('Error checking scheduled wallpaper', error);
+  }
+}
+
+/**
+ * Check if current time is within a time range
+ * Supports ranges that cross midnight (e.g., 22:00 - 06:00)
+ */
+function isTimeInRange(currentTime: string, startTime: string, endTime: string): boolean {
+  const toMinutes = (time: string): number => {
+    const [hours, minutes] = time.split(':').map(Number);
+    return hours * 60 + minutes;
+  };
+
+  const current = toMinutes(currentTime);
+  const start = toMinutes(startTime);
+  const end = toMinutes(endTime);
+
+  if (start <= end) {
+    // Normal range (e.g., 06:00 - 18:00)
+    return current >= start && current < end;
+  } else {
+    // Range crosses midnight (e.g., 22:00 - 06:00)
+    return current >= start || current < end;
+  }
 }

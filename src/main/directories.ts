@@ -98,6 +98,10 @@ export function getDefaultPreferences() {
     dynamicWallpaper: {
       enabled: false,
     },
+    wallpaperSchedule: {
+      enabled: false,
+      schedules: [],
+    },
   };
 }
 
