@@ -14,6 +14,31 @@ This file tracks critical bugs that must be fixed before implementing new featur
 
 ## Resolved Bugs
 
+### [RESOLVED] Missing Theme Symlink on Startup
+- **Reported:** 2025-12-06 (Session 46)
+- **Resolved:** 2025-12-06 (Session 46)
+- **Severity:** CRITICAL
+- **Symptom:** Theme symlink at `~/Library/Application Support/MacTheme/current/theme` was missing, causing theme switching to fail
+- **Root Cause:** `ensureState()` function created state.json file with currentTheme but didn't ensure the actual symlink existed
+- **Resolution:**
+  - Added new `ensureThemeSymlink()` function to `src/main/directories.ts`
+  - Function checks if symlink exists and is valid
+  - Creates symlink pointing to current theme from state.json
+  - Includes fallback to tokyo-night if current theme doesn't exist
+  - Handles invalid/broken symlinks gracefully
+  - Added `initializeAppAfterThemes()` wrapper function
+  - Updated `src/main/main.ts` to call `initializeAppAfterThemes()` after `installBundledThemes()`
+- **Verification:**
+  1. Created test script `test-symlink-standalone.js`
+  2. Verified symlink creation logic works correctly
+  3. Tested missing symlink scenario - symlink recreated successfully
+  4. Ran `test-app-basic.js` - all tests pass
+  5. Symlink now correctly created on app startup if missing
+- **Files Modified:**
+  - `src/main/directories.ts` (+77 lines: ensureThemeSymlink, initializeAppAfterThemes)
+  - `src/main/main.ts` (+2 lines: import and call initializeAppAfterThemes)
+- **Impact:** Critical bug fixed - app now robustly handles missing symlinks
+
 ### [RESOLVED] Theme Loading Failure - Session 10 Verification
 - **Reported:** 2025-12-06 (Session 9)
 - **Resolved:** 2025-12-06 (Session 10)

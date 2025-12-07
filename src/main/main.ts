@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain, nativeTheme, Tray, Menu, nativeImage, globalShortcut } from 'electron';
 import path from 'path';
 import fs from 'fs';
-import { initializeApp, getPreferencesPath, getStatePath } from './directories';
+import { initializeApp, initializeAppAfterThemes, getPreferencesPath, getStatePath } from './directories';
 import { installBundledThemes } from './themeInstaller';
 import { setupIpcHandlers, handleAppearanceChange, checkScheduleAndApplyTheme } from './ipcHandlers';
 
@@ -330,6 +330,9 @@ if (!gotTheLock) {
     console.log('=== MacTheme Starting ===');
     initializeApp();
     installBundledThemes();
+
+    // Initialize theme symlink after themes are installed
+    initializeAppAfterThemes();
 
   // Setup IPC handlers
   setupIpcHandlers();
