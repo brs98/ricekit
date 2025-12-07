@@ -1825,7 +1825,7 @@
       "Step 4: Mark it as light theme in editor",
       "Step 5: Verify light.mode file is created"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
