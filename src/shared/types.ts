@@ -120,6 +120,7 @@ export interface ElectronAPI {
   closeQuickSwitcher: () => Promise<void>;
   onQuickSwitcherOpened: (callback: () => void) => void;
   openExternal: (url: string) => Promise<void>;
+  openHelp: () => Promise<void>;
 }
 
 declare global {

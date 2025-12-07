@@ -48,4 +48,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Utility operations
   openExternal: (url: string) => ipcRenderer.invoke('system:openExternal', url),
+  openHelp: () => ipcRenderer.invoke('system:openHelp'),
 });

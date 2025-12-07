@@ -174,6 +174,21 @@ export function SettingsView() {
     }
   }
 
+  async function handleOpenHelp() {
+    try {
+      // Try to open the local HELP.md file
+      await window.electronAPI.openHelp?.();
+    } catch (err: any) {
+      console.error('Failed to open help:', err);
+      // Fallback to GitHub README if local help file doesn't work
+      const fallbackUrl = 'https://github.com/yourusername/mactheme#readme';
+      window.electronAPI.openExternal?.(fallbackUrl).catch((fallbackErr: Error) => {
+        console.error('Failed to open fallback URL:', fallbackErr);
+        alert('Failed to open help documentation.');
+      });
+    }
+  }
+
   if (loading) {
     return (
       <div className="settings-view">
@@ -666,9 +681,24 @@ export function SettingsView() {
           </div>
         </section>
 
-        {/* About Section */}
+        {/* Help & About Section */}
         <section className="settings-section">
-          <h3 className="section-title">About</h3>
+          <h3 className="section-title">Help & About</h3>
+
+          <div className="setting-item">
+            <div className="setting-info">
+              <label className="setting-label">Help & Documentation</label>
+              <p className="setting-description">
+                View user guide, troubleshooting tips, and feature documentation
+              </p>
+            </div>
+            <button
+              className="secondary-button"
+              onClick={() => handleOpenHelp()}
+            >
+              Open Help
+            </button>
+          </div>
 
           <div className="setting-item">
             <div className="setting-info">

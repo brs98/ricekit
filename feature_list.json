@@ -1643,7 +1643,7 @@
       "Step 4: Verify documentation covers key features",
       "Step 5: Verify troubleshooting section exists"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1669,7 +1669,7 @@
       "Step 5: Select 'Sort by Recently Used'",
       "Step 6: Verify dracula is first, nord is second, tokyo-night is third"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
