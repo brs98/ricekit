@@ -55,6 +55,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Utility operations
   openExternal: (url: string) => ipcRenderer.invoke('system:openExternal', url),
+  openPath: (filePath: string) => ipcRenderer.invoke('system:openPath', filePath),
   openHelp: () => ipcRenderer.invoke('system:openHelp'),
 
   // Logging operations

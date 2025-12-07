@@ -8,6 +8,7 @@ export function ApplicationsView() {
   const [error, setError] = useState<string | null>(null);
   const [setupApp, setSetupApp] = useState<AppInfo | null>(null);
   const [enabledApps, setEnabledApps] = useState<string[]>([]);
+  const [refreshingApp, setRefreshingApp] = useState<string | null>(null);
 
   useEffect(() => {
     loadApps();
@@ -70,6 +71,27 @@ export function ApplicationsView() {
       console.error('Failed to toggle app:', err);
       // Reload preferences to sync state
       loadPreferences();
+    }
+  };
+
+  const handleViewConfig = async (configPath: string) => {
+    try {
+      await window.electronAPI.openPath(configPath);
+    } catch (err) {
+      console.error('Failed to open config file:', err);
+      setError('Failed to open config file. It may not exist yet.');
+    }
+  };
+
+  const handleRefreshApp = async (appName: string) => {
+    try {
+      setRefreshingApp(appName);
+      await window.electronAPI.refreshApp(appName);
+    } catch (err) {
+      console.error('Failed to refresh app:', err);
+      setError(`Failed to refresh ${appName}. The app may not be running.`);
+    } finally {
+      setRefreshingApp(null);
     }
   };
 
@@ -225,11 +247,18 @@ export function ApplicationsView() {
                       )}
                       {app.isInstalled && app.isConfigured && (
                         <>
-                          <button className="secondary-button">
+                          <button
+                            className="secondary-button"
+                            onClick={() => handleViewConfig(app.configPath)}
+                          >
                             View Config
                           </button>
-                          <button className="primary-button">
-                            Refresh
+                          <button
+                            className="primary-button"
+                            onClick={() => handleRefreshApp(app.name)}
+                            disabled={refreshingApp === app.name}
+                          >
+                            {refreshingApp === app.name ? 'Refreshing...' : 'Refresh'}
                           </button>
                         </>
                       )}

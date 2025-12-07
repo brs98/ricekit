@@ -61,6 +61,7 @@ export function setupIpcHandlers(): void {
   ipcMain.handle('system:appearance', handleGetSystemAppearance);
   ipcMain.handle('system:getSunriseSunset', handleGetSunriseSunset);
   ipcMain.handle('system:openExternal', handleOpenExternal);
+  ipcMain.handle('system:openPath', handleOpenPath);
   ipcMain.handle('system:openHelp', handleOpenHelp);
 
   // State operations
@@ -2089,6 +2090,25 @@ async function handleOpenExternal(_event: any, url: string): Promise<void> {
   } catch (error: any) {
     console.error('Failed to open external URL:', error);
     throw new Error(`Failed to open URL: ${error.message}`);
+  }
+}
+
+/**
+ * Open a file or folder path in the default application
+ */
+async function handleOpenPath(_event: any, filePath: string): Promise<void> {
+  try {
+    // Expand ~ to home directory
+    const expandedPath = filePath.replace(/^~/, os.homedir());
+
+    if (!fs.existsSync(expandedPath)) {
+      throw new Error(`Path does not exist: ${filePath}`);
+    }
+
+    await shell.openPath(expandedPath);
+  } catch (error: any) {
+    console.error('Failed to open path:', error);
+    throw new Error(`Failed to open path: ${error.message}`);
   }
 }
 
