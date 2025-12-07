@@ -2050,7 +2050,7 @@
       "Step 4: Verify headings are 15px",
       "Step 5: Verify titles are 20px"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -2063,7 +2063,7 @@
       "Step 5: Verify grid gaps are 12px",
       "Step 6: Verify section margins are 24px"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -2076,7 +2076,7 @@
       "Step 5: Move window over different backgrounds",
       "Step 6: Verify vibrancy adapts to background"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
