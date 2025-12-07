@@ -239,7 +239,7 @@ export function ThemeDetailModal({
                       title="Click to preview"
                     >
                       <img
-                        src={`file://${wallpaper}`}
+                        src={`local-file://${wallpaper}`}
                         alt={`Wallpaper ${index + 1}`}
                         className="wallpaper-thumb-img"
                       />
@@ -265,7 +265,7 @@ export function ThemeDetailModal({
                   <X size={24} />
                 </button>
                 <img
-                  src={`file://${selectedWallpaper}`}
+                  src={`local-file://${selectedWallpaper}`}
                   alt="Wallpaper preview"
                   className="wallpaper-preview-img"
                 />

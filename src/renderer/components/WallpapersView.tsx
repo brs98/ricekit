@@ -48,7 +48,7 @@ const WallpaperPreviewModal: React.FC<WallpaperPreviewModalProps> = ({
 
         <div className="wallpaper-preview-container">
           <img
-            src={`file://${wallpaperPath}`}
+            src={`local-file://${wallpaperPath}`}
             alt="Wallpaper preview"
             className="wallpaper-preview-image"
           />
@@ -642,7 +642,7 @@ export const WallpapersView: React.FC = () => {
             >
               <div className="wallpaper-thumbnail">
                 <img
-                  src={`file://${wallpaper.thumbnail}`}
+                  src={`local-file://${wallpaper.thumbnail}`}
                   alt={displayName}
                   className="wallpaper-image"
                   loading="lazy"

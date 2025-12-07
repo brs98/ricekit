@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, nativeTheme, Tray, Menu, nativeImage, globalShortcut } from 'electron';
+import { app, BrowserWindow, ipcMain, nativeTheme, Tray, Menu, nativeImage, globalShortcut, protocol, net } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import { initializeApp, initializeAppAfterThemes, getPreferencesPath, getStatePath } from './directories';
@@ -370,6 +370,16 @@ if (!gotTheLock) {
 
   // This method will be called when Electron has finished initialization
   app.whenReady().then(() => {
+    // Register custom protocol handler for loading local files
+    // This is required because file:// URLs are blocked in renderer with contextIsolation
+    protocol.handle('local-file', (request) => {
+      // Convert local-file:// URL to file path
+      // Example: local-file:///Users/foo/image.jpg -> /Users/foo/image.jpg
+      const filePath = decodeURIComponent(request.url.replace('local-file://', ''));
+      return net.fetch(`file://${filePath}`);
+    });
+    logger.info('Registered local-file protocol handler');
+
     // Initialize application directories and files
     logger.info('=== MacTheme Starting ===');
     console.log('=== MacTheme Starting ===');
