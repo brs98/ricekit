@@ -1708,7 +1708,7 @@
       "Step 6: Enter color as HSL",
       "Step 7: Verify it is accepted and converted"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

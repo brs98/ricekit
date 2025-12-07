@@ -1,5 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Theme, ThemeMetadata, ThemeColors } from '../../shared/types';
+import {
+  isValidHexColor,
+  toHex,
+  detectColorFormat
+} from '../../shared/colorUtils';
 
 interface ThemeEditorProps {
   initialTheme?: ThemeMetadata;
@@ -202,13 +207,6 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
     }
   }, [initialTheme]);
 
-  // Validate hex color format
-  const isValidHexColor = (color: string): boolean => {
-    // Must start with # and have 3 or 6 hex digits
-    const hexPattern = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
-    return hexPattern.test(color);
-  };
-
   const applyPreset = (presetKey: string) => {
     if (presetKey && presetSchemes[presetKey]) {
       const preset = presetSchemes[presetKey];
@@ -221,28 +219,41 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
   };
 
   const updateColor = (colorKey: keyof ThemeColors, value: string) => {
-    // Always update the value to allow typing
+    // Detect what format the user entered
+    const format = detectColorFormat(value);
+    let hexValue = value;
+    let errorMessage = '';
+
+    // Validate the color
+    if (value.trim() === '') {
+      errorMessage = 'Color cannot be empty';
+    } else if (format === 'invalid') {
+      errorMessage = 'Invalid color format. Use hex (#FF5733), RGB (255, 87, 51), or HSL (360, 100%, 50%)';
+    } else {
+      // Convert to hex if not already
+      const convertedHex = toHex(value);
+      if (convertedHex) {
+        hexValue = convertedHex;
+      } else {
+        errorMessage = 'Failed to convert color to hex format';
+      }
+    }
+
+    // Update the color value (store as hex internally)
     setMetadata({
       ...metadata,
       colors: {
         ...metadata.colors,
-        [colorKey]: value,
+        [colorKey]: hexValue,
       },
     });
     setHasChanges(true);
 
-    // Validate the color
-    if (value.trim() === '') {
-      // Empty value - show error
+    // Update error state
+    if (errorMessage) {
       setColorErrors(prev => ({
         ...prev,
-        [colorKey]: 'Color cannot be empty'
-      }));
-    } else if (!isValidHexColor(value)) {
-      // Invalid format - show error
-      setColorErrors(prev => ({
-        ...prev,
-        [colorKey]: 'Invalid hex color (e.g., #FF5733 or #F73)'
+        [colorKey]: errorMessage
       }));
     } else {
       // Valid - clear any error for this color
@@ -406,8 +417,8 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
               onChange={(e) => updateColor(colorKey, e.target.value)}
               className={`color-hex-input ${isSelected ? 'selected' : ''} ${hasError ? 'error' : ''}`}
               onFocus={() => setSelectedColor(colorKey)}
-              placeholder="#000000"
-              maxLength={7}
+              placeholder="#FF5733, rgb(255, 87, 51), or hsl(9, 100%, 60%)"
+              title="Accepts hex (#FF5733), RGB (255, 87, 51), or HSL (9, 100%, 60%) formats"
             />
           </div>
         </div>
