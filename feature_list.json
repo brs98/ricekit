@@ -2002,7 +2002,7 @@
       "Step 3: Verify validation warning is shown for missing files",
       "Step 4: Verify theme can still be loaded if theme.json is valid"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
