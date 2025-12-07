@@ -16,6 +16,7 @@ import {
   ensureState,
 } from './directories';
 import type { Theme, ThemeMetadata, Preferences, State } from '../shared/types';
+import { logger } from './logger';
 
 /**
  * Setup all IPC handlers
@@ -68,6 +69,14 @@ export function setupIpcHandlers(): void {
     }
   });
 
+  // Logging operations
+  ipcMain.handle('logging:getDirectory', handleGetLogDirectory);
+  ipcMain.handle('logging:getLogFile', handleGetLogFile);
+  ipcMain.handle('logging:clearLogs', handleClearLogs);
+  ipcMain.handle('logging:setDebugEnabled', handleSetDebugEnabled);
+  ipcMain.handle('logging:isDebugEnabled', handleIsDebugEnabled);
+
+  logger.info('IPC handlers registered');
   console.log('IPC handlers registered');
 }
 
@@ -368,6 +377,7 @@ async function updateVSCodeSettings(themeName: string, themePath: string): Promi
  * Apply a theme
  */
 export async function handleApplyTheme(_event: any, name: string): Promise<void> {
+  logger.info(`Applying theme: ${name}`);
   console.log(`Applying theme: ${name}`);
 
   try {
@@ -410,8 +420,10 @@ export async function handleApplyTheme(_event: any, name: string): Promise<void>
     // Create new symlink
     try {
       fs.symlinkSync(theme.path, symlinkPath, 'dir');
+      logger.debug(`Created symlink: ${symlinkPath} -> ${theme.path}`);
       console.log(`Created symlink: ${symlinkPath} -> ${theme.path}`);
     } catch (err: any) {
+      logger.error('Failed to create symlink', err);
       console.error('Failed to create symlink:', err);
       if (err.code === 'EACCES' || err.code === 'EPERM') {
         throw new Error(`PERMISSION_ERROR: Cannot create theme link due to insufficient permissions. Please check folder permissions in ~/Library/Application Support/MacTheme.`);
@@ -480,6 +492,7 @@ export async function handleApplyTheme(_event: any, name: string): Promise<void>
       console.error('Failed to update preferences:', err);
     }
 
+    logger.info(`Theme applied successfully: ${name}`, { recentThemes: prefs.recentThemes.slice(0, 5) });
     console.log(`Updated recent themes: ${prefs.recentThemes.slice(0, 5).join(', ')}`);
     console.log(`Theme ${name} applied successfully`);
 
@@ -551,6 +564,7 @@ export async function handleApplyTheme(_event: any, name: string): Promise<void>
  * Create a new custom theme
  */
 async function handleCreateTheme(_event: any, data: ThemeMetadata): Promise<void> {
+  logger.info(`Creating theme: ${data.name}`);
   console.log(`Creating theme: ${data.name}`);
 
   ensureDirectories();
@@ -562,6 +576,7 @@ async function handleCreateTheme(_event: any, data: ThemeMetadata): Promise<void
 
   // Check if theme already exists
   if (fs.existsSync(themeDir)) {
+    logger.warn(`Attempt to create duplicate theme: ${data.name}`);
     throw new Error(`Theme "${data.name}" already exists`);
   }
 
@@ -571,6 +586,7 @@ async function handleCreateTheme(_event: any, data: ThemeMetadata): Promise<void
   // Generate all config files
   generateThemeConfigFiles(themeDir, data);
 
+  logger.info(`Theme created successfully: ${data.name}`, { path: themeDir });
   console.log(`Theme "${data.name}" created successfully at ${themeDir}`);
 
   // Show notification
@@ -2170,4 +2186,49 @@ async function handleGetState(): Promise<State> {
   const statePath = getStatePath();
   const stateContent = fs.readFileSync(statePath, 'utf-8');
   return JSON.parse(stateContent);
+}
+
+/**
+ * Get the logging directory path
+ */
+async function handleGetLogDirectory(): Promise<string> {
+  return logger.getLogDirectory();
+}
+
+/**
+ * Get the main log file path
+ */
+async function handleGetLogFile(): Promise<string> {
+  return logger.getLogFile();
+}
+
+/**
+ * Clear all log files
+ */
+async function handleClearLogs(): Promise<void> {
+  logger.clearLogs();
+}
+
+/**
+ * Enable or disable debug logging
+ */
+async function handleSetDebugEnabled(_event: any, enabled: boolean): Promise<void> {
+  logger.setDebugEnabled(enabled);
+
+  // Also update preferences
+  try {
+    const prefsPath = getPreferencesPath();
+    const prefs = JSON.parse(fs.readFileSync(prefsPath, 'utf-8'));
+    prefs.debugLogging = enabled;
+    fs.writeFileSync(prefsPath, JSON.stringify(prefs, null, 2));
+  } catch (err) {
+    logger.error('Failed to update debug logging preference', err);
+  }
+}
+
+/**
+ * Check if debug logging is enabled
+ */
+async function handleIsDebugEnabled(): Promise<boolean> {
+  return logger.isDebugEnabled();
 }

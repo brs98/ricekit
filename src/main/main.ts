@@ -4,6 +4,7 @@ import fs from 'fs';
 import { initializeApp, initializeAppAfterThemes, getPreferencesPath, getStatePath } from './directories';
 import { installBundledThemes } from './themeInstaller';
 import { setupIpcHandlers, handleAppearanceChange, checkScheduleAndApplyTheme } from './ipcHandlers';
+import { logger } from './logger';
 
 let mainWindow: BrowserWindow | null = null;
 let quickSwitcherWindow: BrowserWindow | null = null;
@@ -370,9 +371,26 @@ if (!gotTheLock) {
   // This method will be called when Electron has finished initialization
   app.whenReady().then(() => {
     // Initialize application directories and files
+    logger.info('=== MacTheme Starting ===');
     console.log('=== MacTheme Starting ===');
+
+    // Load preferences to check if debug logging is enabled
+    try {
+      const prefsPath = getPreferencesPath();
+      const prefs = JSON.parse(fs.readFileSync(prefsPath, 'utf-8'));
+      if (prefs.debugLogging === true) {
+        logger.setDebugEnabled(true);
+        logger.debug('Debug logging enabled from preferences');
+      }
+    } catch (err) {
+      logger.warn('Could not load debug logging preference', err);
+    }
+
     initializeApp();
+    logger.info('App directories initialized');
+
     installBundledThemes();
+    logger.info('Bundled themes installed');
 
     // Initialize theme symlink after themes are installed
     initializeAppAfterThemes();

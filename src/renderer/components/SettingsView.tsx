@@ -17,12 +17,26 @@ export function SettingsView() {
   const [sunriseSunset, setSunriseSunset] = useState<{ sunrise: string; sunset: string; location: string } | null>(null);
   const [loadingSunTimes, setLoadingSunTimes] = useState(false);
   const [showAboutDialog, setShowAboutDialog] = useState(false);
+  const [debugLogging, setDebugLogging] = useState(false);
+  const [logFile, setLogFile] = useState<string>('');
 
   useEffect(() => {
     loadPreferences();
     loadThemes();
     loadSystemAppearance();
+    loadLoggingState();
   }, []);
+
+  async function loadLoggingState() {
+    try {
+      const isEnabled = await window.electronAPI.isDebugLoggingEnabled();
+      setDebugLogging(isEnabled);
+      const logFilePath = await window.electronAPI.getLogFile();
+      setLogFile(logFilePath);
+    } catch (err) {
+      console.error('Failed to load logging state:', err);
+    }
+  }
 
   async function loadPreferences() {
     try {
@@ -677,6 +691,85 @@ export function SettingsView() {
               }}
             >
               Reset
+            </button>
+          </div>
+        </section>
+
+        {/* Developer & Logging Section */}
+        <section className="settings-section">
+          <h3 className="section-title">Developer & Logging</h3>
+
+          <div className="setting-item">
+            <div className="setting-info">
+              <label className="setting-label">Debug Logging</label>
+              <p className="setting-description">
+                Enable detailed debug logging for troubleshooting
+              </p>
+            </div>
+            <label className="toggle-switch">
+              <input
+                type="checkbox"
+                checked={debugLogging}
+                onChange={async (e) => {
+                  const enabled = e.target.checked;
+                  setDebugLogging(enabled);
+                  try {
+                    await window.electronAPI.setDebugLogging(enabled);
+                  } catch (err) {
+                    console.error('Failed to toggle debug logging:', err);
+                    setDebugLogging(!enabled); // Revert on error
+                  }
+                }}
+              />
+              <span className="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div className="setting-item">
+            <div className="setting-info">
+              <label className="setting-label">View Log Files</label>
+              <p className="setting-description">
+                {logFile ? `Located at: ${logFile}` : 'View application logs for debugging'}
+              </p>
+            </div>
+            <button
+              className="secondary-button"
+              onClick={async () => {
+                try {
+                  const logDir = await window.electronAPI.getLogDirectory();
+                  await window.electronAPI.openExternal(`file://${logDir}`);
+                } catch (err) {
+                  console.error('Failed to open log directory:', err);
+                  alert('Failed to open log directory');
+                }
+              }}
+            >
+              Open Log Folder
+            </button>
+          </div>
+
+          <div className="setting-item">
+            <div className="setting-info">
+              <label className="setting-label">Clear Log Files</label>
+              <p className="setting-description">
+                Delete all log files to free up space
+              </p>
+            </div>
+            <button
+              className="secondary-button danger"
+              onClick={async () => {
+                if (confirm('Are you sure you want to delete all log files?')) {
+                  try {
+                    await window.electronAPI.clearLogs();
+                    alert('Log files cleared successfully');
+                  } catch (err) {
+                    console.error('Failed to clear logs:', err);
+                    alert('Failed to clear log files');
+                  }
+                }
+              }}
+            >
+              Clear Logs
             </button>
           </div>
         </section>

@@ -49,4 +49,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Utility operations
   openExternal: (url: string) => ipcRenderer.invoke('system:openExternal', url),
   openHelp: () => ipcRenderer.invoke('system:openHelp'),
+
+  // Logging operations
+  getLogDirectory: () => ipcRenderer.invoke('logging:getDirectory'),
+  getLogFile: () => ipcRenderer.invoke('logging:getLogFile'),
+  clearLogs: () => ipcRenderer.invoke('logging:clearLogs'),
+  setDebugLogging: (enabled: boolean) => ipcRenderer.invoke('logging:setDebugEnabled', enabled),
+  isDebugLoggingEnabled: () => ipcRenderer.invoke('logging:isDebugEnabled'),
 });
