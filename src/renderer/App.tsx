@@ -23,6 +23,7 @@ function App() {
   const [showImportUrlModal, setShowImportUrlModal] = useState(false);
   const [importUrl, setImportUrl] = useState('');
   const [importing, setImporting] = useState(false);
+  const [stateRestored, setStateRestored] = useState(false);
 
   // Detect if this is the quick switcher window and check onboarding status
   useEffect(() => {
@@ -32,6 +33,8 @@ function App() {
     } else {
       // Check if onboarding needs to be shown
       checkOnboardingStatus();
+      // Restore UI state from crash recovery
+      restoreUIState();
     }
   }, []);
 
@@ -46,9 +49,58 @@ function App() {
     }
   }
 
+  async function restoreUIState() {
+    try {
+      const savedState = await window.electronAPI.getUIState();
+      if (savedState) {
+        console.log('Restoring UI state from crash recovery:', savedState);
+        // Restore the saved state
+        if (savedState.activeView) setActiveView(savedState.activeView);
+        if (savedState.searchQuery) setSearchQuery(savedState.searchQuery);
+        if (savedState.filterMode) setFilterMode(savedState.filterMode);
+        if (savedState.sortMode) setSortMode(savedState.sortMode);
+        if (savedState.editorTheme) setEditorTheme(savedState.editorTheme);
+        console.log('UI state restored successfully');
+      }
+    } catch (error) {
+      console.error('Failed to restore UI state:', error);
+    } finally {
+      // Mark as restored regardless of whether we found saved state
+      setStateRestored(true);
+    }
+  }
+
   function handleOnboardingComplete() {
     setShowOnboarding(false);
   }
+
+  // Save UI state whenever it changes (for crash recovery)
+  useEffect(() => {
+    // Don't save state until initial restore is complete
+    if (!stateRestored) {
+      return;
+    }
+
+    // Save state (debounced to avoid excessive saves)
+    const timeoutId = setTimeout(() => {
+      const uiState = {
+        activeView,
+        searchQuery,
+        filterMode,
+        sortMode,
+        editorTheme: editorTheme ? {
+          name: editorTheme.name,
+          metadata: editorTheme.metadata,
+        } : undefined,
+      };
+
+      window.electronAPI.saveUIState(uiState).catch((error: any) => {
+        console.error('Failed to save UI state:', error);
+      });
+    }, 500); // Debounce by 500ms
+
+    return () => clearTimeout(timeoutId);
+  }, [activeView, searchQuery, filterMode, sortMode, editorTheme, stateRestored]);
 
   async function handleImportFromUrl() {
     if (!importUrl.trim()) {

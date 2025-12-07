@@ -45,6 +45,13 @@ export function getStatePath(): string {
 }
 
 /**
+ * Get path to UI state file (for crash recovery)
+ */
+export function getUIStatePath(): string {
+  return path.join(getAppDataDir(), 'ui-state.json');
+}
+
+/**
  * Create all required directories for MacTheme
  */
 export function ensureDirectories(): void {

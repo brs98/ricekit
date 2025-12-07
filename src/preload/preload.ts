@@ -39,6 +39,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // State operations
   getState: () => ipcRenderer.invoke('state:get'),
+  saveUIState: (uiState: any) => ipcRenderer.invoke('uistate:save', uiState),
+  getUIState: () => ipcRenderer.invoke('uistate:get'),
 
   // Quick switcher operations
   closeQuickSwitcher: () => ipcRenderer.invoke('quickswitcher:close'),

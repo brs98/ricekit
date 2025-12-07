@@ -117,10 +117,17 @@ export interface ElectronAPI {
   getSunriseSunset: () => Promise<{ sunrise: string; sunset: string; location: string } | null>;
   onAppearanceChange: (callback: (appearance: string) => void) => void;
   getState: () => Promise<State>;
+  saveUIState: (uiState: any) => Promise<void>;
+  getUIState: () => Promise<any | null>;
   closeQuickSwitcher: () => Promise<void>;
   onQuickSwitcherOpened: (callback: () => void) => void;
   openExternal: (url: string) => Promise<void>;
   openHelp: () => Promise<void>;
+  getLogDirectory: () => Promise<string>;
+  getLogFile: () => Promise<string>;
+  clearLogs: () => Promise<void>;
+  setDebugLogging: (enabled: boolean) => Promise<void>;
+  isDebugLoggingEnabled: () => Promise<boolean>;
 }
 
 declare global {

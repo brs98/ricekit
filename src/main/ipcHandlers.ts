@@ -10,6 +10,7 @@ import {
   getCustomThemesDir,
   getPreferencesPath,
   getStatePath,
+  getUIStatePath,
   getCurrentDir,
   ensureDirectories,
   ensurePreferences,
@@ -58,6 +59,8 @@ export function setupIpcHandlers(): void {
 
   // State operations
   ipcMain.handle('state:get', handleGetState);
+  ipcMain.handle('uistate:save', handleSaveUIState);
+  ipcMain.handle('uistate:get', handleGetUIState);
 
   // Quick switcher operations
   ipcMain.handle('quickswitcher:close', async () => {
@@ -2186,6 +2189,58 @@ async function handleGetState(): Promise<State> {
   const statePath = getStatePath();
   const stateContent = fs.readFileSync(statePath, 'utf-8');
   return JSON.parse(stateContent);
+}
+
+/**
+ * Save UI state for crash recovery
+ * Saves the current view, filters, search query, etc.
+ */
+async function handleSaveUIState(_event: any, uiState: any): Promise<void> {
+  try {
+    const uiStatePath = getUIStatePath();
+    const stateToSave = {
+      ...uiState,
+      timestamp: Date.now(),
+    };
+    fs.writeFileSync(uiStatePath, JSON.stringify(stateToSave, null, 2));
+    logger.debug('UI state saved for crash recovery', stateToSave);
+  } catch (error) {
+    logger.error('Failed to save UI state', error);
+    // Don't throw - we don't want UI state saving to break the app
+  }
+}
+
+/**
+ * Get saved UI state for crash recovery
+ * Returns null if no saved state exists or if it's too old (>24 hours)
+ */
+async function handleGetUIState(): Promise<any | null> {
+  try {
+    const uiStatePath = getUIStatePath();
+
+    if (!fs.existsSync(uiStatePath)) {
+      logger.debug('No UI state file found');
+      return null;
+    }
+
+    const stateContent = fs.readFileSync(uiStatePath, 'utf-8');
+    const uiState = JSON.parse(stateContent);
+
+    // Check if state is not too old (24 hours = 86400000 ms)
+    const stateAge = Date.now() - (uiState.timestamp || 0);
+    if (stateAge > 86400000) {
+      logger.info('UI state is too old, ignoring', { ageHours: Math.round(stateAge / 3600000) });
+      // Delete old state file
+      fs.unlinkSync(uiStatePath);
+      return null;
+    }
+
+    logger.debug('UI state restored from crash recovery', uiState);
+    return uiState;
+  } catch (error) {
+    logger.error('Failed to load UI state', error);
+    return null;
+  }
 }
 
 /**

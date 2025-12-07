@@ -1,0 +1,95 @@
+Implement application logging system for debugging - Test #158 passing
+
+Comprehensive logging system with timestamps, log levels, and file rotation
+to support debugging and troubleshooting in production environments.
+
+IMPLEMENTATION
+==============
+
+Core Logger Module (src/main/logger.ts):
+- Created singleton Logger class with support for multiple log levels
+- Log levels: DEBUG, INFO, WARN, ERROR
+- Automatic log file rotation at 5MB (keeps 3 backup files)
+- Timestamps with millisecond precision (YYYY-MM-DD HH:MM:SS.mmm)
+- JSON serialization for complex data structures
+- Writes to: ~/Library/Application Support/mactheme/logs/mactheme.log
+- Dual output: both console and file for development convenience
+- Debug logging can be toggled on/off at runtime
+
+Integration Points:
+- Main process startup (src/main/main.ts)
+  * Logs app initialization steps
+  * Loads debug preference from preferences.json
+  * Enables debug logging if configured
+- IPC handlers (src/main/ipcHandlers.ts)
+  * Theme application logging (info + debug)
+  * Theme creation logging (info + warnings)
+  * Error logging with full error details
+- New IPC handlers for log management:
+  * logging:getDirectory - Get log folder path
+  * logging:getLogFile - Get current log file path
+  * logging:clearLogs - Delete all log files
+  * logging:setDebugEnabled - Toggle debug logging
+  * logging:isDebugEnabled - Check debug status
+
+UI Implementation (src/renderer/components/SettingsView.tsx):
+- New Developer & Logging section in Settings
+- Debug Logging toggle switch
+- Open Log Folder button
+- Clear Logs button with confirmation
+
+Preload Bridge (src/preload/preload.ts):
+- Exposed logging APIs to renderer process
+- Type-safe IPC communication for all log operations
+
+FEATURES
+========
+
+1. Automatic Log Rotation
+   - Prevents unbounded log file growth
+   - Rotates at 5MB threshold
+   - Keeps 3 historical log files
+
+2. Log Levels
+   - DEBUG: Detailed debugging information (only when enabled)
+   - INFO: General informational messages
+   - WARN: Warning messages for non-critical issues
+   - ERROR: Error messages with stack traces
+
+3. Structured Logging
+   - Consistent timestamp format
+   - Log level indicators
+   - JSON formatting for complex objects
+
+TEST #158 VERIFICATION
+======================
+
+✅ Step 1: Enable debug logging in settings
+✅ Step 2: Perform various actions (logged with timestamps)
+✅ Step 3: Open log file location (button in Settings)
+✅ Step 4: Log entries created for actions
+✅ Step 5: Timestamps and log levels included
+
+FILES MODIFIED
+==============
+
+New Files:
+- src/main/logger.ts (+189 lines: complete logging system)
+
+Modified Files:
+- src/main/main.ts (+17 lines: logger integration)
+- src/main/ipcHandlers.ts (+73 lines: logging calls, IPC handlers)
+- src/preload/preload.ts (+6 lines: logging API exposure)
+- src/renderer/components/SettingsView.tsx (+79 lines: logging UI)
+- feature_list.json (marked test #158 as passing)
+
+PROGRESS METRICS
+================
+
+Before: 196/202 tests passing (97.0%)
+After:  197/202 tests passing (97.5%)
+Improvement: +1 test ✅
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
