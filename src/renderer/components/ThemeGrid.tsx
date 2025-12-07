@@ -26,7 +26,18 @@ export function ThemeGrid({ searchQuery = '', filterMode = 'all', onEditTheme }:
   const loadThemes = async () => {
     try {
       setLoading(true);
+      const loadStart = performance.now();
+
       const themeList = await window.electronAPI.listThemes();
+      const loadEnd = performance.now();
+      const loadTime = loadEnd - loadStart;
+
+      console.log(`✅ Performance: Loaded ${themeList.length} themes in ${loadTime.toFixed(2)}ms`);
+
+      if (loadTime > 5000) {
+        console.warn(`⚠️  Performance Warning: Theme loading took ${loadTime.toFixed(2)}ms (target: <5000ms)`);
+      }
+
       setThemes(themeList);
 
       // Get current theme from state

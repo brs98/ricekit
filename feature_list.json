@@ -1454,7 +1454,7 @@
       "Step 5: Verify scrolling is smooth",
       "Step 6: Verify search performs quickly"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
