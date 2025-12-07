@@ -2216,7 +2216,7 @@
       "Step 6: Verify selected color preview is visible",
       "Step 7: Verify hex input field is present"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -2228,7 +2228,7 @@
       "Step 4: Verify live preview on right takes ~60% width",
       "Step 5: Verify layout is balanced and not cramped"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -2241,7 +2241,7 @@
       "Step 5: Verify installation status badges are visible",
       "Step 6: Verify toggle switches are aligned"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -2253,7 +2253,7 @@
       "Step 4: Verify thumbnails maintain aspect ratio",
       "Step 5: Verify grid is responsive to window size"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -2265,7 +2265,7 @@
       "Step 4: Verify sections are separated with adequate spacing",
       "Step 5: Verify related settings are grouped together"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -2315,7 +2315,7 @@
       "Step 5: Verify theme list is well-formatted",
       "Step 6: Verify overall appearance is polished"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -2328,7 +2328,7 @@
       "Step 5: Verify text is readable",
       "Step 6: Verify icon is visible and appropriate"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -2340,7 +2340,7 @@
       "Step 4: Verify loading indicator is centered and obvious",
       "Step 5: Verify loading indicator disappears when complete"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -2353,7 +2353,7 @@
       "Step 5: Verify empty state has helpful message",
       "Step 6: Verify empty state has call-to-action button"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -2365,7 +2365,7 @@
       "Step 4: Verify error message suggests solution if possible",
       "Step 5: Verify error icon is present"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -2377,7 +2377,7 @@
       "Step 4: Verify scrollbar fades when not in use",
       "Step 5: Verify scrollbar matches macOS native appearance"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -2389,7 +2389,7 @@
       "Step 4: Verify active indicator uses accent color",
       "Step 5: Verify active theme is easily distinguishable from others"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -2401,7 +2401,7 @@
       "Step 4: Verify star icon is filled/solid",
       "Step 5: Verify filled star is easily distinguishable"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -2425,7 +2425,7 @@
       "Step 4: Verify monospace font is used",
       "Step 5: Verify prompt and output are formatted correctly"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -2437,7 +2437,7 @@
       "Step 4: Verify colors provide good contrast",
       "Step 5: Verify code is readable"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -2449,7 +2449,7 @@
       "Step 4: Verify code blocks are distinguished from text",
       "Step 5: Verify copy button is visible and accessible"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -2473,7 +2473,7 @@
       "Step 4: Verify focus states are consistent",
       "Step 5: Verify placeholder text has appropriate opacity"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -2485,7 +2485,7 @@
       "Step 4: Verify buttons are properly styled",
       "Step 5: Verify destructive actions use red/warning color"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -2498,7 +2498,7 @@
       "Step 5: Verify version number is visible",
       "Step 6: Verify layout is centered and balanced"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -2511,7 +2511,7 @@
       "Step 5: Verify navigation buttons (Next, Back) are consistent",
       "Step 6: Verify visual hierarchy guides user through flow"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -2524,6 +2524,6 @@
       "Step 5: Verify UI responds appropriately to different sizes",
       "Step 6: Verify minimum window size prevents UI from breaking"
     ],
-    "passes": false
+    "passes": true
   }
 ]
