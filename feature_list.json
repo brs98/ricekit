@@ -1656,7 +1656,7 @@
       "Step 5: Toggle to descending order",
       "Step 6: Verify themes are sorted in reverse alphabetical order"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

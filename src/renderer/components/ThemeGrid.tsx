@@ -6,13 +6,15 @@ import { ThemeDetailModal } from './ThemeDetailModal';
 interface ThemeGridProps {
   searchQuery?: string;
   filterMode?: 'all' | 'light' | 'dark' | 'favorites';
+  sortMode?: 'default' | 'name-asc' | 'name-desc' | 'recent';
   onEditTheme?: (theme: Theme) => void;
 }
 
-export function ThemeGrid({ searchQuery = '', filterMode = 'all', onEditTheme }: ThemeGridProps) {
+export function ThemeGrid({ searchQuery = '', filterMode = 'all', sortMode = 'default', onEditTheme }: ThemeGridProps) {
   const [themes, setThemes] = useState<Theme[]>([]);
   const [currentTheme, setCurrentTheme] = useState<string>('');
   const [favorites, setFavorites] = useState<string[]>([]);
+  const [recentThemes, setRecentThemes] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedTheme, setSelectedTheme] = useState<Theme | null>(null);
@@ -57,6 +59,7 @@ export function ThemeGrid({ searchQuery = '', filterMode = 'all', onEditTheme }:
     try {
       const prefs = await window.electronAPI.getPreferences();
       setFavorites(prefs.favorites);
+      setRecentThemes(prefs.recentThemes || []);
     } catch (err) {
       console.error('Failed to load preferences:', err);
     }
@@ -152,26 +155,52 @@ export function ThemeGrid({ searchQuery = '', filterMode = 'all', onEditTheme }:
     }
   };
 
-  // Filter themes based on search and filter mode
-  const filteredThemes = themes.filter((theme) => {
-    // Search filter
-    const matchesSearch = theme.metadata.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         theme.metadata.description.toLowerCase().includes(searchQuery.toLowerCase());
+  // Filter and sort themes based on search, filter mode, and sort mode
+  const filteredAndSortedThemes = themes
+    .filter((theme) => {
+      // Search filter
+      const matchesSearch = theme.metadata.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           theme.metadata.description.toLowerCase().includes(searchQuery.toLowerCase());
 
-    if (!matchesSearch) return false;
+      if (!matchesSearch) return false;
 
-    // Mode filter
-    switch (filterMode) {
-      case 'light':
-        return theme.isLight;
-      case 'dark':
-        return !theme.isLight;
-      case 'favorites':
-        return favorites.includes(theme.name);
-      default:
-        return true;
-    }
-  });
+      // Mode filter
+      switch (filterMode) {
+        case 'light':
+          return theme.isLight;
+        case 'dark':
+          return !theme.isLight;
+        case 'favorites':
+          return favorites.includes(theme.name);
+        default:
+          return true;
+      }
+    })
+    .sort((a, b) => {
+      switch (sortMode) {
+        case 'name-asc':
+          return a.metadata.name.toLowerCase().localeCompare(b.metadata.name.toLowerCase());
+        case 'name-desc':
+          return b.metadata.name.toLowerCase().localeCompare(a.metadata.name.toLowerCase());
+        case 'recent': {
+          const aIndex = recentThemes.indexOf(a.name);
+          const bIndex = recentThemes.indexOf(b.name);
+
+          // If neither is in recent themes, maintain current order
+          if (aIndex === -1 && bIndex === -1) return 0;
+
+          // If only one is in recent themes, prioritize that one
+          if (aIndex === -1) return 1;
+          if (bIndex === -1) return -1;
+
+          // Both are in recent themes, sort by recency (lower index = more recent)
+          return aIndex - bIndex;
+        }
+        default:
+          // Default order (as loaded from file system)
+          return 0;
+      }
+    });
 
   if (loading) {
     return (
@@ -191,7 +220,7 @@ export function ThemeGrid({ searchQuery = '', filterMode = 'all', onEditTheme }:
     );
   }
 
-  if (filteredThemes.length === 0) {
+  if (filteredAndSortedThemes.length === 0) {
     return (
       <div className="theme-grid-empty">
         <p>No themes found matching your filters.</p>
@@ -205,7 +234,7 @@ export function ThemeGrid({ searchQuery = '', filterMode = 'all', onEditTheme }:
   return (
     <>
       <div className="theme-grid">
-        {filteredThemes.map((theme) => (
+        {filteredAndSortedThemes.map((theme) => (
           <ThemeCard
             key={theme.name}
             theme={theme}

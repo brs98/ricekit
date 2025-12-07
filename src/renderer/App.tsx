@@ -10,11 +10,13 @@ import { OnboardingModal } from './components/OnboardingModal';
 import { Theme } from '../shared/types';
 
 type FilterMode = 'all' | 'light' | 'dark' | 'favorites';
+type SortMode = 'default' | 'name-asc' | 'name-desc' | 'recent';
 
 function App() {
   const [activeView, setActiveView] = useState('themes');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMode, setFilterMode] = useState<FilterMode>('all');
+  const [sortMode, setSortMode] = useState<SortMode>('default');
   const [editorTheme, setEditorTheme] = useState<Theme | undefined>(undefined);
   const [isQuickSwitcher, setIsQuickSwitcher] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -195,6 +197,17 @@ function App() {
                 >
                   ★ Favorites
                 </button>
+                <select
+                  className="sort-dropdown"
+                  value={sortMode}
+                  onChange={(e) => setSortMode(e.target.value as SortMode)}
+                  title="Sort themes"
+                >
+                  <option value="default">Default Order</option>
+                  <option value="name-asc">Name (A-Z)</option>
+                  <option value="name-desc">Name (Z-A)</option>
+                  <option value="recent">Recently Used</option>
+                </select>
                 <button
                   className="filter-chip import-url-button"
                   onClick={() => setShowImportUrlModal(true)}
@@ -211,6 +224,7 @@ function App() {
             <ThemeGrid
               searchQuery={searchQuery}
               filterMode={filterMode}
+              sortMode={sortMode}
               onEditTheme={(theme) => {
                 setEditorTheme(theme);
                 setActiveView('editor');
