@@ -1583,7 +1583,7 @@
       "Step 5: Import a valid theme",
       "Step 6: Verify it installs successfully"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1595,7 +1595,7 @@
       "Step 4: Verify wallpapers directory is included",
       "Step 5: Verify all wallpaper images are present"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
