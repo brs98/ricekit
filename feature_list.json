@@ -1682,7 +1682,7 @@
       "Step 5: Verify dominant colors are extracted",
       "Step 6: Verify color palette is populated with extracted colors"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

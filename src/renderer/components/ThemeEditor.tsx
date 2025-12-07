@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Theme, ThemeMetadata, ThemeColors } from '../../shared/types';
 import {
   isValidHexColor,
   toHex,
   detectColorFormat
 } from '../../shared/colorUtils';
+import * as Vibrant from 'node-vibrant';
 
 interface ThemeEditorProps {
   initialTheme?: ThemeMetadata;
@@ -199,6 +200,8 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
   const [hasChanges, setHasChanges] = useState(false);
   const [selectedPreset, setSelectedPreset] = useState<string>('');
   const [colorErrors, setColorErrors] = useState<{ [key in keyof ThemeColors]?: string }>({});
+  const [extractingColors, setExtractingColors] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Update when initialTheme changes
   useEffect(() => {
@@ -215,6 +218,105 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
         colors: { ...preset.colors },
       });
       setSelectedPreset(presetKey);
+    }
+  };
+
+  const handleImageImport = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImageSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setExtractingColors(true);
+    try {
+      // Create an image URL from the file
+      const imageUrl = URL.createObjectURL(file);
+
+      // Extract colors using Vibrant
+      const palette = await Vibrant.from(imageUrl).getPalette();
+
+      // Clean up the object URL
+      URL.revokeObjectURL(imageUrl);
+
+      // Map extracted colors to our theme palette
+      const extractedColors: Partial<ThemeColors> = {};
+
+      if (palette.DarkVibrant) {
+        extractedColors.background = palette.DarkVibrant.hex;
+        extractedColors.black = palette.DarkVibrant.hex;
+      }
+
+      if (palette.LightVibrant) {
+        extractedColors.foreground = palette.LightVibrant.hex;
+        extractedColors.white = palette.LightVibrant.hex;
+        extractedColors.cursor = palette.LightVibrant.hex;
+      }
+
+      if (palette.Vibrant) {
+        extractedColors.accent = palette.Vibrant.hex;
+        extractedColors.blue = palette.Vibrant.hex;
+      }
+
+      if (palette.Muted) {
+        extractedColors.selection = palette.Muted.hex;
+        extractedColors.border = palette.Muted.hex;
+        extractedColors.brightBlack = palette.Muted.hex;
+      }
+
+      if (palette.DarkMuted) {
+        extractedColors.brightBlack = palette.DarkMuted.hex;
+      }
+
+      if (palette.LightMuted) {
+        extractedColors.brightWhite = palette.LightMuted.hex;
+      }
+
+      // For ANSI colors, use variations of the extracted colors
+      // Red - slightly adjust hue towards red
+      extractedColors.red = palette.Vibrant?.hex || '#ff5555';
+      extractedColors.brightRed = palette.Vibrant?.hex || '#ff6e6e';
+
+      // Green - use muted vibrant
+      extractedColors.green = palette.Muted?.hex || '#50fa7b';
+      extractedColors.brightGreen = palette.LightMuted?.hex || '#69ff94';
+
+      // Yellow - between vibrant and light
+      extractedColors.yellow = palette.LightVibrant?.hex || '#f1fa8c';
+      extractedColors.brightYellow = palette.LightVibrant?.hex || '#ffffa5';
+
+      // Magenta - vibrant
+      extractedColors.magenta = palette.Vibrant?.hex || '#ff79c6';
+      extractedColors.brightMagenta = palette.Vibrant?.hex || '#ff92df';
+
+      // Cyan - light vibrant
+      extractedColors.cyan = palette.LightVibrant?.hex || '#8be9fd';
+      extractedColors.brightCyan = palette.LightVibrant?.hex || '#a4ffff';
+
+      // Blue variations
+      extractedColors.brightBlue = palette.Vibrant?.hex || '#bd93f9';
+
+      // Apply the extracted colors to the theme
+      setMetadata({
+        ...metadata,
+        colors: {
+          ...metadata.colors,
+          ...extractedColors,
+        },
+      });
+      setHasChanges(true);
+      setSelectedPreset(''); // Clear preset selection since we're using custom colors
+
+    } catch (error) {
+      console.error('Error extracting colors from image:', error);
+      alert('Failed to extract colors from image. Please try a different image.');
+    } finally {
+      setExtractingColors(false);
+      // Reset the file input so the same file can be selected again
+      if (event.target) {
+        event.target.value = '';
+      }
     }
   };
 
@@ -449,6 +551,29 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
             </select>
             <p className="preset-hint">
               Choose a preset color scheme to start with, then customize colors below
+            </p>
+          </div>
+        </div>
+
+        <div className="theme-editor-section">
+          <h3 className="section-title">Import from Image</h3>
+          <div className="image-import-section">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageSelected}
+              style={{ display: 'none' }}
+            />
+            <button
+              onClick={handleImageImport}
+              className="btn btn-secondary"
+              disabled={extractingColors}
+            >
+              {extractingColors ? 'Extracting Colors...' : 'Choose Image'}
+            </button>
+            <p className="preset-hint">
+              Select an image to extract dominant colors and create a color palette automatically
             </p>
           </div>
         </div>
