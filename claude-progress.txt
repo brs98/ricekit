@@ -6320,3 +6320,65 @@ SESSION QUALITY: Excellent
 - Automated test for CI/CD
 - App left in working state
 
+===========================================
+Session 40 - 2025-12-06
+===========================================
+
+OBJECTIVE: Implement single-instance lock to prevent multiple app instances
+
+TEST COMPLETED:
+- Test #128: Multiple instances of application are prevented ✅
+
+IMPLEMENTATION SUMMARY:
+- Implemented Electron's requestSingleInstanceLock() API in main.ts
+- Second instance now detects existing instance and quits gracefully
+- First instance receives 'second-instance' event and focuses existing window
+- Handles minimized, hidden, and missing window states correctly
+- Created comprehensive test script for future CI/CD integration
+
+TECHNICAL DETAILS:
+- Used app.requestSingleInstanceLock() before app.whenReady()
+- Second instance logs "Another instance is already running" and calls app.quit()
+- First instance's 'second-instance' handler:
+  * Restores window if minimized
+  * Shows window if hidden
+  * Focuses window to bring to front
+  * Creates window if it doesn't exist (edge case)
+
+BUILD PROCESS:
+- Required npm run build:main to compile TypeScript to JavaScript
+- Main entry point is dist/main/main.js (compiled, not source)
+- Changes to src/main/*.ts require rebuild to take effect
+
+PROGRESS: 124/202 tests passing (61.4%, +0.5% this session)
+REMAINING: 78 tests
+
+FILES MODIFIED:
+- src/main/main.ts (added single-instance lock logic)
+- feature_list.json (Test #128 marked passing)
+
+FILES CREATED:
+- test-single-instance.js (automated test script)
+
+COMMIT: 2be561a - Implement single-instance lock to prevent multiple app instances
+
+VERIFICATION:
+- Automated test passed: second instance quit correctly
+- First instance logged "Second instance detected. Focusing existing window."
+- Manual testing confirmed: only one window exists, properly focused
+- Standard macOS app behavior achieved
+
+WHAT'S NEXT:
+- Test #125: URL-based theme import
+- Tests #126-130: Theme import/export validation
+- Test #131: About dialog
+- Test #132: Help documentation
+- Test #133-134: Theme sorting features
+- Performance tests (#116, #118)
+
+SESSION QUALITY: ✅ Excellent
+- Production-ready single-instance functionality
+- No regressions detected
+- Clean, well-documented implementation
+- Automated test for CI/CD
+- App left in working state
