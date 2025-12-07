@@ -1942,7 +1942,7 @@
       "Step 4: Verify notification shows success icon",
       "Step 5: Verify notification auto-dismisses after 3-5 seconds"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1954,7 +1954,7 @@
       "Step 4: Verify notification shows error icon",
       "Step 5: Verify notification persists longer or requires manual dismiss"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1967,7 +1967,7 @@
       "Step 5: Apply theme",
       "Step 6: Verify notification appears"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
