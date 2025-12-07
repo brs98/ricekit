@@ -5,7 +5,7 @@ import {
   toHex,
   detectColorFormat
 } from '../../shared/colorUtils';
-import * as Vibrant from 'node-vibrant';
+import { Vibrant } from 'node-vibrant/browser';
 
 interface ThemeEditorProps {
   initialTheme?: ThemeMetadata;

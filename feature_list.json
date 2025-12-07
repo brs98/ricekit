@@ -1838,7 +1838,7 @@
       "Step 5: Verify terminal colors match preview colors",
       "Step 6: Repeat for code editor colors"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

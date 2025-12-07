@@ -97,7 +97,6 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
   }
 
   const stepIndex = ['welcome', 'theme-selection', 'app-configuration'].indexOf(currentStep);
-  const totalSteps = 3;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -106,7 +105,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
         {currentStep !== 'complete' && (
           <div className="bg-gray-100 dark:bg-gray-700 px-8 py-4">
             <div className="flex items-center justify-between mb-2">
-              {['Welcome', 'Choose Theme', 'Configure Apps'].map((label, idx) => (
+              {['Welcome', 'Choose Theme', 'Configure Apps'].map((_label, idx) => (
                 <div key={idx} className="flex items-center">
                   <div
                     className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
