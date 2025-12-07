@@ -6050,3 +6050,170 @@ SESSION QUALITY
 ===========================================
 End of Session 36
 ===========================================
+
+===========================================
+Session 37 - Corrupted Preferences Handling
+===========================================
+Date: 2025-12-06
+Goal: Implement graceful error handling for corrupted preference files
+
+SESSION OVERVIEW
+================
+Started with fresh context window. Oriented by:
+- Reading app_spec.txt
+- Checking BUGS.md (no active bugs)
+- Reviewing recent progress notes
+- Counting remaining tests: 84 failing, 118 passing (58.4%)
+- Verified app is working with basic health check
+
+Selected Test #119: "Application handles corrupted preference files"
+This is a critical error handling feature for production robustness.
+
+IMPLEMENTATION DETAILS
+======================
+
+Problem Identified:
+- ensurePreferences() only created file if missing
+- No validation of existing file contents
+- Direct JSON.parse() calls would crash app on corrupted files
+- Multiple code paths reading preferences without error handling
+
+Solution Implemented:
+1. Enhanced ensurePreferences() in directories.ts:
+   - Validates existing files are valid JSON
+   - Detects corruption and logs detailed error
+   - Creates timestamped backup of corrupted file
+   - Replaces with default preferences automatically
+   - All happens during app initialization
+
+2. Added getDefaultPreferences() helper:
+   - Centralized default preferences definition
+   - Proper TypeScript type assertions
+   - Used by both creation and repair logic
+
+3. Added safety fallback in handleGetPreferences():
+   - Try-catch around file read and parse
+   - Returns defaults if anything goes wrong
+   - Defensive programming approach
+
+4. Fixed TypeScript compilation issues:
+   - Added execSync import (was missing)
+   - Added type assertions for arrays and mode field
+   - Rebuilt main process with npm run build:main
+
+ERROR HANDLING FLOW
+===================
+1. App starts → initializeApp() called
+2. ensurePreferences() executes
+3. File exists? → Validate JSON
+4. Invalid JSON detected:
+   a. Log: "Corrupted preferences file detected"
+   b. Log: Detailed parse error
+   c. Backup to: preferences.json.corrupted.{timestamp}.backup
+   d. Log: "Backed up corrupted file"
+   e. Write new default preferences
+   f. Log: "Replaced corrupted preferences with defaults"
+5. App continues normally
+6. Tray, shortcuts, schedule checking all work
+
+VERIFICATION TESTING
+====================
+
+Manual Test Performed:
+1. Created corrupted preferences: { "invalid": json }
+2. Verified JSON.parse() throws error
+3. Killed app processes
+4. Rebuilt TypeScript with npm run build:main
+5. Started app with corrupted file
+6. Observed console output
+
+Results:
+✓ Error logged: "Corrupted preferences file detected"
+✓ Parse error logged: "Unexpected token 'j'..."
+✓ Backup created: preferences.json.corrupted.1765066624462.backup
+✓ Log: "Replaced corrupted preferences with defaults"
+✓ Log: "MacTheme initialization complete!"
+✓ Log: "Menu bar tray icon created"
+✓ Log: "Quick switcher shortcut registered: Cmd+Shift+T"
+✓ App running successfully
+✓ New preferences.json contains valid JSON with all default keys
+✓ No crashes or unhandled errors
+
+Test Scripts Created:
+- verify-app-working.js: General health check (5 validation steps)
+- test-corrupted-preferences.js: Basic corruption test
+- test-corrupted-prefs-e2e.js: Full E2E test with app restart
+
+FILES MODIFIED
+==============
+1. src/main/directories.ts
+   - Added getDefaultPreferences() function
+   - Enhanced ensurePreferences() with validation and repair
+   - Added backup logic with timestamps
+   - Improved error logging
+
+2. src/main/ipcHandlers.ts
+   - Added execSync to imports (fix compilation error)
+   - Added try-catch in handleGetPreferences()
+   - Defensive fallback to defaults
+
+3. feature_list.json
+   - Test #119: passes: false → true
+
+FILES CREATED
+=============
+1. verify-app-working.js - General app health verification
+2. test-corrupted-preferences.js - Basic corruption test
+3. test-corrupted-prefs-e2e.js - Full E2E restart test
+4. app-output.log - Console output capture (temporary)
+
+COMMITS
+=======
+fd66654 - Implement graceful corrupted preferences file handling - Test #119
+
+PROGRESS SUMMARY
+================
+✨ Completed Test #119 this session
+✨ 119/202 tests now passing (58.9% complete, +0.5% this session)
+
+Tests remaining: 83
+
+Quality Improvements:
+- Production-grade error recovery
+- Data backup before replacement
+- Comprehensive error logging
+- No crashes on corrupted files
+- Defensive programming practices
+- TypeScript type safety improvements
+
+WHAT TO DO NEXT
+===============
+Continue with remaining functional tests:
+- Test #116: Large number of custom themes (100+) performs well
+- Test #118: Memory usage remains stable after multiple theme switches
+- Test #120-122: Onboarding flow tests
+- Test #123: Application window is closeable and reopenable
+- Test #125: URL-based theme import validation
+
+Next Priority: Continue with robustness and error handling tests, or start onboarding flow implementation.
+
+SESSION QUALITY
+===============
+- Identified issue through systematic debugging
+- Implemented comprehensive solution
+- Fixed all TypeScript compilation errors
+- Manual verification with real corrupted file
+- Thorough testing of error paths
+- Clean commit with detailed documentation
+- All changes properly backed up and tested
+- Left codebase in working state
+
+Key Learning:
+- Need to validate file contents, not just existence
+- Error handling should happen at initialization
+- Backup user data before replacing
+- TypeScript compilation must pass before testing
+
+===========================================
+End of Session 37
+===========================================
