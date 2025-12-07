@@ -1478,7 +1478,7 @@
       "Step 4: Verify memory increase is less than 50MB",
       "Step 5: Verify no memory leaks detected"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
