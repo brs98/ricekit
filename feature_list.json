@@ -1721,7 +1721,7 @@
       "Step 5: Verify all required color fields are present",
       "Step 6: Test config in actual Alacritty installation"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1732,7 +1732,7 @@
       "Step 3: Verify config syntax is valid for Kitty",
       "Step 4: Test config in actual Kitty installation"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1744,7 +1744,7 @@
       "Step 4: Verify no parse errors",
       "Step 5: Verify Warp-specific structure is correct"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1756,7 +1756,7 @@
       "Step 4: Verify module.exports structure is correct",
       "Step 5: Test config in actual Hyper installation"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1768,7 +1768,7 @@
       "Step 4: Verify Starship-specific settings are present",
       "Step 5: Test config with Starship"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
