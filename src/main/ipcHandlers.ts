@@ -558,6 +558,20 @@ export async function handleApplyTheme(_event: any, name: string): Promise<void>
       console.error('Failed to execute hook script:', err);
       // Don't throw - hook script failure shouldn't block theme application
     }
+
+    // Automatically apply the first wallpaper from the theme
+    try {
+      const wallpapers = await handleListWallpapers(null, name);
+      if (wallpapers.length > 0) {
+        console.log(`Automatically applying first wallpaper: ${wallpapers[0]}`);
+        await handleApplyWallpaper(null, wallpapers[0]);
+      } else {
+        console.log('No wallpapers found in theme, skipping automatic wallpaper');
+      }
+    } catch (err) {
+      console.error('Failed to apply automatic wallpaper:', err);
+      // Don't throw - wallpaper failure shouldn't block theme application
+    }
   } catch (err: any) {
     // Log the full error for debugging
     console.error('Error applying theme:', err);
