@@ -559,7 +559,7 @@ export function SettingsView() {
               onChange={(shortcut) => updatePreference('keyboardShortcuts', {
                 quickSwitcher: shortcut
               })}
-              placeholder="Cmd+Shift+T"
+              placeholder="⌘⇧T"
             />
           </div>
         </section>

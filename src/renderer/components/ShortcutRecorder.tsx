@@ -6,6 +6,52 @@ interface ShortcutRecorderProps {
   placeholder?: string;
 }
 
+/**
+ * Converts a keyboard shortcut string to macOS symbol format
+ * Example: "Cmd+Shift+T" -> "⌘⇧T"
+ */
+function formatShortcutWithSymbols(shortcut: string): string {
+  if (!shortcut) return '';
+
+  const symbolMap: Record<string, string> = {
+    'Cmd': '⌘',
+    'Command': '⌘',
+    'Shift': '⇧',
+    'Alt': '⌥',
+    'Option': '⌥',
+    'Ctrl': '⌃',
+    'Control': '⌃',
+    'Enter': '↩',
+    'Return': '↩',
+    'Delete': '⌫',
+    'Backspace': '⌫',
+    'Esc': '⎋',
+    'Escape': '⎋',
+    'Tab': '⇥',
+    'Space': '␣',
+    'Up': '↑',
+    'Down': '↓',
+    'Left': '←',
+    'Right': '→'
+  };
+
+  // Split by + and map each part
+  const parts = shortcut.split('+');
+  let result = '';
+
+  for (const part of parts) {
+    const trimmed = part.trim();
+    if (symbolMap[trimmed]) {
+      result += symbolMap[trimmed];
+    } else {
+      // For regular keys, just append them (they're already uppercase)
+      result += trimmed;
+    }
+  }
+
+  return result;
+}
+
 export function ShortcutRecorder({ value, onChange, placeholder = 'Press keys...' }: ShortcutRecorderProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [currentKeys, setCurrentKeys] = useState<string[]>([]);
@@ -86,9 +132,10 @@ export function ShortcutRecorder({ value, onChange, placeholder = 'Press keys...
     onChange('');
   }
 
+  // Format the display value with macOS symbols
   const displayValue = isRecording
-    ? (currentKeys.length > 0 ? currentKeys.join('+') : 'Press keys...')
-    : (value || placeholder);
+    ? (currentKeys.length > 0 ? formatShortcutWithSymbols(currentKeys.join('+')) : 'Press keys...')
+    : (value ? formatShortcutWithSymbols(value) : placeholder);
 
   return (
     <div className="shortcut-recorder">

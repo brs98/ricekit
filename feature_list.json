@@ -2461,7 +2461,7 @@
       "Step 4: Verify shortcuts use ⇧ symbol for Shift",
       "Step 5: Verify shortcuts are formatted like native macOS apps"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
