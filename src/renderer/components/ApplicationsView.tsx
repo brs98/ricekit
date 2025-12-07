@@ -249,6 +249,13 @@ export function ApplicationsView() {
                         <>
                           <button
                             className="secondary-button"
+                            onClick={() => setSetupApp(app)}
+                            title="View setup instructions"
+                          >
+                            Setup Guide
+                          </button>
+                          <button
+                            className="secondary-button"
                             onClick={() => handleViewConfig(app.configPath)}
                           >
                             View Config
