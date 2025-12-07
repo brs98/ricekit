@@ -14,15 +14,16 @@ export function installBundledThemes(): void {
   console.log('Bundled themes dir:', bundledThemesDir);
   console.log('Target themes dir:', themesDir);
 
-  // Check if bundled themes directory exists and has themes
+  // Check if bundled themes directory exists and has complete themes (with theme.json)
   let hasBundledThemes = false;
   if (fs.existsSync(bundledThemesDir)) {
     const themes = fs.readdirSync(bundledThemesDir);
-    const themeDirectories = themes.filter(name => {
+    const completeThemes = themes.filter(name => {
       const themePath = path.join(bundledThemesDir, name);
-      return fs.statSync(themePath).isDirectory();
+      const themeJsonPath = path.join(themePath, 'theme.json');
+      return fs.statSync(themePath).isDirectory() && fs.existsSync(themeJsonPath);
     });
-    hasBundledThemes = themeDirectories.length > 0;
+    hasBundledThemes = completeThemes.length > 0;
   }
 
   if (!hasBundledThemes) {
@@ -109,6 +110,57 @@ function createThemesFromTemplates(): void {
   createRosePineTheme(themesDir);
 
   console.log('Created all 11 bundled themes from templates');
+
+  // Copy wallpapers from bundled-themes if available
+  copyBundledWallpapers(themesDir);
+}
+
+/**
+ * Copy wallpapers from bundled-themes directory to created themes
+ * This allows wallpapers to be distributed with the app without duplicating theme configs
+ */
+function copyBundledWallpapers(themesDir: string): void {
+  const bundledThemesDir = path.join(__dirname, '../../bundled-themes');
+
+  if (!fs.existsSync(bundledThemesDir)) {
+    console.log('No bundled-themes directory found, skipping wallpaper copy');
+    return;
+  }
+
+  const bundledThemes = fs.readdirSync(bundledThemesDir);
+  for (const themeName of bundledThemes) {
+    const bundledWallpapersDir = path.join(bundledThemesDir, themeName, 'wallpapers');
+
+    if (!fs.existsSync(bundledWallpapersDir)) {
+      continue;
+    }
+
+    const destThemeDir = path.join(themesDir, themeName);
+    if (!fs.existsSync(destThemeDir)) {
+      console.log(`Theme ${themeName} not found in themes directory, skipping wallpaper copy`);
+      continue;
+    }
+
+    const destWallpapersDir = path.join(destThemeDir, 'wallpapers');
+    if (!fs.existsSync(destWallpapersDir)) {
+      fs.mkdirSync(destWallpapersDir, { recursive: true });
+    }
+
+    // Copy all wallpapers
+    const wallpaperFiles = fs.readdirSync(bundledWallpapersDir);
+    for (const file of wallpaperFiles) {
+      const srcPath = path.join(bundledWallpapersDir, file);
+      const destPath = path.join(destWallpapersDir, file);
+
+      // Only copy if destination doesn't exist
+      if (!fs.existsSync(destPath)) {
+        fs.copyFileSync(srcPath, destPath);
+        console.log(`Copied wallpaper: ${themeName}/${file}`);
+      }
+    }
+  }
+
+  console.log('Finished copying bundled wallpapers');
 }
 
 function createTokyoNightTheme(themesDir: string): void {
