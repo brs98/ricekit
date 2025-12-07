@@ -1441,7 +1441,7 @@
       "Step 4: Verify app does not crash",
       "Step 5: Restore permissions"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

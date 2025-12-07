@@ -367,119 +367,179 @@ async function updateVSCodeSettings(themeName: string, themePath: string): Promi
 export async function handleApplyTheme(_event: any, name: string): Promise<void> {
   console.log(`Applying theme: ${name}`);
 
-  // Ensure all required directories exist
-  ensureDirectories();
-  ensureState();
-  ensurePreferences();
+  try {
+    // Ensure all required directories exist
+    ensureDirectories();
+    ensureState();
+    ensurePreferences();
 
-  // Find the theme
-  const theme = await handleGetTheme(null, name);
-  if (!theme) {
-    throw new Error(`Theme ${name} not found`);
-  }
-
-  // Create or update symlink
-  const currentDir = getCurrentDir();
-  const symlinkPath = path.join(currentDir, 'theme');
-
-  // Remove existing symlink if it exists
-  if (fs.existsSync(symlinkPath)) {
-    // Check if it's a symlink
-    const stats = fs.lstatSync(symlinkPath);
-    if (stats.isSymbolicLink()) {
-      fs.unlinkSync(symlinkPath);
-      console.log(`Removed existing symlink: ${symlinkPath}`);
-    } else if (stats.isDirectory()) {
-      // If it's a directory (shouldn't happen), remove it
-      fs.rmSync(symlinkPath, { recursive: true, force: true });
-      console.log(`Removed existing directory: ${symlinkPath}`);
+    // Find the theme
+    const theme = await handleGetTheme(null, name);
+    if (!theme) {
+      throw new Error(`THEME_NOT_FOUND: Theme "${name}" not found. Please check if the theme exists.`);
     }
-  }
 
-  // Create new symlink
-  try {
-    fs.symlinkSync(theme.path, symlinkPath, 'dir');
-    console.log(`Created symlink: ${symlinkPath} -> ${theme.path}`);
-  } catch (err) {
-    console.error('Failed to create symlink:', err);
-    throw new Error(`Failed to create symlink: ${err}`);
-  }
+    // Create or update symlink
+    const currentDir = getCurrentDir();
+    const symlinkPath = path.join(currentDir, 'theme');
 
-  // Update state
-  const statePath = getStatePath();
-  const state: State = JSON.parse(fs.readFileSync(statePath, 'utf-8'));
-  state.currentTheme = name;
-  state.lastSwitched = Date.now();
-  fs.writeFileSync(statePath, JSON.stringify(state, null, 2));
+    // Remove existing symlink if it exists
+    try {
+      if (fs.existsSync(symlinkPath)) {
+        // Check if it's a symlink
+        const stats = fs.lstatSync(symlinkPath);
+        if (stats.isSymbolicLink()) {
+          fs.unlinkSync(symlinkPath);
+          console.log(`Removed existing symlink: ${symlinkPath}`);
+        } else if (stats.isDirectory()) {
+          // If it's a directory (shouldn't happen), remove it
+          fs.rmSync(symlinkPath, { recursive: true, force: true });
+          console.log(`Removed existing directory: ${symlinkPath}`);
+        }
+      }
+    } catch (err: any) {
+      if (err.code === 'EACCES' || err.code === 'EPERM') {
+        throw new Error(`PERMISSION_ERROR: MacTheme doesn't have permission to modify theme files. Please check folder permissions.`);
+      }
+      throw err;
+    }
 
-  // Update recent themes in preferences
-  const prefsPath = getPreferencesPath();
-  const prefs: Preferences = JSON.parse(fs.readFileSync(prefsPath, 'utf-8'));
+    // Create new symlink
+    try {
+      fs.symlinkSync(theme.path, symlinkPath, 'dir');
+      console.log(`Created symlink: ${symlinkPath} -> ${theme.path}`);
+    } catch (err: any) {
+      console.error('Failed to create symlink:', err);
+      if (err.code === 'EACCES' || err.code === 'EPERM') {
+        throw new Error(`PERMISSION_ERROR: Cannot create theme link due to insufficient permissions. Please check folder permissions in ~/Library/Application Support/MacTheme.`);
+      } else if (err.code === 'EEXIST') {
+        throw new Error(`FILE_EXISTS: A file or folder already exists at the theme location. Please remove it and try again.`);
+      } else if (err.code === 'ENOSPC') {
+        throw new Error(`NO_SPACE: Not enough disk space to apply theme.`);
+      }
+      throw new Error(`SYMLINK_ERROR: Failed to create theme link: ${err.message}`);
+    }
 
-  // Add to recent themes (remove if already exists to avoid duplicates)
-  if (!prefs.recentThemes) {
-    prefs.recentThemes = [];
-  }
-  prefs.recentThemes = prefs.recentThemes.filter(t => t !== name);
-  prefs.recentThemes.unshift(name); // Add to beginning
+    // Update state
+    const statePath = getStatePath();
+    let state: State;
+    try {
+      state = JSON.parse(fs.readFileSync(statePath, 'utf-8'));
+    } catch (err: any) {
+      if (err.code === 'EACCES' || err.code === 'EPERM') {
+        throw new Error(`PERMISSION_ERROR: Cannot read app state file. Please check permissions for ~/Library/Application Support/MacTheme.`);
+      }
+      throw err;
+    }
 
-  // Keep only last 10 recent themes
-  if (prefs.recentThemes.length > 10) {
-    prefs.recentThemes = prefs.recentThemes.slice(0, 10);
-  }
+    state.currentTheme = name;
+    state.lastSwitched = Date.now();
 
-  fs.writeFileSync(prefsPath, JSON.stringify(prefs, null, 2));
-  console.log(`Updated recent themes: ${prefs.recentThemes.slice(0, 5).join(', ')}`);
+    try {
+      fs.writeFileSync(statePath, JSON.stringify(state, null, 2));
+    } catch (err: any) {
+      if (err.code === 'EACCES' || err.code === 'EPERM') {
+        throw new Error(`PERMISSION_ERROR: Cannot save app state. Please check write permissions for ~/Library/Application Support/MacTheme.`);
+      } else if (err.code === 'ENOSPC') {
+        throw new Error(`NO_SPACE: Not enough disk space to save theme state.`);
+      }
+      throw err;
+    }
 
-  console.log(`Theme ${name} applied successfully`);
+    // Update recent themes in preferences
+    const prefsPath = getPreferencesPath();
+    let prefs: Preferences;
+    try {
+      prefs = JSON.parse(fs.readFileSync(prefsPath, 'utf-8'));
+    } catch (err: any) {
+      if (err.code === 'EACCES' || err.code === 'EPERM') {
+        throw new Error(`PERMISSION_ERROR: Cannot read preferences. Please check permissions for ~/Library/Application Support/MacTheme.`);
+      }
+      throw err;
+    }
 
-  // Show notification if enabled
-  const shouldShowNotification = prefs.notifications?.onThemeChange ?? prefs.showNotifications ?? true;
-  if (Notification.isSupported() && shouldShowNotification) {
-    const notification = new Notification({
-      title: 'Theme Applied',
-      body: `${theme.metadata.name} is now active`,
-      silent: false,
-    });
-    notification.show();
-  }
+    // Add to recent themes (remove if already exists to avoid duplicates)
+    if (!prefs.recentThemes) {
+      prefs.recentThemes = [];
+    }
+    prefs.recentThemes = prefs.recentThemes.filter(t => t !== name);
+    prefs.recentThemes.unshift(name); // Add to beginning
 
-  // Update tray menu with new recent themes
-  try {
-    const { refreshTrayMenu } = await import('./main');
-    refreshTrayMenu();
-  } catch (err) {
-    console.error('Failed to refresh tray menu:', err);
-  }
+    // Keep only last 10 recent themes
+    if (prefs.recentThemes.length > 10) {
+      prefs.recentThemes = prefs.recentThemes.slice(0, 10);
+    }
 
-  // Update VS Code settings if enabled
-  try {
-    if (prefs.enabledApps && prefs.enabledApps.includes('vscode')) {
-      await updateVSCodeSettings(name, theme.path);
+    try {
+      fs.writeFileSync(prefsPath, JSON.stringify(prefs, null, 2));
+    } catch (err: any) {
+      // Don't fail the theme application if we can't update preferences
+      console.error('Failed to update preferences:', err);
+    }
+
+    console.log(`Updated recent themes: ${prefs.recentThemes.slice(0, 5).join(', ')}`);
+    console.log(`Theme ${name} applied successfully`);
+
+    // Show notification if enabled
+    const shouldShowNotification = prefs.notifications?.onThemeChange ?? prefs.showNotifications ?? true;
+    if (Notification.isSupported() && shouldShowNotification) {
+      const notification = new Notification({
+        title: 'Theme Applied',
+        body: `${theme.metadata.name} is now active`,
+        silent: false,
+      });
+      notification.show();
+    }
+
+    // Update tray menu with new recent themes
+    try {
+      const { refreshTrayMenu } = await import('./main');
+      refreshTrayMenu();
+    } catch (err) {
+      console.error('Failed to refresh tray menu:', err);
+    }
+
+    // Update VS Code settings if enabled
+    try {
+      if (prefs.enabledApps && prefs.enabledApps.includes('vscode')) {
+        await updateVSCodeSettings(name, theme.path);
+      } else {
+        console.log('VS Code integration disabled in preferences');
+      }
+    } catch (err) {
+      console.error('Failed to update VS Code settings:', err);
+    }
+
+    // Notify terminal applications to reload themes
+    try {
+      await notifyTerminalsToReload(theme.path);
+    } catch (err) {
+      console.error('Failed to notify terminals:', err);
+    }
+
+    // Execute user-defined hook script if configured
+    try {
+      if (prefs.hookScript && prefs.hookScript.trim() !== '') {
+        await executeHookScript(name, prefs.hookScript);
+      } else {
+        console.log('No hook script configured');
+      }
+    } catch (err) {
+      console.error('Failed to execute hook script:', err);
+      // Don't throw - hook script failure shouldn't block theme application
+    }
+  } catch (err: any) {
+    // Log the full error for debugging
+    console.error('Error applying theme:', err);
+
+    // Re-throw with user-friendly message
+    if (err.message && err.message.includes(':')) {
+      // Already formatted error (e.g., "PERMISSION_ERROR: ...")
+      throw err;
     } else {
-      console.log('VS Code integration disabled in preferences');
+      // Generic error - wrap it
+      throw new Error(`UNEXPECTED_ERROR: Failed to apply theme: ${err.message || 'Unknown error'}`);
     }
-  } catch (err) {
-    console.error('Failed to update VS Code settings:', err);
-  }
-
-  // Notify terminal applications to reload themes
-  try {
-    await notifyTerminalsToReload(theme.path);
-  } catch (err) {
-    console.error('Failed to notify terminals:', err);
-  }
-
-  // Execute user-defined hook script if configured
-  try {
-    if (prefs.hookScript && prefs.hookScript.trim() !== '') {
-      await executeHookScript(name, prefs.hookScript);
-    } else {
-      console.log('No hook script configured');
-    }
-  } catch (err) {
-    console.error('Failed to execute hook script:', err);
-    // Don't throw - hook script failure shouldn't block theme application
   }
 }
 
