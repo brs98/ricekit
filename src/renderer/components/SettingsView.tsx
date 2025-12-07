@@ -19,6 +19,14 @@ export function SettingsView() {
   const [showAboutDialog, setShowAboutDialog] = useState(false);
   const [debugLogging, setDebugLogging] = useState(false);
   const [logFile, setLogFile] = useState<string>('');
+  const [checkingUpdates, setCheckingUpdates] = useState(false);
+  const [updateInfo, setUpdateInfo] = useState<{
+    currentVersion: string;
+    latestVersion: string;
+    hasUpdate: boolean;
+    updateUrl?: string;
+    error?: string;
+  } | null>(null);
 
   useEffect(() => {
     loadPreferences();
@@ -200,6 +208,25 @@ export function SettingsView() {
         console.error('Failed to open fallback URL:', fallbackErr);
         alert('Failed to open help documentation.');
       });
+    }
+  }
+
+  async function handleCheckForUpdates() {
+    try {
+      setCheckingUpdates(true);
+      setUpdateInfo(null);
+      const result = await window.electronAPI.checkForUpdates();
+      setUpdateInfo(result);
+    } catch (err: any) {
+      console.error('Failed to check for updates:', err);
+      setUpdateInfo({
+        currentVersion: '0.1.0',
+        latestVersion: '0.1.0',
+        hasUpdate: false,
+        error: 'Failed to check for updates'
+      });
+    } finally {
+      setCheckingUpdates(false);
     }
   }
 
@@ -777,6 +804,44 @@ export function SettingsView() {
         {/* Help & About Section */}
         <section className="settings-section">
           <h3 className="section-title">Help & About</h3>
+
+          <div className="setting-item">
+            <div className="setting-info">
+              <label className="setting-label">Check for Updates</label>
+              <p className="setting-description">
+                {updateInfo ? (
+                  updateInfo.error ? (
+                    <span className="error-text">{updateInfo.error}</span>
+                  ) : updateInfo.hasUpdate ? (
+                    <span className="success-text">
+                      Update available: v{updateInfo.latestVersion}
+                    </span>
+                  ) : (
+                    <span>You're up to date (v{updateInfo.currentVersion})</span>
+                  )
+                ) : (
+                  'Check if a newer version of MacTheme is available'
+                )}
+              </p>
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                className="secondary-button"
+                onClick={handleCheckForUpdates}
+                disabled={checkingUpdates}
+              >
+                {checkingUpdates ? 'Checking...' : 'Check for Updates'}
+              </button>
+              {updateInfo?.hasUpdate && updateInfo.updateUrl && (
+                <button
+                  className="primary-button"
+                  onClick={() => window.electronAPI.openExternal(updateInfo.updateUrl!)}
+                >
+                  Download Update
+                </button>
+              )}
+            </div>
+          </div>
 
           <div className="setting-item">
             <div className="setting-info">

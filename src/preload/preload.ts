@@ -61,4 +61,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   clearLogs: () => ipcRenderer.invoke('logging:clearLogs'),
   setDebugLogging: (enabled: boolean) => ipcRenderer.invoke('logging:setDebugEnabled', enabled),
   isDebugLoggingEnabled: () => ipcRenderer.invoke('logging:isDebugEnabled'),
+
+  // Update operations
+  checkForUpdates: () => ipcRenderer.invoke('system:checkForUpdates'),
 });

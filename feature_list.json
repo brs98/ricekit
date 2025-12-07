@@ -1618,7 +1618,7 @@
       "Step 4: Verify result is displayed (up to date or update available)",
       "Step 5: If update available, verify download/install option is shown"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

@@ -83,6 +83,9 @@ export function setupIpcHandlers(): void {
   ipcMain.handle('logging:setDebugEnabled', handleSetDebugEnabled);
   ipcMain.handle('logging:isDebugEnabled', handleIsDebugEnabled);
 
+  // Update operations
+  ipcMain.handle('system:checkForUpdates', handleCheckForUpdates);
+
   logger.info('IPC handlers registered');
   console.log('IPC handlers registered');
 }
@@ -2419,6 +2422,69 @@ async function handleSetDebugEnabled(_event: any, enabled: boolean): Promise<voi
  */
 async function handleIsDebugEnabled(): Promise<boolean> {
   return logger.isDebugEnabled();
+}
+
+/**
+ * Check for application updates
+ */
+async function handleCheckForUpdates(): Promise<{
+  currentVersion: string;
+  latestVersion: string;
+  hasUpdate: boolean;
+  updateUrl?: string;
+  error?: string;
+}> {
+  try {
+    // Get current version from package.json
+    const packageJsonPath = path.join(__dirname, '../../package.json');
+    let currentVersion = '0.1.0';
+
+    try {
+      const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+      currentVersion = packageJson.version;
+    } catch (err) {
+      logger.error('Failed to read current version', err);
+    }
+
+    logger.info(`Checking for updates. Current version: ${currentVersion}`);
+
+    // For now, simulate checking for updates
+    // In a real implementation, this would:
+    // 1. Fetch latest release from GitHub API
+    // 2. Compare versions using semver
+    // 3. Return update information
+
+    // Simulated response - always return "up to date"
+    return {
+      currentVersion,
+      latestVersion: currentVersion,
+      hasUpdate: false,
+      updateUrl: 'https://github.com/mactheme/mactheme/releases'
+    };
+
+    /* Example real implementation:
+    const response = await fetch('https://api.github.com/repos/username/mactheme/releases/latest');
+    const data = await response.json();
+    const latestVersion = data.tag_name.replace('v', '');
+
+    const hasUpdate = compareVersions(latestVersion, currentVersion) > 0;
+
+    return {
+      currentVersion,
+      latestVersion,
+      hasUpdate,
+      updateUrl: data.html_url
+    };
+    */
+  } catch (error) {
+    logger.error('Error checking for updates', error);
+    return {
+      currentVersion: '0.1.0',
+      latestVersion: '0.1.0',
+      hasUpdate: false,
+      error: 'Failed to check for updates: ' + (error as Error).message
+    };
+  }
 }
 
 /**
