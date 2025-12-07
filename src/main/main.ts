@@ -298,12 +298,38 @@ function toggleQuickSwitcher() {
   }
 }
 
-// This method will be called when Electron has finished initialization
-app.whenReady().then(() => {
-  // Initialize application directories and files
-  console.log('=== MacTheme Starting ===');
-  initializeApp();
-  installBundledThemes();
+// Request single instance lock to prevent multiple instances
+const gotTheLock = app.requestSingleInstanceLock();
+
+if (!gotTheLock) {
+  // Another instance is already running, quit this one
+  console.log('Another instance is already running. Quitting this instance.');
+  app.quit();
+} else {
+  // This is the first instance, register second-instance handler
+  app.on('second-instance', (_event, _commandLine, _workingDirectory) => {
+    // Someone tried to run a second instance, focus our window instead
+    console.log('Second instance detected. Focusing existing window.');
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) {
+        mainWindow.restore();
+      }
+      if (!mainWindow.isVisible()) {
+        mainWindow.show();
+      }
+      mainWindow.focus();
+    } else {
+      // Window doesn't exist, create it
+      createWindow();
+    }
+  });
+
+  // This method will be called when Electron has finished initialization
+  app.whenReady().then(() => {
+    // Initialize application directories and files
+    console.log('=== MacTheme Starting ===');
+    initializeApp();
+    installBundledThemes();
 
   // Setup IPC handlers
   setupIpcHandlers();
@@ -375,16 +401,17 @@ app.whenReady().then(() => {
       createWindow();
     }
   });
-});
+  });
 
-// Quit when all windows are closed, except on macOS
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
-});
+  // Quit when all windows are closed, except on macOS
+  app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') {
+      app.quit();
+    }
+  });
 
-// Unregister shortcuts when app is about to quit
-app.on('will-quit', () => {
-  globalShortcut.unregisterAll();
-});
+  // Unregister shortcuts when app is about to quit
+  app.on('will-quit', () => {
+    globalShortcut.unregisterAll();
+  });
+}

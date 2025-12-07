@@ -1606,7 +1606,7 @@
       "Step 3: Verify second instance does not open new window",
       "Step 4: Verify existing window is focused/brought to front"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
