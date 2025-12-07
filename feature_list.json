@@ -2302,7 +2302,7 @@
       "Step 4: Verify icon is monochrome (matches other menu bar icons)",
       "Step 5: Verify icon represents theming concept"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",

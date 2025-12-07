@@ -13,17 +13,23 @@ let tray: Tray | null = null;
  * Create or update the menu bar tray icon and menu
  */
 function createTray() {
-  // Create a simple colored icon for the tray
+  // Create a monochrome template icon for the macOS menu bar
   // For macOS, we create a 22x22 icon (template size for menu bar)
-  const createTrayIcon = (color: string = '#007AFF'): Electron.NativeImage => {
-    // Create a simple SVG icon
+  const createTrayIcon = (): Electron.NativeImage => {
+    // Create a simple color swatches icon (theming concept)
+    // macOS menu bar icons should be black on transparent, system will handle light/dark mode
+    // Three circles representing color swatches - simple and clear at 22x22
     const svg = `
-      <svg width="22" height="22" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="11" cy="11" r="8" fill="${color}" opacity="0.8"/>
-        <circle cx="11" cy="11" r="6" fill="none" stroke="${color}" stroke-width="2"/>
+      <svg width="22" height="22" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 22">
+        <circle cx="5.5" cy="11" r="3.5" fill="black" stroke="black" stroke-width="1"/>
+        <circle cx="11" cy="11" r="3.5" fill="black" stroke="black" stroke-width="1"/>
+        <circle cx="16.5" cy="11" r="3.5" fill="black" stroke="black" stroke-width="1"/>
       </svg>
     `;
-    return nativeImage.createFromDataURL(`data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`);
+    const image = nativeImage.createFromDataURL(`data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`);
+    // Mark as template so macOS handles light/dark mode automatically
+    image.setTemplateImage(true);
+    return image;
   };
 
   if (!tray) {
