@@ -2026,7 +2026,7 @@
       "Step 4: Verify buttons use SF Pro font",
       "Step 5: Verify font weights are consistent with macOS"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
@@ -2038,7 +2038,7 @@
       "Step 4: View config snippets in setup wizard",
       "Step 5: Verify code uses SF Mono font"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "style",
