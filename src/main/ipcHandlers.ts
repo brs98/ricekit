@@ -4,7 +4,7 @@ import path from 'path';
 import os from 'os';
 import archiver from 'archiver';
 import { promisify } from 'util';
-import { exec } from 'child_process';
+import { exec, execSync } from 'child_process';
 import {
   getThemesDir,
   getCustomThemesDir,
@@ -1528,10 +1528,19 @@ async function handleRefreshApp(_event: any, appName: string): Promise<void> {
  */
 async function handleGetPreferences(): Promise<Preferences> {
   ensureDirectories();
-  ensurePreferences();
+  ensurePreferences(); // This now validates and repairs corrupted files
   const prefsPath = getPreferencesPath();
-  const prefsContent = fs.readFileSync(prefsPath, 'utf-8');
-  return JSON.parse(prefsContent);
+
+  try {
+    const prefsContent = fs.readFileSync(prefsPath, 'utf-8');
+    return JSON.parse(prefsContent);
+  } catch (error) {
+    // This should never happen after ensurePreferences(), but just in case...
+    console.error('Failed to read preferences after validation:', error);
+    // Import the function to get defaults
+    const { getDefaultPreferences } = await import('./directories');
+    return getDefaultPreferences();
+  }
 }
 
 /**

@@ -1490,7 +1490,7 @@
       "Step 4: Verify error is logged",
       "Step 5: Verify new valid preferences.json is created"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

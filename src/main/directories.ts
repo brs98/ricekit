@@ -64,36 +64,69 @@ export function ensureDirectories(): void {
 }
 
 /**
+ * Get default preferences object
+ */
+export function getDefaultPreferences() {
+  return {
+    defaultLightTheme: 'catppuccin-latte',
+    defaultDarkTheme: 'tokyo-night',
+    enabledApps: [] as string[],
+    favorites: [] as string[],
+    recentThemes: [] as string[],
+    keyboardShortcuts: {
+      quickSwitcher: 'Cmd+Shift+T',
+    },
+    autoSwitch: {
+      enabled: false,
+      mode: 'system' as 'system' | 'schedule' | 'sunset',
+    },
+    startAtLogin: false,
+    showInMenuBar: true,
+    showNotifications: true,
+    notifications: {
+      onThemeChange: true,
+      onScheduledSwitch: true,
+    },
+  };
+}
+
+/**
  * Initialize preferences file with defaults if it doesn't exist
+ * Also validates and repairs corrupted preferences files
  */
 export function ensurePreferences(): void {
   const prefsPath = getPreferencesPath();
+  const defaultPreferences = getDefaultPreferences();
 
+  // If file doesn't exist, create it
   if (!fs.existsSync(prefsPath)) {
-    const defaultPreferences = {
-      defaultLightTheme: 'catppuccin-latte',
-      defaultDarkTheme: 'tokyo-night',
-      enabledApps: [],
-      favorites: [],
-      recentThemes: [],
-      keyboardShortcuts: {
-        quickSwitcher: 'Cmd+Shift+T',
-      },
-      autoSwitch: {
-        enabled: false,
-        mode: 'system',
-      },
-      startAtLogin: false,
-      showInMenuBar: true,
-      showNotifications: true,
-      notifications: {
-        onThemeChange: true,
-        onScheduledSwitch: true,
-      },
-    };
-
     fs.writeFileSync(prefsPath, JSON.stringify(defaultPreferences, null, 2));
     console.log(`Created preferences file: ${prefsPath}`);
+    return;
+  }
+
+  // If file exists, validate it's valid JSON
+  try {
+    const content = fs.readFileSync(prefsPath, 'utf-8');
+    JSON.parse(content); // This will throw if JSON is invalid
+    // If we get here, the file is valid - no action needed
+  } catch (error) {
+    // File exists but contains invalid JSON - log error and recreate with defaults
+    console.error(`Corrupted preferences file detected: ${prefsPath}`);
+    console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+
+    // Backup the corrupted file
+    try {
+      const backupPath = `${prefsPath}.corrupted.${Date.now()}.backup`;
+      fs.copyFileSync(prefsPath, backupPath);
+      console.log(`Backed up corrupted file to: ${backupPath}`);
+    } catch (backupError) {
+      console.error('Failed to backup corrupted file:', backupError);
+    }
+
+    // Replace with default preferences
+    fs.writeFileSync(prefsPath, JSON.stringify(defaultPreferences, null, 2));
+    console.log(`Replaced corrupted preferences with defaults: ${prefsPath}`);
   }
 }
 
