@@ -21,6 +21,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getDisplays: () => ipcRenderer.invoke('wallpaper:getDisplays'),
   clearThumbnailCache: () => ipcRenderer.invoke('wallpaper:clearThumbnailCache'),
   getThumbnailCacheStats: () => ipcRenderer.invoke('wallpaper:getThumbnailCacheStats'),
+  addWallpapers: (themeName: string) => ipcRenderer.invoke('wallpaper:add', themeName),
+  removeWallpaper: (wallpaperPath: string) => ipcRenderer.invoke('wallpaper:remove', wallpaperPath),
 
   // Application operations
   detectApps: () => ipcRenderer.invoke('apps:detect'),

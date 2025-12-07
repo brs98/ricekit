@@ -296,6 +296,8 @@ export const WallpapersView: React.FC = () => {
   const [scheduleEnabled, setScheduleEnabled] = useState(false);
   const [schedules, setSchedules] = useState<WallpaperSchedule[]>([]);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [wallpaperToDelete, setWallpaperToDelete] = useState<string | null>(null);
+  const [isAdding, setIsAdding] = useState(false);
 
   useEffect(() => {
     loadWallpapers();
@@ -419,6 +421,41 @@ export const WallpapersView: React.FC = () => {
     }
   };
 
+  const handleAddWallpapers = async () => {
+    if (!currentTheme || isAdding) return;
+
+    try {
+      setIsAdding(true);
+      const result = await window.electronAPI.addWallpapers(currentTheme);
+
+      if (result.added.length > 0) {
+        // Reload wallpapers to show the new ones
+        await loadWallpapers();
+      }
+
+      if (result.errors.length > 0) {
+        setError(`Some wallpapers failed to add: ${result.errors.join(', ')}`);
+      }
+    } catch (err) {
+      console.error('Error adding wallpapers:', err);
+      setError('Failed to add wallpapers. Please try again.');
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  const handleRemoveWallpaper = async (wallpaperPath: string) => {
+    try {
+      await window.electronAPI.removeWallpaper(wallpaperPath);
+      setWallpaperToDelete(null);
+      // Reload wallpapers to reflect the removal
+      await loadWallpapers();
+    } catch (err) {
+      console.error('Error removing wallpaper:', err);
+      setError('Failed to remove wallpaper. Please try again.');
+    }
+  };
+
   if (loading) {
     return (
       <div className="wallpapers-view">
@@ -455,8 +492,16 @@ export const WallpapersView: React.FC = () => {
         <div className="empty-state">
           <p>No wallpapers available for this theme.</p>
           <p className="empty-state-hint">
-            Wallpapers should be placed in the theme's <code>wallpapers/</code> directory.
+            Add wallpapers to get started.
           </p>
+          <button
+            className="primary-button"
+            onClick={handleAddWallpapers}
+            disabled={isAdding}
+            style={{ marginTop: '16px' }}
+          >
+            {isAdding ? 'Adding...' : '+ Add Wallpapers'}
+          </button>
         </div>
       </div>
     );
@@ -623,6 +668,14 @@ export const WallpapersView: React.FC = () => {
               </select>
             </div>
           )}
+          <button
+            className="primary-button"
+            onClick={handleAddWallpapers}
+            disabled={isAdding}
+            style={{ padding: '6px 12px', fontSize: '13px' }}
+          >
+            {isAdding ? 'Adding...' : '+ Add'}
+          </button>
           <button className="refresh-button" onClick={loadWallpapers}>
             ↻ Refresh
           </button>
@@ -649,6 +702,16 @@ export const WallpapersView: React.FC = () => {
                 />
                 <div className="wallpaper-overlay">
                   <button className="wallpaper-apply-button">Apply</button>
+                  <button
+                    className="wallpaper-delete-button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setWallpaperToDelete(wallpaper.original);
+                    }}
+                    title="Remove wallpaper"
+                  >
+                    ✕
+                  </button>
                 </div>
               </div>
               <div className="wallpaper-info">
@@ -676,6 +739,49 @@ export const WallpapersView: React.FC = () => {
           onClose={() => setShowScheduleModal(false)}
           onSave={saveSchedules}
         />
+      )}
+
+      {wallpaperToDelete && (
+        <div className="modal-overlay" onClick={() => setWallpaperToDelete(null)}>
+          <div
+            className="modal-content"
+            style={{ maxWidth: '400px' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h2>Remove Wallpaper</h2>
+              <button className="close-button" onClick={() => setWallpaperToDelete(null)}>
+                ✕
+              </button>
+            </div>
+
+            <div style={{ padding: '16px' }}>
+              <p style={{ marginBottom: '8px' }}>
+                Are you sure you want to remove this wallpaper?
+              </p>
+              <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+                {wallpaperToDelete.split('/').pop()}
+              </p>
+            </div>
+
+            <div className="modal-actions">
+              <button className="secondary-button" onClick={() => setWallpaperToDelete(null)}>
+                Cancel
+              </button>
+              <button
+                className="danger-button"
+                onClick={() => handleRemoveWallpaper(wallpaperToDelete)}
+                style={{
+                  backgroundColor: '#e74c3c',
+                  color: 'white',
+                  border: 'none',
+                }}
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

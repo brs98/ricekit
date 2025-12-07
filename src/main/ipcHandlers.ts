@@ -43,6 +43,8 @@ export function setupIpcHandlers(): void {
   ipcMain.handle('wallpaper:getDisplays', handleGetDisplays);
   ipcMain.handle('wallpaper:clearThumbnailCache', handleClearThumbnailCache);
   ipcMain.handle('wallpaper:getThumbnailCacheStats', handleGetThumbnailCacheStats);
+  ipcMain.handle('wallpaper:add', handleAddWallpapers);
+  ipcMain.handle('wallpaper:remove', handleRemoveWallpaper);
 
   // Application operations
   ipcMain.handle('apps:detect', handleDetectApps);
@@ -1397,6 +1399,153 @@ async function handleGetDisplays(): Promise<any[]> {
       resolution: 'Unknown',
       isMain: true,
     }];
+  }
+}
+
+/**
+ * Add wallpaper(s) to a theme
+ * Opens a file dialog and copies selected images to the theme's wallpapers directory
+ */
+async function handleAddWallpapers(_event: any, themeName: string): Promise<{ added: string[]; errors: string[] }> {
+  logger.info(`Adding wallpapers to theme: ${themeName}`);
+
+  try {
+    // Open file dialog to select images
+    const result = await dialog.showOpenDialog({
+      title: 'Select Wallpapers to Add',
+      filters: [
+        { name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'heic', 'webp'] },
+      ],
+      properties: ['openFile', 'multiSelections'],
+    });
+
+    if (result.canceled || result.filePaths.length === 0) {
+      logger.info('Wallpaper selection canceled');
+      return { added: [], errors: [] };
+    }
+
+    // Find theme directory
+    const themesDir = getThemesDir();
+    const customThemesDir = getCustomThemesDir();
+
+    let themePath = path.join(themesDir, themeName);
+    if (!fs.existsSync(themePath)) {
+      themePath = path.join(customThemesDir, themeName);
+    }
+
+    if (!fs.existsSync(themePath)) {
+      throw new Error(`Theme not found: ${themeName}`);
+    }
+
+    // Ensure wallpapers directory exists
+    const wallpapersDir = path.join(themePath, 'wallpapers');
+    if (!fs.existsSync(wallpapersDir)) {
+      fs.mkdirSync(wallpapersDir, { recursive: true });
+    }
+
+    const added: string[] = [];
+    const errors: string[] = [];
+
+    // Copy each selected file to the wallpapers directory
+    for (const sourcePath of result.filePaths) {
+      try {
+        const fileName = path.basename(sourcePath);
+        let destPath = path.join(wallpapersDir, fileName);
+
+        // Handle duplicate filenames by adding a suffix
+        if (fs.existsSync(destPath)) {
+          const ext = path.extname(fileName);
+          const baseName = path.basename(fileName, ext);
+          let counter = 1;
+          while (fs.existsSync(destPath)) {
+            destPath = path.join(wallpapersDir, `${baseName}-${counter}${ext}`);
+            counter++;
+          }
+        }
+
+        fs.copyFileSync(sourcePath, destPath);
+        added.push(destPath);
+        logger.info(`Added wallpaper: ${destPath}`);
+      } catch (err) {
+        const errorMsg = `Failed to copy ${sourcePath}: ${err instanceof Error ? err.message : String(err)}`;
+        errors.push(errorMsg);
+        logger.error(errorMsg);
+      }
+    }
+
+    // Show notification
+    if (Notification.isSupported() && added.length > 0) {
+      const notification = new Notification({
+        title: 'Wallpapers Added',
+        body: `Added ${added.length} wallpaper${added.length > 1 ? 's' : ''} to ${themeName}`,
+        silent: false,
+      });
+      notification.show();
+    }
+
+    return { added, errors };
+  } catch (error) {
+    logger.error(`Error adding wallpapers to theme ${themeName}:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Remove a wallpaper from a theme
+ */
+async function handleRemoveWallpaper(_event: any, wallpaperPath: string): Promise<void> {
+  logger.info(`Removing wallpaper: ${wallpaperPath}`);
+
+  try {
+    // Verify the file exists
+    if (!fs.existsSync(wallpaperPath)) {
+      throw new Error(`Wallpaper not found: ${wallpaperPath}`);
+    }
+
+    // Safety check: ensure the file is inside a wallpapers directory
+    const parentDir = path.basename(path.dirname(wallpaperPath));
+    if (parentDir !== 'wallpapers') {
+      throw new Error('Cannot remove file: not in a wallpapers directory');
+    }
+
+    // Delete the file
+    fs.unlinkSync(wallpaperPath);
+    logger.info(`Removed wallpaper: ${wallpaperPath}`);
+
+    // Check if this was the current wallpaper and clear the symlink if so
+    const currentDir = getCurrentDir();
+    const wallpaperSymlink = path.join(currentDir, 'wallpaper');
+
+    if (fs.existsSync(wallpaperSymlink)) {
+      try {
+        const currentWallpaper = fs.readlinkSync(wallpaperSymlink);
+        if (currentWallpaper === wallpaperPath) {
+          fs.unlinkSync(wallpaperSymlink);
+          // Update state to clear current wallpaper
+          const statePath = getStatePath();
+          const state: State = JSON.parse(fs.readFileSync(statePath, 'utf-8'));
+          delete state.currentWallpaper;
+          fs.writeFileSync(statePath, JSON.stringify(state, null, 2));
+          logger.info('Cleared current wallpaper reference');
+        }
+      } catch {
+        // Symlink might not exist or be readable, ignore
+      }
+    }
+
+    // Show notification
+    if (Notification.isSupported()) {
+      const fileName = path.basename(wallpaperPath);
+      const notification = new Notification({
+        title: 'Wallpaper Removed',
+        body: `Removed ${fileName}`,
+        silent: false,
+      });
+      notification.show();
+    }
+  } catch (error) {
+    logger.error(`Error removing wallpaper:`, error);
+    throw error;
   }
 }
 
