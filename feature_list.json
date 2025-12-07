@@ -1694,7 +1694,7 @@
       "Step 4: Enter valid hex code",
       "Step 5: Verify it is accepted"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

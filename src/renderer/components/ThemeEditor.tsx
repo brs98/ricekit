@@ -193,6 +193,7 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
   const [newThemeName, setNewThemeName] = useState('');
   const [hasChanges, setHasChanges] = useState(false);
   const [selectedPreset, setSelectedPreset] = useState<string>('');
+  const [colorErrors, setColorErrors] = useState<{ [key in keyof ThemeColors]?: string }>({});
 
   // Update when initialTheme changes
   useEffect(() => {
@@ -200,6 +201,13 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
       setMetadata(initialTheme);
     }
   }, [initialTheme]);
+
+  // Validate hex color format
+  const isValidHexColor = (color: string): boolean => {
+    // Must start with # and have 3 or 6 hex digits
+    const hexPattern = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
+    return hexPattern.test(color);
+  };
 
   const applyPreset = (presetKey: string) => {
     if (presetKey && presetSchemes[presetKey]) {
@@ -213,6 +221,7 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
   };
 
   const updateColor = (colorKey: keyof ThemeColors, value: string) => {
+    // Always update the value to allow typing
     setMetadata({
       ...metadata,
       colors: {
@@ -221,6 +230,28 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
       },
     });
     setHasChanges(true);
+
+    // Validate the color
+    if (value.trim() === '') {
+      // Empty value - show error
+      setColorErrors(prev => ({
+        ...prev,
+        [colorKey]: 'Color cannot be empty'
+      }));
+    } else if (!isValidHexColor(value)) {
+      // Invalid format - show error
+      setColorErrors(prev => ({
+        ...prev,
+        [colorKey]: 'Invalid hex color (e.g., #FF5733 or #F73)'
+      }));
+    } else {
+      // Valid - clear any error for this color
+      setColorErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[colorKey];
+        return newErrors;
+      });
+    }
   };
 
   const updateMetadataField = (field: keyof Omit<ThemeMetadata, 'colors'>, value: string) => {
@@ -232,6 +263,12 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
   };
 
   const handleSave = async () => {
+    // Check for validation errors
+    if (Object.keys(colorErrors).length > 0) {
+      alert('Please fix all color validation errors before saving.');
+      return;
+    }
+
     // If editing a built-in theme, show save-as dialog
     if (sourceTheme && !sourceTheme.isCustom) {
       setShowSaveAsDialog(true);
@@ -347,28 +384,36 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
   const ColorInput = ({ colorKey }: { colorKey: keyof ThemeColors }) => {
     const colorValue = metadata.colors[colorKey];
     const isSelected = selectedColor === colorKey;
+    const error = colorErrors[colorKey];
+    const hasError = Boolean(error);
 
     return (
       <div className="color-input-item">
-        <label className="color-input-label">{formatColorName(colorKey)}</label>
-        <div className="color-input-controls">
-          <input
-            type="color"
-            value={colorValue}
-            onChange={(e) => updateColor(colorKey, e.target.value)}
-            className="color-picker-input"
-            onClick={() => setSelectedColor(colorKey)}
-          />
-          <input
-            type="text"
-            value={colorValue}
-            onChange={(e) => updateColor(colorKey, e.target.value)}
-            className={`color-hex-input ${isSelected ? 'selected' : ''}`}
-            onFocus={() => setSelectedColor(colorKey)}
-            placeholder="#000000"
-            maxLength={7}
-          />
+        <div className="color-input-row">
+          <label className="color-input-label">{formatColorName(colorKey)}</label>
+          <div className="color-input-controls">
+            <input
+              type="color"
+              value={isValidHexColor(colorValue) ? colorValue : '#000000'}
+              onChange={(e) => updateColor(colorKey, e.target.value)}
+              className="color-picker-input"
+              onClick={() => setSelectedColor(colorKey)}
+              disabled={!isValidHexColor(colorValue)}
+            />
+            <input
+              type="text"
+              value={colorValue}
+              onChange={(e) => updateColor(colorKey, e.target.value)}
+              className={`color-hex-input ${isSelected ? 'selected' : ''} ${hasError ? 'error' : ''}`}
+              onFocus={() => setSelectedColor(colorKey)}
+              placeholder="#000000"
+              maxLength={7}
+            />
+          </div>
         </div>
+        {error && (
+          <div className="color-input-error">{error}</div>
+        )}
       </div>
     );
   };
