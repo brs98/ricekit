@@ -89,7 +89,7 @@ function updateTrayMenu() {
       {
         label: 'Open MacTheme',
         click: () => {
-          if (mainWindow) {
+          if (mainWindow && !mainWindow.isDestroyed()) {
             mainWindow.show();
             mainWindow.focus();
           } else {
@@ -100,7 +100,7 @@ function updateTrayMenu() {
       {
         label: 'Preferences',
         click: () => {
-          if (mainWindow) {
+          if (mainWindow && !mainWindow.isDestroyed()) {
             mainWindow.show();
             mainWindow.focus();
             // Could send IPC to navigate to settings
@@ -207,6 +207,16 @@ function createWindow() {
     // In production, load from built files
     mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
   }
+
+  // Handle window close button - hide instead of close on macOS
+  mainWindow.on('close', (event) => {
+    // On macOS, hide the window instead of closing it
+    // This allows the app to stay in the menu bar
+    if (process.platform === 'darwin') {
+      event.preventDefault();
+      mainWindow?.hide();
+    }
+  });
 
   mainWindow.on('closed', () => {
     mainWindow = null;

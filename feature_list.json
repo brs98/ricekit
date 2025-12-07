@@ -1541,7 +1541,7 @@
       "Step 4: Click menu bar icon and select 'Open MacTheme'",
       "Step 5: Verify window reopens with previous state"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
