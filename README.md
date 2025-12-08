@@ -39,7 +39,7 @@ MacTheme is inspired by Omarchy's Linux theming system and brings unified theme 
 - Raycast • Alfred
 
 #### System
-- Desktop Wallpaper • macOS Accent Color
+- Desktop Wallpaper • macOS Accent Color • SketchyBar
 
 ---
 

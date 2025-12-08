@@ -333,6 +333,18 @@ async function notifyTerminalsToReload(themePath: string): Promise<void> {
     console.log('Could not notify WezTerm:', err);
   }
 
+  // 4. Reload SketchyBar
+  try {
+    execSync('sketchybar --reload', {
+      stdio: 'pipe',
+      timeout: 5000,
+    });
+    console.log('✓ SketchyBar reloaded');
+  } catch (err) {
+    // SketchyBar may not be installed or running - that's ok
+    console.log('SketchyBar not available or not running');
+  }
+
   console.log('Terminal reload notifications sent');
 }
 
@@ -1776,6 +1788,16 @@ async function handleDetectApps(): Promise<any[]> {
       ],
       configPath: path.join(process.env.HOME || '', '.config', 'lazygit', 'config.yml'),
     },
+    {
+      name: 'sketchybar',
+      displayName: 'SketchyBar',
+      category: 'system',
+      paths: [
+        '/usr/local/bin/sketchybar',
+        '/opt/homebrew/bin/sketchybar',
+      ],
+      configPath: path.join(process.env.HOME || '', '.config', 'sketchybar', 'sketchybarrc'),
+    },
 
     // Launchers
     {
@@ -1947,6 +1969,11 @@ async function handleSetupApp(_event: any, appName: string): Promise<void> {
 local mactheme_colors = wezterm.home_dir .. "/Library/Application Support/MacTheme/wezterm-colors.lua"
 wezterm.add_to_config_reload_watch_list(mactheme_colors)
 config.colors = dofile(mactheme_colors)`,
+      },
+      sketchybar: {
+        configPath: path.join(homeDir, '.config', 'sketchybar', 'sketchybarrc'),
+        importLine: `# MacTheme SketchyBar integration
+source "$HOME/Library/Application Support/MacTheme/current/theme/sketchybar-colors.sh"`,
       },
     };
 
@@ -2120,6 +2147,19 @@ async function handleRefreshApp(_event: any, appName: string): Promise<void> {
           }
         } catch (err) {
           console.log('Could not refresh WezTerm:', err);
+        }
+        break;
+
+      case 'sketchybar':
+        // SketchyBar can be reloaded via command line
+        try {
+          execSync('sketchybar --reload', {
+            stdio: 'pipe',
+            timeout: 5000,
+          });
+          console.log('SketchyBar theme refreshed successfully');
+        } catch (err) {
+          console.log('Could not refresh SketchyBar - it may not be running:', err);
         }
         break;
 

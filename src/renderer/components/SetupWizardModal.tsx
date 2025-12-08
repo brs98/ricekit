@@ -70,6 +70,13 @@ config.colors = dofile(mactheme_colors)`;
       case 'alfred':
         return 'Alfred themes use .alfredappearance files. Import via Alfred preferences';
 
+      case 'sketchybar':
+        return `# Add to your sketchybarrc:
+source "$CONFIG_DIR/colors.sh"
+
+# Or source from MacTheme:
+source "${basePath}/sketchybar-colors.sh"`;
+
       default:
         return `# Import theme from: ${basePath}/${app.name}.conf`;
     }
@@ -142,6 +149,14 @@ config.colors = dofile(mactheme_colors)`;
           'Save and test with: git diff'
         ];
 
+      case 'sketchybar':
+        return [
+          `Open your SketchyBar config: ${app.configPath}`,
+          'Add the source line to import colors at the top of your config',
+          'Use the exported color variables (e.g., $BAR_COLOR, $ICON_COLOR) in your sketchybarrc',
+          'Save the file and run: sketchybar --reload'
+        ];
+
       default:
         return [
           `Open the app's configuration file: ${app.configPath}`,
@@ -178,7 +193,7 @@ config.colors = dofile(mactheme_colors)`;
 
   const importStatement = getImportStatement();
   const instructions = getSetupInstructions();
-  const supportsAutomaticSetup = ['alacritty', 'kitty', 'neovim', 'vscode', 'starship', 'wezterm'].includes(app.name);
+  const supportsAutomaticSetup = ['alacritty', 'kitty', 'neovim', 'vscode', 'starship', 'wezterm', 'sketchybar'].includes(app.name);
 
   return (
     <div className="modal-overlay" onClick={onClose}>

@@ -214,6 +214,7 @@ function createTokyoNightTheme(themesDir: string): void {
   fs.writeFileSync(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
 }
 
 function createCatppuccinMochaTheme(themesDir: string): void {
@@ -266,6 +267,7 @@ function createCatppuccinMochaTheme(themesDir: string): void {
   fs.writeFileSync(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
 }
 
 function createCatppuccinLatteTheme(themesDir: string): void {
@@ -318,6 +320,7 @@ function createCatppuccinLatteTheme(themesDir: string): void {
   fs.writeFileSync(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
 }
 
 function createGruvboxDarkTheme(themesDir: string): void {
@@ -370,6 +373,7 @@ function createGruvboxDarkTheme(themesDir: string): void {
   fs.writeFileSync(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
 }
 
 function createGruvboxLightTheme(themesDir: string): void {
@@ -422,6 +426,7 @@ function createGruvboxLightTheme(themesDir: string): void {
   fs.writeFileSync(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
 }
 
 function createNordTheme(themesDir: string): void {
@@ -474,6 +479,7 @@ function createNordTheme(themesDir: string): void {
   fs.writeFileSync(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
 }
 
 function createDraculaTheme(themesDir: string): void {
@@ -526,6 +532,7 @@ function createDraculaTheme(themesDir: string): void {
   fs.writeFileSync(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
 }
 
 function createOneDarkTheme(themesDir: string): void {
@@ -578,6 +585,7 @@ function createOneDarkTheme(themesDir: string): void {
   fs.writeFileSync(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
 }
 
 function createSolarizedDarkTheme(themesDir: string): void {
@@ -630,6 +638,7 @@ function createSolarizedDarkTheme(themesDir: string): void {
   fs.writeFileSync(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
 }
 
 function createSolarizedLightTheme(themesDir: string): void {
@@ -682,6 +691,7 @@ function createSolarizedLightTheme(themesDir: string): void {
   fs.writeFileSync(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
 }
 
 function createRosePineTheme(themesDir: string): void {
@@ -734,6 +744,7 @@ function createRosePineTheme(themesDir: string): void {
   fs.writeFileSync(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
 }
 
 // Config generators
@@ -1173,6 +1184,61 @@ return {
 `;
 }
 
+function generateSketchybarConfig(colors: any): string {
+  // Convert hex color to sketchybar's ARGB format (0xAARRGGBB)
+  const toArgb = (hex: string) => {
+    // Remove # if present
+    const cleanHex = hex.replace('#', '');
+    return `0xff${cleanHex}`;
+  };
+
+  return `#!/bin/bash
+# SketchyBar color configuration
+# Source this file in your sketchybarrc: source "$CONFIG_DIR/colors.sh"
+# Generated by MacTheme
+
+# Color Definitions
+export COLOR_BACKGROUND="${toArgb(colors.background)}"
+export COLOR_FOREGROUND="${toArgb(colors.foreground)}"
+export COLOR_ACCENT="${toArgb(colors.accent)}"
+export COLOR_SELECTION="${toArgb(colors.selection)}"
+export COLOR_BORDER="${toArgb(colors.border)}"
+
+# Bar colors
+export BAR_COLOR="${toArgb(colors.background)}"
+export BAR_BORDER_COLOR="${toArgb(colors.border)}"
+
+# Item colors
+export ITEM_BG_COLOR="${toArgb(colors.selection)}"
+export ICON_COLOR="${toArgb(colors.accent)}"
+export LABEL_COLOR="${toArgb(colors.foreground)}"
+
+# ANSI colors
+export COLOR_BLACK="${toArgb(colors.black)}"
+export COLOR_RED="${toArgb(colors.red)}"
+export COLOR_GREEN="${toArgb(colors.green)}"
+export COLOR_YELLOW="${toArgb(colors.yellow)}"
+export COLOR_BLUE="${toArgb(colors.blue)}"
+export COLOR_MAGENTA="${toArgb(colors.magenta)}"
+export COLOR_CYAN="${toArgb(colors.cyan)}"
+export COLOR_WHITE="${toArgb(colors.white)}"
+
+# Bright ANSI colors
+export COLOR_BRIGHT_BLACK="${toArgb(colors.brightBlack)}"
+export COLOR_BRIGHT_RED="${toArgb(colors.brightRed)}"
+export COLOR_BRIGHT_GREEN="${toArgb(colors.brightGreen)}"
+export COLOR_BRIGHT_YELLOW="${toArgb(colors.brightYellow)}"
+export COLOR_BRIGHT_BLUE="${toArgb(colors.brightBlue)}"
+export COLOR_BRIGHT_MAGENTA="${toArgb(colors.brightMagenta)}"
+export COLOR_BRIGHT_CYAN="${toArgb(colors.brightCyan)}"
+export COLOR_BRIGHT_WHITE="${toArgb(colors.brightWhite)}"
+
+# Transparent variants (50% alpha)
+export COLOR_TRANSPARENT="${toArgb(colors.background).replace('0xff', '0x80')}"
+export COLOR_SEMI_TRANSPARENT="${toArgb(colors.background).replace('0xff', '0xcc')}"
+`;
+}
+
 /**
  * Generate all config files for a theme in a directory
  * This is used by both theme creation and bundled theme generation
@@ -1201,4 +1267,5 @@ export function generateThemeConfigFiles(themeDir: string, metadata: ThemeMetada
   fs.writeFileSync(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
 }
