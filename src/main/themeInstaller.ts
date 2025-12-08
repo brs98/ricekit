@@ -256,6 +256,7 @@ function createCatppuccinMochaTheme(themesDir: string): void {
   fs.writeFileSync(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'wezterm.lua'), generateWeztermConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
@@ -357,6 +358,7 @@ function createGruvboxDarkTheme(themesDir: string): void {
   fs.writeFileSync(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'wezterm.lua'), generateWeztermConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
@@ -458,6 +460,7 @@ function createNordTheme(themesDir: string): void {
   fs.writeFileSync(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'wezterm.lua'), generateWeztermConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
@@ -508,6 +511,7 @@ function createDraculaTheme(themesDir: string): void {
   fs.writeFileSync(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'wezterm.lua'), generateWeztermConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
@@ -558,6 +562,7 @@ function createOneDarkTheme(themesDir: string): void {
   fs.writeFileSync(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'wezterm.lua'), generateWeztermConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
@@ -608,6 +613,7 @@ function createSolarizedDarkTheme(themesDir: string): void {
   fs.writeFileSync(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'wezterm.lua'), generateWeztermConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
@@ -709,6 +715,7 @@ function createRosePineTheme(themesDir: string): void {
   fs.writeFileSync(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'wezterm.lua'), generateWeztermConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
@@ -1030,6 +1037,68 @@ ZSH_HIGHLIGHT_STYLES[double-quoted-argument]='fg=${colors.green}'
 `;
 }
 
+function generateWeztermConfig(colors: any): string {
+  return `-- WezTerm color configuration
+-- Add this to your wezterm.lua or require() this file
+return {
+  foreground = "${colors.foreground}",
+  background = "${colors.background}",
+  cursor_bg = "${colors.cursor}",
+  cursor_fg = "${colors.background}",
+  cursor_border = "${colors.cursor}",
+  selection_bg = "${colors.selection}",
+  selection_fg = "${colors.foreground}",
+  scrollbar_thumb = "${colors.brightBlack}",
+  split = "${colors.border}",
+
+  ansi = {
+    "${colors.black}",
+    "${colors.red}",
+    "${colors.green}",
+    "${colors.yellow}",
+    "${colors.blue}",
+    "${colors.magenta}",
+    "${colors.cyan}",
+    "${colors.white}",
+  },
+  brights = {
+    "${colors.brightBlack}",
+    "${colors.brightRed}",
+    "${colors.brightGreen}",
+    "${colors.brightYellow}",
+    "${colors.brightBlue}",
+    "${colors.brightMagenta}",
+    "${colors.brightCyan}",
+    "${colors.brightWhite}",
+  },
+
+  tab_bar = {
+    background = "${colors.background}",
+    active_tab = {
+      bg_color = "${colors.selection}",
+      fg_color = "${colors.foreground}",
+    },
+    inactive_tab = {
+      bg_color = "${colors.background}",
+      fg_color = "${colors.brightBlack}",
+    },
+    inactive_tab_hover = {
+      bg_color = "${colors.selection}",
+      fg_color = "${colors.foreground}",
+    },
+    new_tab = {
+      bg_color = "${colors.background}",
+      fg_color = "${colors.brightBlack}",
+    },
+    new_tab_hover = {
+      bg_color = "${colors.selection}",
+      fg_color = "${colors.foreground}",
+    },
+  },
+}
+`;
+}
+
 /**
  * Generate all config files for a theme in a directory
  * This is used by both theme creation and bundled theme generation
@@ -1049,6 +1118,7 @@ export function generateThemeConfigFiles(themeDir: string, metadata: ThemeMetada
   fs.writeFileSync(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'wezterm.lua'), generateWeztermConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));

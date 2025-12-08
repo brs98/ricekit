@@ -317,6 +317,22 @@ async function notifyTerminalsToReload(themePath: string): Promise<void> {
   // Note: Warp requires manual reload
   // Note: Hyper auto-reloads when .hyper.js changes
 
+  // 3. Notify WezTerm by updating the theme file directly
+  // WezTerm watches files added to config_reload_watch_list
+  // We write the theme content to a fixed location that WezTerm watches
+  try {
+    const weztermThemeSrc = path.join(themePath, 'wezterm.lua');
+    const weztermThemeDest = path.join(os.homedir(), 'Library', 'Application Support', 'MacTheme', 'wezterm-colors.lua');
+
+    if (fs.existsSync(weztermThemeSrc)) {
+      // Copy theme content to the fixed location (this triggers WezTerm's file watcher)
+      fs.copyFileSync(weztermThemeSrc, weztermThemeDest);
+      console.log('✓ WezTerm theme file updated - will auto-reload');
+    }
+  } catch (err) {
+    console.log('Could not notify WezTerm:', err);
+  }
+
   console.log('Terminal reload notifications sent');
 }
 
@@ -1622,6 +1638,16 @@ async function handleDetectApps(): Promise<any[]> {
       ],
       configPath: path.join(process.env.HOME || '', '.hyper.js'),
     },
+    {
+      name: 'wezterm',
+      displayName: 'WezTerm',
+      category: 'terminal',
+      paths: [
+        '/Applications/WezTerm.app',
+        path.join(process.env.HOME || '', 'Applications', 'WezTerm.app'),
+      ],
+      configPath: path.join(process.env.HOME || '', '.config', 'wezterm', 'wezterm.lua'),
+    },
 
     // Editors
     {
@@ -1786,6 +1812,13 @@ async function handleSetupApp(_event: any, appName: string): Promise<void> {
         configPath: path.join(homeDir, '.config', 'starship.toml'),
         importLine: `"$include" = '${themeBasePath}/starship.toml'`,
       },
+      wezterm: {
+        configPath: path.join(homeDir, '.config', 'wezterm', 'wezterm.lua'),
+        importLine: `-- MacTheme WezTerm integration
+local mactheme_colors = wezterm.home_dir .. "/Library/Application Support/MacTheme/wezterm-colors.lua"
+wezterm.add_to_config_reload_watch_list(mactheme_colors)
+config.colors = dofile(mactheme_colors)`,
+      },
     };
 
     const config = appConfigs[appName];
@@ -1901,6 +1934,25 @@ async function handleRefreshApp(_event: any, appName: string): Promise<void> {
 
       case 'neovim':
         console.log('Neovim requires manual reload (:source $MYVIMRC) to apply theme changes');
+        break;
+
+      case 'wezterm':
+        // WezTerm watches the wezterm-colors.lua file we manage
+        // Re-copy the current theme to trigger a reload
+        try {
+          const currentThemePath = path.join(os.homedir(), 'Library', 'Application Support', 'MacTheme', 'current', 'theme');
+          const weztermThemeSrc = path.join(currentThemePath, 'wezterm.lua');
+          const weztermThemeDest = path.join(os.homedir(), 'Library', 'Application Support', 'MacTheme', 'wezterm-colors.lua');
+
+          if (fs.existsSync(weztermThemeSrc)) {
+            fs.copyFileSync(weztermThemeSrc, weztermThemeDest);
+            console.log('WezTerm theme file updated - will auto-reload');
+          } else {
+            console.log('WezTerm theme source not found');
+          }
+        } catch (err) {
+          console.log('Could not refresh WezTerm:', err);
+        }
         break;
 
       default:

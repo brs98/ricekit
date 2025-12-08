@@ -31,6 +31,12 @@ export function SetupWizardModal({ app, onClose, onSetupComplete }: SetupWizardM
       case 'hyper':
         return `# Add to ~/.hyper.js config section\ncolors: require('${basePath}/hyper.js')`;
 
+      case 'wezterm':
+        return `-- MacTheme WezTerm integration
+local mactheme_colors = wezterm.home_dir .. "/Library/Application Support/MacTheme/wezterm-colors.lua"
+wezterm.add_to_config_reload_watch_list(mactheme_colors)
+config.colors = dofile(mactheme_colors)`;
+
       case 'vscode':
         return 'VS Code themes are applied automatically via settings.json modification';
 
@@ -112,6 +118,14 @@ export function SetupWizardModal({ app, onClose, onSetupComplete }: SetupWizardM
           'Restart your shell or reload config'
         ];
 
+      case 'wezterm':
+        return [
+          `Open your WezTerm config: ${app.configPath}`,
+          'Add the code snippet after your config = wezterm.config_builder() line',
+          'The add_to_config_reload_watch_list line enables auto-reload on theme change',
+          'Save the file - WezTerm will reload automatically'
+        ];
+
       case 'bat':
         return [
           'Add the bat theme flag to your shell config (~/.zshrc or ~/.bashrc)',
@@ -164,7 +178,7 @@ export function SetupWizardModal({ app, onClose, onSetupComplete }: SetupWizardM
 
   const importStatement = getImportStatement();
   const instructions = getSetupInstructions();
-  const supportsAutomaticSetup = ['alacritty', 'kitty', 'neovim', 'vscode', 'starship'].includes(app.name);
+  const supportsAutomaticSetup = ['alacritty', 'kitty', 'neovim', 'vscode', 'starship', 'wezterm'].includes(app.name);
 
   return (
     <div className="modal-overlay" onClick={onClose}>
