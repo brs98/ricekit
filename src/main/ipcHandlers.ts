@@ -1821,6 +1821,18 @@ async function handleDetectApps(): Promise<any[]> {
       ],
       configPath: path.join(process.env.HOME || '', 'Library', 'Application Support', 'Alfred'),
     },
+
+    // Communication
+    {
+      name: 'slack',
+      displayName: 'Slack',
+      category: 'communication',
+      paths: [
+        '/Applications/Slack.app',
+        path.join(process.env.HOME || '', 'Applications', 'Slack.app'),
+      ],
+      configPath: path.join(process.env.HOME || '', 'Library', 'Application Support', 'MacTheme', 'current', 'theme', 'slack-theme.txt'),
+    },
   ];
 
   // Check which apps are installed and configured
@@ -1941,6 +1953,41 @@ async function handleSetupApp(_event: any, appName: string): Promise<void> {
           silent: false,
         });
         notification.show();
+      }
+      return;
+    }
+
+    // Handle Slack specially - it requires manual theme application
+    if (appName === 'slack') {
+      const slackThemePath = path.join(homeDir, 'Library', 'Application Support', 'MacTheme', 'current', 'theme', 'slack-theme.txt');
+      
+      // Check if theme file exists
+      if (fs.existsSync(slackThemePath)) {
+        // Open the theme file in the default text editor
+        const { shell } = require('electron');
+        await shell.openPath(slackThemePath);
+        
+        // Show notification with instructions
+        if (Notification.isSupported()) {
+          const notification = new Notification({
+            title: 'Slack Theme Setup',
+            body: 'Theme file opened. Copy the theme string and paste it in Slack Preferences → Themes → Custom theme',
+            silent: false,
+          });
+          notification.show();
+        }
+      } else {
+        throw new Error('Slack theme file not found. Please apply a theme first.');
+      }
+      
+      // Add to enabledApps
+      const prefs = await handleGetPreferences();
+      if (!prefs.enabledApps) {
+        prefs.enabledApps = [];
+      }
+      if (!prefs.enabledApps.includes('slack')) {
+        prefs.enabledApps.push('slack');
+        await handleSetPreferences(null, prefs);
       }
       return;
     }
@@ -2161,6 +2208,12 @@ async function handleRefreshApp(_event: any, appName: string): Promise<void> {
         } catch (err) {
           console.log('Could not refresh SketchyBar - it may not be running:', err);
         }
+        break;
+
+      case 'slack':
+        // Slack doesn't support automatic theme refresh
+        // Users need to manually paste the theme string from the theme file
+        console.log('Slack requires manual theme application. Open Preferences → Themes → Create custom theme and paste the theme string from the slack-theme.txt file.');
         break;
 
       default:

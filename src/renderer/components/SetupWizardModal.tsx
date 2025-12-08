@@ -77,6 +77,12 @@ source "$CONFIG_DIR/colors.sh"
 # Or source from MacTheme:
 source "${basePath}/sketchybar-colors.sh"`;
 
+      case 'slack':
+        return `# Slack requires manual theme application
+# Click "Automatic Setup" below to open the theme file
+# Then copy the theme string and paste it in Slack
+# Theme file: ${basePath}/slack-theme.txt`;
+
       default:
         return `# Import theme from: ${basePath}/${app.name}.conf`;
     }
@@ -157,6 +163,16 @@ source "${basePath}/sketchybar-colors.sh"`;
           'Save the file and run: sketchybar --reload'
         ];
 
+      case 'slack':
+        return [
+          'Open Slack Preferences (Cmd+,)',
+          'Go to "Themes" in the sidebar',
+          'Scroll down and click "Create a custom theme"',
+          `Open the theme file: ${app.configPath}`,
+          'Copy the theme string from the file and paste it into Slack',
+          'The theme will be applied automatically when you switch themes in MacTheme'
+        ];
+
       default:
         return [
           `Open the app's configuration file: ${app.configPath}`,
@@ -193,7 +209,7 @@ source "${basePath}/sketchybar-colors.sh"`;
 
   const importStatement = getImportStatement();
   const instructions = getSetupInstructions();
-  const supportsAutomaticSetup = ['alacritty', 'kitty', 'neovim', 'vscode', 'starship', 'wezterm', 'sketchybar'].includes(app.name);
+  const supportsAutomaticSetup = ['alacritty', 'kitty', 'neovim', 'vscode', 'starship', 'wezterm', 'sketchybar', 'slack', 'cursor'].includes(app.name);
 
   return (
     <div className="modal-overlay" onClick={onClose}>

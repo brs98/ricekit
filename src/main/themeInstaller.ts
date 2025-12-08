@@ -215,6 +215,7 @@ function createTokyoNightTheme(themesDir: string): void {
   fs.writeFileSync(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
 }
 
 function createCatppuccinMochaTheme(themesDir: string): void {
@@ -268,6 +269,7 @@ function createCatppuccinMochaTheme(themesDir: string): void {
   fs.writeFileSync(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
 }
 
 function createCatppuccinLatteTheme(themesDir: string): void {
@@ -321,6 +323,7 @@ function createCatppuccinLatteTheme(themesDir: string): void {
   fs.writeFileSync(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
 }
 
 function createGruvboxDarkTheme(themesDir: string): void {
@@ -374,6 +377,7 @@ function createGruvboxDarkTheme(themesDir: string): void {
   fs.writeFileSync(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
 }
 
 function createGruvboxLightTheme(themesDir: string): void {
@@ -427,6 +431,7 @@ function createGruvboxLightTheme(themesDir: string): void {
   fs.writeFileSync(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
 }
 
 function createNordTheme(themesDir: string): void {
@@ -480,6 +485,7 @@ function createNordTheme(themesDir: string): void {
   fs.writeFileSync(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
 }
 
 function createDraculaTheme(themesDir: string): void {
@@ -533,6 +539,7 @@ function createDraculaTheme(themesDir: string): void {
   fs.writeFileSync(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
 }
 
 function createOneDarkTheme(themesDir: string): void {
@@ -586,6 +593,7 @@ function createOneDarkTheme(themesDir: string): void {
   fs.writeFileSync(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
 }
 
 function createSolarizedDarkTheme(themesDir: string): void {
@@ -639,6 +647,7 @@ function createSolarizedDarkTheme(themesDir: string): void {
   fs.writeFileSync(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
 }
 
 function createSolarizedLightTheme(themesDir: string): void {
@@ -692,6 +701,7 @@ function createSolarizedLightTheme(themesDir: string): void {
   fs.writeFileSync(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
 }
 
 function createRosePineTheme(themesDir: string): void {
@@ -745,6 +755,7 @@ function createRosePineTheme(themesDir: string): void {
   fs.writeFileSync(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
 }
 
 // Config generators
@@ -1239,6 +1250,59 @@ export COLOR_SEMI_TRANSPARENT="${toArgb(colors.background).replace('0xff', '0xcc
 `;
 }
 
+function generateSlackConfig(colors: any): string {
+  // Slack sidebar theme format:
+  // Column Background, Menu Background Hover, Active Item, Active Item Text,
+  // Hover Item, Text Color, Active Presence, Mention Badge
+  //
+  // To apply in Slack:
+  // 1. Go to Preferences → Sidebar → Theme
+  // 2. Click "Create a custom theme" at the bottom
+  // 3. Paste the theme string
+
+  const columnBg = colors.background;
+  const menuBgHover = colors.selection;
+  const activeItem = colors.accent;
+  const activeItemText = colors.background;
+  const hoverItem = colors.selection;
+  const textColor = colors.foreground;
+  const activePresence = colors.green;
+  const mentionBadge = colors.red;
+
+  const themeString = `${columnBg},${menuBgHover},${activeItem},${activeItemText},${hoverItem},${textColor},${activePresence},${mentionBadge}`;
+
+  return `# Slack Sidebar Theme
+# Generated by MacTheme
+#
+# To apply this theme in Slack:
+# 1. Open Slack Preferences (Cmd+,)
+# 2. Go to Themes in the sidebar
+# 3. Scroll down and click "Create a custom theme"
+# 4. Copy and paste the theme string below into the input field
+# 5. Click "Apply" or the theme will apply automatically
+#
+# Theme String (copy this line):
+${themeString}
+
+# Color breakdown:
+# Column Background:    ${columnBg}
+# Menu Background Hover: ${menuBgHover}
+# Active Item:          ${activeItem}
+# Active Item Text:     ${activeItemText}
+# Hover Item:           ${hoverItem}
+# Text Color:           ${textColor}
+# Active Presence:      ${activePresence}
+# Mention Badge:        ${mentionBadge}
+
+# Alternative formats for different Slack versions:
+# 
+# Legacy format (4 colors):
+# ${columnBg},${colors.border},${textColor},${activeItem}
+#
+# If the 8-color format doesn't work, try the legacy format above.
+`;
+}
+
 /**
  * Generate all config files for a theme in a directory
  * This is used by both theme creation and bundled theme generation
@@ -1268,4 +1332,5 @@ export function generateThemeConfigFiles(themeDir: string, metadata: ThemeMetada
   fs.writeFileSync(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
 }

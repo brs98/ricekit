@@ -107,6 +107,8 @@ export function ApplicationsView() {
         return '🚀';
       case 'system':
         return '🖥️';
+      case 'communication':
+        return '💬';
       default:
         return '📦';
     }
@@ -124,6 +126,8 @@ export function ApplicationsView() {
         return 'Launchers';
       case 'system':
         return 'System';
+      case 'communication':
+        return 'Communication';
       default:
         return 'Other';
     }
@@ -139,7 +143,7 @@ export function ApplicationsView() {
     return acc;
   }, {} as Record<string, AppInfo[]>);
 
-  const categories = ['terminal', 'editor', 'cli', 'launcher', 'system'];
+  const categories = ['terminal', 'editor', 'cli', 'launcher', 'system', 'communication'];
 
   if (loading) {
     return (

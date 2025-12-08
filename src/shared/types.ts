@@ -49,7 +49,7 @@ export interface Theme {
 export interface AppInfo {
   name: string;
   displayName: string;
-  category: 'terminal' | 'editor' | 'cli' | 'launcher' | 'system';
+  category: 'terminal' | 'editor' | 'cli' | 'launcher' | 'system' | 'communication';
   isInstalled: boolean;
   isConfigured: boolean;
   configPath?: string;
