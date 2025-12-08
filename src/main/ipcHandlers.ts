@@ -337,69 +337,91 @@ async function notifyTerminalsToReload(themePath: string): Promise<void> {
 }
 
 /**
- * Update VS Code settings.json with the current theme
+ * Theme name mapping for VS Code and Cursor
+ * Maps MacTheme internal names to VS Code/Cursor theme extension names
  */
-async function updateVSCodeSettings(themeName: string, themePath: string): Promise<void> {
-  console.log('Updating VS Code settings.json...');
+const editorThemeNameMapping: Record<string, string> = {
+  'tokyo-night': 'Tokyo Night',
+  'catppuccin-mocha': 'Catppuccin Mocha',
+  'catppuccin-latte': 'Catppuccin Latte',
+  'gruvbox-dark': 'Gruvbox Dark Hard',
+  'gruvbox-light': 'Gruvbox Light Hard',
+  'nord': 'Nord',
+  'dracula': 'Dracula',
+  'one-dark': 'One Dark Pro',
+  'solarized-dark': 'Solarized Dark',
+  'solarized-light': 'Solarized Light',
+  'rose-pine': 'Rosé Pine',
+};
+
+/**
+ * Update editor settings.json (VS Code or Cursor) with the current theme
+ */
+async function updateEditorSettings(
+  editorName: string,
+  settingsPath: string,
+  themeName: string,
+  themePath: string
+): Promise<void> {
+  console.log(`Updating ${editorName} settings.json...`);
 
   try {
-    const homeDir = os.homedir();
-    const vscodeSettingsPath = path.join(homeDir, 'Library', 'Application Support', 'Code', 'User', 'settings.json');
+    const settingsDir = path.dirname(settingsPath);
 
-    // Check if VS Code settings file exists
-    if (!fs.existsSync(vscodeSettingsPath)) {
-      console.log('VS Code settings.json not found, creating it...');
-      const vscodeDir = path.dirname(vscodeSettingsPath);
-      if (!fs.existsSync(vscodeDir)) {
-        fs.mkdirSync(vscodeDir, { recursive: true });
+    // Check if settings file exists
+    if (!fs.existsSync(settingsPath)) {
+      console.log(`${editorName} settings.json not found, creating it...`);
+      if (!fs.existsSync(settingsDir)) {
+        fs.mkdirSync(settingsDir, { recursive: true });
       }
       // Create empty settings file
-      fs.writeFileSync(vscodeSettingsPath, '{}', 'utf-8');
+      fs.writeFileSync(settingsPath, '{}', 'utf-8');
     }
 
     // Read current settings
     let settings: any = {};
     try {
-      const settingsContent = fs.readFileSync(vscodeSettingsPath, 'utf-8');
+      const settingsContent = fs.readFileSync(settingsPath, 'utf-8');
       // Handle empty file or invalid JSON
       if (settingsContent.trim()) {
         settings = JSON.parse(settingsContent);
       }
     } catch (parseError) {
-      console.warn('Failed to parse VS Code settings.json, starting with empty object:', parseError);
+      console.warn(`Failed to parse ${editorName} settings.json, starting with empty object:`, parseError);
       settings = {};
     }
 
-    // Map theme name to VS Code theme name
-    // VS Code themes typically have specific naming conventions
-    // For now, we'll use a simple mapping based on common themes
-    const themeNameMapping: Record<string, string> = {
-      'tokyo-night': 'Tokyo Night',
-      'catppuccin-mocha': 'Catppuccin Mocha',
-      'catppuccin-latte': 'Catppuccin Latte',
-      'gruvbox-dark': 'Gruvbox Dark Hard',
-      'gruvbox-light': 'Gruvbox Light Hard',
-      'nord': 'Nord',
-      'dracula': 'Dracula',
-      'one-dark': 'One Dark Pro',
-      'solarized-dark': 'Solarized Dark',
-      'solarized-light': 'Solarized Light',
-      'rose-pine': 'Rosé Pine',
-    };
-
-    // Get the VS Code theme name
-    const vscodeThemeName = themeNameMapping[themeName] || 'Default Dark+';
+    // Get the editor theme name from mapping
+    const editorThemeName = editorThemeNameMapping[themeName] || 'Default Dark+';
 
     // Update the theme setting
-    settings['workbench.colorTheme'] = vscodeThemeName;
+    settings['workbench.colorTheme'] = editorThemeName;
 
     // Write back the settings file with formatting
-    fs.writeFileSync(vscodeSettingsPath, JSON.stringify(settings, null, 2), 'utf-8');
-    console.log(`✓ VS Code theme updated to: ${vscodeThemeName}`);
+    fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf-8');
+    console.log(`✓ ${editorName} theme updated to: ${editorThemeName}`);
   } catch (error) {
-    console.error('Failed to update VS Code settings:', error);
+    console.error(`Failed to update ${editorName} settings:`, error);
     // Don't throw - this is a non-critical error
   }
+}
+
+/**
+ * Update VS Code settings.json with the current theme
+ */
+async function updateVSCodeSettings(themeName: string, themePath: string): Promise<void> {
+  const homeDir = os.homedir();
+  const vscodeSettingsPath = path.join(homeDir, 'Library', 'Application Support', 'Code', 'User', 'settings.json');
+  await updateEditorSettings('VS Code', vscodeSettingsPath, themeName, themePath);
+}
+
+/**
+ * Update Cursor settings.json with the current theme
+ */
+async function updateCursorSettings(themeName: string, themePath: string): Promise<void> {
+  const homeDir = os.homedir();
+  const cursorSettingsPath = path.join(homeDir, 'Library', 'Application Support', 'Cursor', 'User', 'settings.json');
+  await updateEditorSettings('Cursor', cursorSettingsPath, themeName, themePath);
 }
 
 /**
@@ -556,6 +578,17 @@ export async function handleApplyTheme(_event: any, name: string): Promise<void>
       console.error('Failed to update VS Code settings:', err);
     }
 
+    // Update Cursor settings if enabled
+    try {
+      if (prefs.enabledApps && prefs.enabledApps.includes('cursor')) {
+        await updateCursorSettings(name, theme.path);
+      } else {
+        console.log('Cursor integration disabled in preferences');
+      }
+    } catch (err) {
+      console.error('Failed to update Cursor settings:', err);
+    }
+
     // Notify terminal applications to reload themes
     try {
       await notifyTerminalsToReload(theme.path);
@@ -690,6 +723,7 @@ async function handleUpdateTheme(_event: any, name: string, data: ThemeMetadata)
       'warp.yaml',
       'hyper.js',
       'vscode.json',
+      'cursor.json',
       'neovim.lua',
       'raycast.json',
       'bat.conf',
@@ -1661,6 +1695,16 @@ async function handleDetectApps(): Promise<any[]> {
       configPath: path.join(process.env.HOME || '', 'Library', 'Application Support', 'Code', 'User', 'settings.json'),
     },
     {
+      name: 'cursor',
+      displayName: 'Cursor',
+      category: 'editor',
+      paths: [
+        '/Applications/Cursor.app',
+        path.join(process.env.HOME || '', 'Applications', 'Cursor.app'),
+      ],
+      configPath: path.join(process.env.HOME || '', 'Library', 'Application Support', 'Cursor', 'User', 'settings.json'),
+    },
+    {
       name: 'neovim',
       displayName: 'Neovim',
       category: 'editor',
@@ -1780,6 +1824,62 @@ async function handleDetectApps(): Promise<any[]> {
 }
 
 /**
+ * Setup Cursor or VS Code for theming
+ * These editors don't support file imports, so we directly configure them
+ * and add them to enabledApps for automatic theme switching
+ */
+async function setupEditorApp(
+  appName: string,
+  displayName: string,
+  settingsPath: string
+): Promise<void> {
+  console.log(`Setting up ${displayName}...`);
+
+  const settingsDir = path.dirname(settingsPath);
+
+  // Create settings directory if it doesn't exist
+  if (!fs.existsSync(settingsDir)) {
+    fs.mkdirSync(settingsDir, { recursive: true });
+  }
+
+  // Create backup if settings file exists
+  if (fs.existsSync(settingsPath)) {
+    const backupPath = `${settingsPath}.mactheme-backup`;
+    fs.copyFileSync(settingsPath, backupPath);
+    console.log(`Created backup at: ${backupPath}`);
+  }
+
+  // Get current theme to apply
+  const state = await handleGetState();
+  const currentThemeName = state.currentTheme;
+
+  if (currentThemeName) {
+    // Apply current theme to the editor
+    const theme = await handleGetTheme(null, currentThemeName);
+    if (theme) {
+      if (appName === 'cursor') {
+        await updateCursorSettings(currentThemeName, theme.path);
+      } else if (appName === 'vscode') {
+        await updateVSCodeSettings(currentThemeName, theme.path);
+      }
+    }
+  }
+
+  // Add to enabledApps in preferences so future theme changes update this app
+  const prefs = await handleGetPreferences();
+  if (!prefs.enabledApps) {
+    prefs.enabledApps = [];
+  }
+  if (!prefs.enabledApps.includes(appName)) {
+    prefs.enabledApps.push(appName);
+    await handleSetPreferences(null, prefs);
+    console.log(`Added ${appName} to enabled apps`);
+  }
+
+  console.log(`Successfully configured ${displayName}`);
+}
+
+/**
  * Setup an application for theming
  * Automatically configures the app's config file to import MacTheme themes
  */
@@ -1790,7 +1890,40 @@ async function handleSetupApp(_event: any, appName: string): Promise<void> {
   const themeBasePath = '~/Library/Application Support/MacTheme/current/theme';
 
   try {
-    // Define config paths and import statements for each app
+    // Handle Cursor and VS Code specially - they don't support file imports
+    if (appName === 'cursor') {
+      const cursorSettingsPath = path.join(homeDir, 'Library', 'Application Support', 'Cursor', 'User', 'settings.json');
+      await setupEditorApp('cursor', 'Cursor', cursorSettingsPath);
+
+      // Show notification
+      if (Notification.isSupported()) {
+        const notification = new Notification({
+          title: 'Setup Complete',
+          body: 'Cursor has been configured to use MacTheme themes. Themes will be applied automatically when you switch themes.',
+          silent: false,
+        });
+        notification.show();
+      }
+      return;
+    }
+
+    if (appName === 'vscode') {
+      const vscodeSettingsPath = path.join(homeDir, 'Library', 'Application Support', 'Code', 'User', 'settings.json');
+      await setupEditorApp('vscode', 'Visual Studio Code', vscodeSettingsPath);
+
+      // Show notification
+      if (Notification.isSupported()) {
+        const notification = new Notification({
+          title: 'Setup Complete',
+          body: 'VS Code has been configured to use MacTheme themes. Themes will be applied automatically when you switch themes.',
+          silent: false,
+        });
+        notification.show();
+      }
+      return;
+    }
+
+    // Define config paths and import statements for other apps
     const appConfigs: Record<string, { configPath: string; importLine: string; section?: string }> = {
       alacritty: {
         configPath: path.join(homeDir, '.config', 'alacritty', 'alacritty.toml'),
@@ -1803,10 +1936,6 @@ async function handleSetupApp(_event: any, appName: string): Promise<void> {
       neovim: {
         configPath: path.join(homeDir, '.config', 'nvim', 'init.lua'),
         importLine: `dofile(vim.fn.expand("${themeBasePath}/neovim.lua"))`,
-      },
-      vscode: {
-        configPath: path.join(homeDir, 'Library', 'Application Support', 'Code', 'User', 'settings.json'),
-        importLine: `"workbench.colorCustomizations": require("${themeBasePath}/vscode.json")`,
       },
       starship: {
         configPath: path.join(homeDir, '.config', 'starship.toml'),
@@ -1855,6 +1984,17 @@ config.colors = dofile(mactheme_colors)`,
     fs.writeFileSync(configPath, newContent, 'utf-8');
 
     console.log(`Successfully configured ${appName} at ${configPath}`);
+
+    // Add to enabledApps in preferences so the app is tracked
+    const prefs = await handleGetPreferences();
+    if (!prefs.enabledApps) {
+      prefs.enabledApps = [];
+    }
+    if (!prefs.enabledApps.includes(appName)) {
+      prefs.enabledApps.push(appName);
+      await handleSetPreferences(null, prefs);
+      console.log(`Added ${appName} to enabled apps`);
+    }
 
     // Show notification
     if (Notification.isSupported()) {
@@ -1929,7 +2069,35 @@ async function handleRefreshApp(_event: any, appName: string): Promise<void> {
         break;
 
       case 'vscode':
-        console.log('VS Code requires manual reload (Cmd+R) to apply theme changes');
+        // Re-apply the current theme settings to VS Code
+        try {
+          const state = await handleGetState();
+          if (state.currentTheme) {
+            const theme = await handleGetTheme(null, state.currentTheme);
+            if (theme) {
+              await updateVSCodeSettings(state.currentTheme, theme.path);
+              console.log('VS Code theme settings refreshed');
+            }
+          }
+        } catch (err) {
+          console.log('Could not refresh VS Code:', err);
+        }
+        break;
+
+      case 'cursor':
+        // Re-apply the current theme settings to Cursor
+        try {
+          const state = await handleGetState();
+          if (state.currentTheme) {
+            const theme = await handleGetTheme(null, state.currentTheme);
+            if (theme) {
+              await updateCursorSettings(state.currentTheme, theme.path);
+              console.log('Cursor theme settings refreshed');
+            }
+          }
+        } catch (err) {
+          console.log('Could not refresh Cursor:', err);
+        }
         break;
 
       case 'neovim':

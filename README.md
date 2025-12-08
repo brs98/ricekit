@@ -30,7 +30,7 @@ MacTheme is inspired by Omarchy's Linux theming system and brings unified theme 
 - Alacritty • Kitty • iTerm2 • Warp • Hyper • Terminal.app
 
 #### Editors
-- VS Code • Neovim • Sublime Text
+- VS Code • Cursor • Neovim • Sublime Text
 
 #### CLI Tools
 - bat • delta • starship • zsh-syntax-highlighting • fzf • lazygit
