@@ -620,6 +620,33 @@ export async function handleApplyTheme(_event: any, name: string): Promise<void>
       // Don't throw - hook script failure shouldn't block theme application
     }
 
+    // Update AeroSpace/JankyBorders if enabled
+    try {
+      const isAerospaceEnabled = !prefs.enabledApps || prefs.enabledApps.length === 0 || prefs.enabledApps.includes('aerospace');
+      if (isAerospaceEnabled) {
+        const bordersScript = path.join(theme.path, 'aerospace-borders.sh');
+        if (fs.existsSync(bordersScript)) {
+          // Check if borders is running before trying to refresh
+          try {
+            execSync('pgrep -x borders', { stdio: 'pipe' });
+            // Borders is running, refresh it
+            execSync(`bash "${bordersScript}"`, {
+              shell: '/bin/bash',
+              stdio: 'pipe',
+              timeout: 5000,
+            });
+            console.log('AeroSpace/JankyBorders theme refreshed automatically');
+          } catch {
+            // Borders not running, skip refresh (not an error)
+            console.log('JankyBorders not running, skipping border refresh');
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Failed to refresh AeroSpace/JankyBorders:', err);
+      // Don't throw - borders failure shouldn't block theme application
+    }
+
     // Automatically apply the first wallpaper from the theme
     try {
       const wallpapers = await handleListWallpapers(null, name);
@@ -1833,6 +1860,20 @@ async function handleDetectApps(): Promise<any[]> {
       ],
       configPath: path.join(process.env.HOME || '', 'Library', 'Application Support', 'MacTheme', 'current', 'theme', 'slack-theme.txt'),
     },
+
+    // Tiling Managers
+    {
+      name: 'aerospace',
+      displayName: 'AeroSpace',
+      category: 'tiling',
+      paths: [
+        '/Applications/AeroSpace.app',
+        path.join(process.env.HOME || '', 'Applications', 'AeroSpace.app'),
+        '/opt/homebrew/bin/aerospace',
+        '/usr/local/bin/aerospace',
+      ],
+      configPath: path.join(process.env.HOME || '', '.config', 'aerospace', 'aerospace.toml'),
+    },
   ];
 
   // Check which apps are installed and configured
@@ -2021,6 +2062,15 @@ config.colors = dofile(mactheme_colors)`,
         configPath: path.join(homeDir, '.config', 'sketchybar', 'sketchybarrc'),
         importLine: `# MacTheme SketchyBar integration
 source "$HOME/Library/Application Support/MacTheme/current/theme/sketchybar-colors.sh"`,
+      },
+      aerospace: {
+        configPath: path.join(homeDir, '.config', 'aerospace', 'aerospace.toml'),
+        importLine: `# MacTheme AeroSpace/JankyBorders integration
+# Note: JankyBorders must be installed for border colors to work
+# Install with: brew install FelixKratz/formulae/borders
+after-startup-command = [
+  'exec-and-forget source "$HOME/Library/Application Support/MacTheme/current/theme/aerospace-borders.sh"'
+]`,
       },
     };
 
@@ -2214,6 +2264,30 @@ async function handleRefreshApp(_event: any, appName: string): Promise<void> {
         // Slack doesn't support automatic theme refresh
         // Users need to manually paste the theme string from the theme file
         console.log('Slack requires manual theme application. Open Preferences → Themes → Create custom theme and paste the theme string from the slack-theme.txt file.');
+        break;
+
+      case 'aerospace':
+        // AeroSpace uses JankyBorders for window borders
+        // Re-run the borders command with updated colors from the theme
+        try {
+          const currentThemePath = path.join(os.homedir(), 'Library', 'Application Support', 'MacTheme', 'current', 'theme');
+          const bordersScript = path.join(currentThemePath, 'aerospace-borders.sh');
+          
+          if (fs.existsSync(bordersScript)) {
+            // Execute the borders script to apply new colors
+            // The script handles killing existing borders process and starting fresh
+            execSync(`bash "${bordersScript}"`, {
+              shell: '/bin/bash',
+              stdio: 'pipe',
+              timeout: 5000,
+            });
+            console.log('AeroSpace/JankyBorders theme refreshed successfully');
+          } else {
+            console.log('AeroSpace borders script not found');
+          }
+        } catch (err) {
+          console.log('Could not refresh AeroSpace/JankyBorders - borders may not be installed:', err);
+        }
         break;
 
       default:

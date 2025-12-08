@@ -216,6 +216,7 @@ function createTokyoNightTheme(themesDir: string): void {
   fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
 }
 
 function createCatppuccinMochaTheme(themesDir: string): void {
@@ -270,6 +271,7 @@ function createCatppuccinMochaTheme(themesDir: string): void {
   fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
 }
 
 function createCatppuccinLatteTheme(themesDir: string): void {
@@ -324,6 +326,7 @@ function createCatppuccinLatteTheme(themesDir: string): void {
   fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
 }
 
 function createGruvboxDarkTheme(themesDir: string): void {
@@ -378,6 +381,7 @@ function createGruvboxDarkTheme(themesDir: string): void {
   fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
 }
 
 function createGruvboxLightTheme(themesDir: string): void {
@@ -432,6 +436,7 @@ function createGruvboxLightTheme(themesDir: string): void {
   fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
 }
 
 function createNordTheme(themesDir: string): void {
@@ -486,6 +491,7 @@ function createNordTheme(themesDir: string): void {
   fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
 }
 
 function createDraculaTheme(themesDir: string): void {
@@ -540,6 +546,7 @@ function createDraculaTheme(themesDir: string): void {
   fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
 }
 
 function createOneDarkTheme(themesDir: string): void {
@@ -594,6 +601,7 @@ function createOneDarkTheme(themesDir: string): void {
   fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
 }
 
 function createSolarizedDarkTheme(themesDir: string): void {
@@ -648,6 +656,7 @@ function createSolarizedDarkTheme(themesDir: string): void {
   fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
 }
 
 function createSolarizedLightTheme(themesDir: string): void {
@@ -702,6 +711,7 @@ function createSolarizedLightTheme(themesDir: string): void {
   fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
 }
 
 function createRosePineTheme(themesDir: string): void {
@@ -756,6 +766,7 @@ function createRosePineTheme(themesDir: string): void {
   fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
 }
 
 // Config generators
@@ -1303,6 +1314,46 @@ ${themeString}
 `;
 }
 
+function generateAerospaceBordersConfig(colors: any): string {
+  // Convert hex color to ARGB format for JankyBorders (0xAARRGGBB)
+  const toArgb = (hex: string) => {
+    // Remove # if present
+    const cleanHex = hex.replace('#', '');
+    return `0xff${cleanHex}`;
+  };
+
+  // Use accent color for active border and a muted color for inactive
+  const activeColor = toArgb(colors.accent);
+  const inactiveColor = toArgb(colors.border || colors.brightBlack);
+
+  return `#!/bin/bash
+# AeroSpace/JankyBorders color configuration
+# Generated by MacTheme
+#
+# This script configures JankyBorders to display themed window borders
+# JankyBorders must be installed: brew install FelixKratz/formulae/borders
+#
+# Usage in aerospace.toml:
+# after-startup-command = [
+#   'exec-and-forget source "$HOME/Library/Application Support/MacTheme/current/theme/aerospace-borders.sh"'
+# ]
+
+# Color values (ARGB format: 0xAARRGGBB)
+ACTIVE_COLOR="${activeColor}"
+INACTIVE_COLOR="${inactiveColor}"
+BORDER_WIDTH="5.0"
+
+# Kill any existing borders process to allow theme updates without restart
+pkill -x borders 2>/dev/null || true
+
+# Small delay to ensure clean shutdown
+sleep 0.1
+
+# Start borders with theme colors
+borders active_color="$ACTIVE_COLOR" inactive_color="$INACTIVE_COLOR" width="$BORDER_WIDTH"
+`;
+}
+
 /**
  * Generate all config files for a theme in a directory
  * This is used by both theme creation and bundled theme generation
@@ -1333,4 +1384,5 @@ export function generateThemeConfigFiles(themeDir: string, metadata: ThemeMetada
   fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
   fs.writeFileSync(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
+  fs.writeFileSync(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
 }

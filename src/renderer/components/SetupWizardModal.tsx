@@ -83,6 +83,15 @@ source "${basePath}/sketchybar-colors.sh"`;
 # Then copy the theme string and paste it in Slack
 # Theme file: ${basePath}/slack-theme.txt`;
 
+      case 'aerospace':
+        return `# Add to your aerospace.toml:
+# Note: JankyBorders is required for border colors
+# Install with: brew install FelixKratz/formulae/borders
+
+after-startup-command = [
+  'exec-and-forget source "${basePath}/aerospace-borders.sh"'
+]`;
+
       default:
         return `# Import theme from: ${basePath}/${app.name}.conf`;
     }
@@ -173,6 +182,16 @@ source "${basePath}/sketchybar-colors.sh"`;
           'The theme will be applied automatically when you switch themes in MacTheme'
         ];
 
+      case 'aerospace':
+        return [
+          'First, install JankyBorders if not already installed: brew install FelixKratz/formulae/borders',
+          `Open your AeroSpace config file: ${app.configPath}`,
+          'Add the after-startup-command block to run JankyBorders with theme colors',
+          'Save the file and restart AeroSpace (only needed once for initial setup)',
+          'JankyBorders will display colored borders around active/inactive windows',
+          'Use the "Refresh" button to update border colors without restarting AeroSpace'
+        ];
+
       default:
         return [
           `Open the app's configuration file: ${app.configPath}`,
@@ -209,7 +228,7 @@ source "${basePath}/sketchybar-colors.sh"`;
 
   const importStatement = getImportStatement();
   const instructions = getSetupInstructions();
-  const supportsAutomaticSetup = ['alacritty', 'kitty', 'neovim', 'vscode', 'starship', 'wezterm', 'sketchybar', 'slack', 'cursor'].includes(app.name);
+  const supportsAutomaticSetup = ['alacritty', 'kitty', 'neovim', 'vscode', 'starship', 'wezterm', 'sketchybar', 'slack', 'cursor', 'aerospace'].includes(app.name);
 
   return (
     <div className="modal-overlay" onClick={onClose}>

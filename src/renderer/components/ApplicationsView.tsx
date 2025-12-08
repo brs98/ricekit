@@ -109,6 +109,8 @@ export function ApplicationsView() {
         return '🖥️';
       case 'communication':
         return '💬';
+      case 'tiling':
+        return '🪟';
       default:
         return '📦';
     }
@@ -128,6 +130,8 @@ export function ApplicationsView() {
         return 'System';
       case 'communication':
         return 'Communication';
+      case 'tiling':
+        return 'Tiling Managers';
       default:
         return 'Other';
     }
@@ -143,7 +147,7 @@ export function ApplicationsView() {
     return acc;
   }, {} as Record<string, AppInfo[]>);
 
-  const categories = ['terminal', 'editor', 'cli', 'launcher', 'system', 'communication'];
+  const categories = ['terminal', 'editor', 'cli', 'launcher', 'system', 'tiling', 'communication'];
 
   if (loading) {
     return (

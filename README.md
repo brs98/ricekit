@@ -41,6 +41,9 @@ MacTheme is inspired by Omarchy's Linux theming system and brings unified theme 
 #### System
 - Desktop Wallpaper • macOS Accent Color • SketchyBar
 
+#### Tiling Managers
+- AeroSpace (with JankyBorders)
+
 ---
 
 ## Installation
