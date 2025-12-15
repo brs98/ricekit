@@ -1,34 +1,34 @@
-import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
 import sharp from 'sharp';
 import { app } from 'electron';
 import { logger } from './logger';
+import { existsSync, ensureDir, readDir, stat, unlink } from './utils/asyncFs';
 
 const THUMBNAIL_WIDTH = 400;
 const THUMBNAIL_HEIGHT = 250;
 const THUMBNAIL_QUALITY = 80;
 
 // Get cache directory for thumbnails
-function getThumbnailCacheDir(): string {
+async function getThumbnailCacheDir(): Promise<string> {
   const cacheDir = path.join(app.getPath('userData'), 'thumbnails');
-  if (!fs.existsSync(cacheDir)) {
-    fs.mkdirSync(cacheDir, { recursive: true });
+  if (!existsSync(cacheDir)) {
+    await ensureDir(cacheDir);
   }
   return cacheDir;
 }
 
 // Generate a cache key from the file path and modification time
-function getCacheKey(filePath: string): string {
-  const stats = fs.statSync(filePath);
+async function getCacheKey(filePath: string): Promise<string> {
+  const stats = await stat(filePath);
   const mtime = stats.mtime.getTime();
   const hash = crypto.createHash('md5').update(`${filePath}-${mtime}`).digest('hex');
   return hash;
 }
 
 // Get thumbnail path from cache
-function getThumbnailPath(cacheKey: string): string {
-  const cacheDir = getThumbnailCacheDir();
+async function getThumbnailPath(cacheKey: string): Promise<string> {
+  const cacheDir = await getThumbnailCacheDir();
   return path.join(cacheDir, `${cacheKey}.jpg`);
 }
 
@@ -39,16 +39,16 @@ function getThumbnailPath(cacheKey: string): string {
 export async function generateThumbnail(imagePath: string): Promise<string> {
   try {
     // Check if file exists
-    if (!fs.existsSync(imagePath)) {
+    if (!existsSync(imagePath)) {
       throw new Error(`Image file not found: ${imagePath}`);
     }
 
     // Get cache key
-    const cacheKey = getCacheKey(imagePath);
-    const thumbnailPath = getThumbnailPath(cacheKey);
+    const cacheKey = await getCacheKey(imagePath);
+    const thumbnailPath = await getThumbnailPath(cacheKey);
 
     // Check if thumbnail already exists in cache
-    if (fs.existsSync(thumbnailPath)) {
+    if (existsSync(thumbnailPath)) {
       logger.info(`[Thumbnail] Using cached thumbnail for: ${path.basename(imagePath)}`);
       return thumbnailPath;
     }
@@ -103,22 +103,22 @@ export async function generateThumbnails(imagePaths: string[]): Promise<Map<stri
  * Clear old thumbnails from cache
  * Removes thumbnails that haven't been accessed in the last 30 days
  */
-export function clearOldThumbnails(): void {
+export async function clearOldThumbnails(): Promise<void> {
   try {
-    const cacheDir = getThumbnailCacheDir();
-    const files = fs.readdirSync(cacheDir);
+    const cacheDir = await getThumbnailCacheDir();
+    const files = await readDir(cacheDir);
     const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
 
     let deletedCount = 0;
-    files.forEach((file) => {
+    for (const file of files) {
       const filePath = path.join(cacheDir, file);
-      const stats = fs.statSync(filePath);
+      const stats = await stat(filePath);
 
       if (stats.atimeMs < thirtyDaysAgo) {
-        fs.unlinkSync(filePath);
+        await unlink(filePath);
         deletedCount++;
       }
-    });
+    }
 
     if (deletedCount > 0) {
       logger.info(`[Thumbnail] Cleared ${deletedCount} old thumbnails from cache`);
@@ -131,14 +131,12 @@ export function clearOldThumbnails(): void {
 /**
  * Clear all thumbnails from cache
  */
-export function clearAllThumbnails(): void {
+export async function clearAllThumbnails(): Promise<void> {
   try {
-    const cacheDir = getThumbnailCacheDir();
-    const files = fs.readdirSync(cacheDir);
+    const cacheDir = await getThumbnailCacheDir();
+    const files = await readDir(cacheDir);
 
-    files.forEach((file) => {
-      fs.unlinkSync(path.join(cacheDir, file));
-    });
+    await Promise.all(files.map((file) => unlink(path.join(cacheDir, file))));
 
     logger.info(`[Thumbnail] Cleared ${files.length} thumbnails from cache`);
   } catch (error) {
@@ -149,16 +147,16 @@ export function clearAllThumbnails(): void {
 /**
  * Get cache statistics
  */
-export function getThumbnailCacheStats(): { count: number; sizeBytes: number } {
+export async function getThumbnailCacheStats(): Promise<{ count: number; sizeBytes: number }> {
   try {
-    const cacheDir = getThumbnailCacheDir();
-    const files = fs.readdirSync(cacheDir);
+    const cacheDir = await getThumbnailCacheDir();
+    const files = await readDir(cacheDir);
 
     let totalSize = 0;
-    files.forEach((file) => {
-      const stats = fs.statSync(path.join(cacheDir, file));
+    for (const file of files) {
+      const stats = await stat(path.join(cacheDir, file));
       totalSize += stats.size;
-    });
+    }
 
     return {
       count: files.length,

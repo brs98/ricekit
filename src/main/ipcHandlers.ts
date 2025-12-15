@@ -342,7 +342,7 @@ async function notifyTerminalsToReload(themePath: string): Promise<void> {
 
     if (existsSync(weztermThemeSrc)) {
       // Copy theme content to the fixed location (this triggers WezTerm's file watcher)
-      fs.copyFileSync(weztermThemeSrc, weztermThemeDest);
+      await copyFile(weztermThemeSrc, weztermThemeDest);
       logger.info('✓ WezTerm theme file updated - will auto-reload');
     }
   } catch (err) {
@@ -400,16 +400,16 @@ async function updateEditorSettings(
     if (!existsSync(settingsPath)) {
       logger.info(`${editorName} settings.json not found, creating it...`);
       if (!existsSync(settingsDir)) {
-        fs.mkdirSync(settingsDir, { recursive: true });
+        await ensureDir(settingsDir);
       }
       // Create empty settings file
-      fs.writeFileSync(settingsPath, '{}', 'utf-8');
+      await writeFile(settingsPath, '{}');
     }
 
     // Read current settings
     let settings: any = {};
     try {
-      const settingsContent = fs.readFileSync(settingsPath, 'utf-8');
+      const settingsContent = await readFile(settingsPath);
       // Handle empty file or invalid JSON
       if (settingsContent.trim()) {
         settings = JSON.parse(settingsContent);
@@ -426,7 +426,7 @@ async function updateEditorSettings(
     settings['workbench.colorTheme'] = editorThemeName;
 
     // Write back the settings file with formatting
-    fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf-8');
+    await writeJson(settingsPath, settings);
     logger.info(`✓ ${editorName} theme updated to: ${editorThemeName}`);
   } catch (error) {
     logger.error(`Failed to update ${editorName} settings:`, error);
@@ -479,49 +479,46 @@ export async function handleApplyTheme(_event: any, name: string): Promise<void>
     try {
       if (existsSync(symlinkPath)) {
         // Check if it's a symlink
-        const stats = fs.lstatSync(symlinkPath);
-        if (stats.isSymbolicLink()) {
-          fs.unlinkSync(symlinkPath);
+        if (await isSymlink(symlinkPath)) {
+          await unlink(symlinkPath);
           logger.info(`Removed existing symlink: ${symlinkPath}`);
-        } else if (stats.isDirectory()) {
+        } else if (await isDirectory(symlinkPath)) {
           // If it's a directory (shouldn't happen), remove it
-          fs.rmSync(symlinkPath, { recursive: true, force: true });
+          await rmdir(symlinkPath);
           logger.info(`Removed existing directory: ${symlinkPath}`);
         }
       }
     } catch (err: any) {
       if (err.code === 'EACCES' || err.code === 'EPERM') {
-        throw new Error(`PERMISSION_ERROR: MacTheme doesn't have permission to modify theme files. Please check folder permissions.`);
+        throw createError('PERMISSION_ERROR', 'MacTheme doesn\'t have permission to modify theme files. Please check folder permissions.');
       }
       throw err;
     }
 
     // Create new symlink
     try {
-      fs.symlinkSync(theme.path, symlinkPath, 'dir');
+      await createSymlink(theme.path, symlinkPath, 'dir');
       logger.debug(`Created symlink: ${symlinkPath} -> ${theme.path}`);
-      logger.info(`Created symlink: ${symlinkPath} -> ${theme.path}`);
     } catch (err: any) {
       logger.error('Failed to create symlink', err);
-      logger.error('Failed to create symlink:', err);
       if (err.code === 'EACCES' || err.code === 'EPERM') {
-        throw new Error(`PERMISSION_ERROR: Cannot create theme link due to insufficient permissions. Please check folder permissions in ~/Library/Application Support/MacTheme.`);
+        throw createError('PERMISSION_ERROR', 'Cannot create theme link due to insufficient permissions. Please check folder permissions in ~/Library/Application Support/MacTheme.');
       } else if (err.code === 'EEXIST') {
-        throw new Error(`FILE_EXISTS: A file or folder already exists at the theme location. Please remove it and try again.`);
+        throw createError('FILE_EXISTS', 'A file or folder already exists at the theme location. Please remove it and try again.');
       } else if (err.code === 'ENOSPC') {
-        throw new Error(`NO_SPACE: Not enough disk space to apply theme.`);
+        throw createError('NO_SPACE', 'Not enough disk space to apply theme.');
       }
-      throw new Error(`SYMLINK_ERROR: Failed to create theme link: ${err.message}`);
+      throw createError('SYMLINK_ERROR', `Failed to create theme link: ${err.message}`);
     }
 
     // Update state
     const statePath = getStatePath();
     let state: State;
     try {
-      state = JSON.parse(fs.readFileSync(statePath, 'utf-8'));
+      state = await readJson<State>(statePath);
     } catch (err: any) {
       if (err.code === 'EACCES' || err.code === 'EPERM') {
-        throw new Error(`PERMISSION_ERROR: Cannot read app state file. Please check permissions for ~/Library/Application Support/MacTheme.`);
+        throw createError('PERMISSION_ERROR', 'Cannot read app state file. Please check permissions for ~/Library/Application Support/MacTheme.');
       }
       throw err;
     }
@@ -530,12 +527,12 @@ export async function handleApplyTheme(_event: any, name: string): Promise<void>
     state.lastSwitched = Date.now();
 
     try {
-      fs.writeFileSync(statePath, JSON.stringify(state, null, 2));
+      await writeJson(statePath, state);
     } catch (err: any) {
       if (err.code === 'EACCES' || err.code === 'EPERM') {
-        throw new Error(`PERMISSION_ERROR: Cannot save app state. Please check write permissions for ~/Library/Application Support/MacTheme.`);
+        throw createError('PERMISSION_ERROR', 'Cannot save app state. Please check write permissions for ~/Library/Application Support/MacTheme.');
       } else if (err.code === 'ENOSPC') {
-        throw new Error(`NO_SPACE: Not enough disk space to save theme state.`);
+        throw createError('NO_SPACE', 'Not enough disk space to save theme state.');
       }
       throw err;
     }
@@ -544,10 +541,10 @@ export async function handleApplyTheme(_event: any, name: string): Promise<void>
     const prefsPath = getPreferencesPath();
     let prefs: Preferences;
     try {
-      prefs = JSON.parse(fs.readFileSync(prefsPath, 'utf-8'));
+      prefs = await readJson<Preferences>(prefsPath);
     } catch (err: any) {
       if (err.code === 'EACCES' || err.code === 'EPERM') {
-        throw new Error(`PERMISSION_ERROR: Cannot read preferences. Please check permissions for ~/Library/Application Support/MacTheme.`);
+        throw createError('PERMISSION_ERROR', 'Cannot read preferences. Please check permissions for ~/Library/Application Support/MacTheme.');
       }
       throw err;
     }
@@ -565,7 +562,7 @@ export async function handleApplyTheme(_event: any, name: string): Promise<void>
     }
 
     try {
-      fs.writeFileSync(prefsPath, JSON.stringify(prefs, null, 2));
+      await writeJson(prefsPath, prefs);
     } catch (err: any) {
       // Don't fail the theme application if we can't update preferences
       logger.error('Failed to update preferences:', err);
@@ -715,7 +712,7 @@ async function handleCreateTheme(_event: any, data: ThemeMetadata): Promise<void
   const { generateThemeConfigFiles } = await import('./themeInstaller');
 
   // Generate all config files
-  generateThemeConfigFiles(themeDir, data);
+  await generateThemeConfigFiles(themeDir, data);
 
   logger.info(`Theme created successfully: ${data.name}`, { path: themeDir });
   logger.info(`Theme "${data.name}" created successfully at ${themeDir}`);
@@ -791,12 +788,12 @@ async function handleUpdateTheme(_event: any, name: string, data: ThemeMetadata)
     for (const file of configFiles) {
       const filePath = path.join(themeDir, file);
       if (existsSync(filePath)) {
-        fs.unlinkSync(filePath);
+        await unlink(filePath);
       }
     }
 
     // Regenerate all config files with the updated metadata
-    generateThemeConfigFiles(themeDir, updatedMetadata);
+    await generateThemeConfigFiles(themeDir, updatedMetadata);
 
     logger.info(`Theme "${name}" updated successfully at ${themeDir}`);
 
@@ -903,20 +900,20 @@ async function handleDuplicateTheme(_event: any, sourceThemeName: string): Promi
     }
 
     // Create new theme directory
-    fs.mkdirSync(newThemeDir, { recursive: true });
+    await ensureDir(newThemeDir);
 
     // Copy all files from source theme
-    const files = fs.readdirSync(sourceThemeDir);
+    const files = await readDir(sourceThemeDir);
     for (const file of files) {
       const sourcePath = path.join(sourceThemeDir, file);
       const destPath = path.join(newThemeDir, file);
 
-      const stat = fs.statSync(sourcePath);
-      if (stat.isDirectory()) {
+      const fileStat = await stat(sourcePath);
+      if (fileStat.isDirectory()) {
         // Recursively copy directories (like wallpapers)
-        fs.cpSync(sourcePath, destPath, { recursive: true });
+        await copyDir(sourcePath, destPath);
       } else {
-        fs.copyFileSync(sourcePath, destPath);
+        await copyFile(sourcePath, destPath);
       }
     }
 
@@ -926,10 +923,7 @@ async function handleDuplicateTheme(_event: any, sourceThemeName: string): Promi
       name: newThemeName,
       author: `${sourceMetadata.author} (duplicated)`,
     };
-    fs.writeFileSync(
-      path.join(newThemeDir, 'theme.json'),
-      JSON.stringify(newMetadata, null, 2)
-    );
+    await writeJson(path.join(newThemeDir, 'theme.json'), newMetadata);
 
     logger.info(`Successfully duplicated theme to: ${newThemeName}`);
 
@@ -1122,11 +1116,11 @@ async function handleImportTheme(_event: any, importPath?: string): Promise<void
       }
 
       // Copy theme to custom-themes directory
-      fs.cpSync(extractedThemePath, destThemeDir, { recursive: true });
+      await copyDir(extractedThemePath, destThemeDir);
       logger.info(`Theme imported to: ${destThemeDir}`);
 
       // Clean up temp directory
-      fs.rmSync(tmpDir, { recursive: true, force: true });
+      await rmdir(tmpDir);
 
       // Show success notification
       if (Notification.isSupported()) {
@@ -1142,7 +1136,7 @@ async function handleImportTheme(_event: any, importPath?: string): Promise<void
     } catch (extractError) {
       // Clean up temp directory on error
       if (existsSync(tmpDir)) {
-        fs.rmSync(tmpDir, { recursive: true, force: true });
+        await rmdir(tmpDir);
       }
       throw extractError;
     }
@@ -1183,7 +1177,7 @@ async function handleImportThemeFromUrl(_event: any, url: string): Promise<void>
 
     // Create temporary directory for download
     const tmpDir = path.join(os.tmpdir(), `mactheme-url-import-${Date.now()}`);
-    fs.mkdirSync(tmpDir, { recursive: true });
+    await ensureDir(tmpDir);
 
     try {
       // Download file from URL
@@ -1218,8 +1212,8 @@ async function handleImportThemeFromUrl(_event: any, url: string): Promise<void>
                 });
               });
 
-              redirectRequest.on('error', (err) => {
-                fs.unlinkSync(downloadPath);
+              redirectRequest.on('error', async (err) => {
+                try { await unlink(downloadPath); } catch { /* ignore */ }
                 reject(err);
               });
 
@@ -1241,13 +1235,13 @@ async function handleImportThemeFromUrl(_event: any, url: string): Promise<void>
           });
         });
 
-        request.on('error', (err) => {
-          fs.unlinkSync(downloadPath);
+        request.on('error', async (err) => {
+          try { await unlink(downloadPath); } catch { /* ignore */ }
           reject(err);
         });
 
-        file.on('error', (err) => {
-          fs.unlinkSync(downloadPath);
+        file.on('error', async (err) => {
+          try { await unlink(downloadPath); } catch { /* ignore */ }
           reject(err);
         });
       });
@@ -1255,24 +1249,24 @@ async function handleImportThemeFromUrl(_event: any, url: string): Promise<void>
       logger.info(`Download complete: ${downloadPath}`);
 
       // Verify file was downloaded and is not empty
-      const stats = fs.statSync(downloadPath);
-      if (stats.size === 0) {
+      const downloadStats = await stat(downloadPath);
+      if (downloadStats.size === 0) {
         throw new Error('Downloaded file is empty');
       }
 
-      logger.info(`Downloaded file size: ${stats.size} bytes`);
+      logger.info(`Downloaded file size: ${downloadStats.size} bytes`);
 
       // Use the existing import logic to process the downloaded file
       await handleImportTheme(_event, downloadPath);
 
       // Clean up temp directory
-      fs.rmSync(tmpDir, { recursive: true, force: true });
+      await rmdir(tmpDir);
 
       logger.info(`Successfully imported theme from URL: ${url}`);
     } catch (downloadError) {
       // Clean up temp directory on error
       if (existsSync(tmpDir)) {
-        fs.rmSync(tmpDir, { recursive: true, force: true });
+        await rmdir(tmpDir);
       }
       throw downloadError;
     }
@@ -1306,7 +1300,7 @@ async function handleListWallpapers(_event: any, themeName: string): Promise<str
       return [];
     }
 
-    const files = fs.readdirSync(wallpapersDir);
+    const files = await readDir(wallpapersDir);
     const imageFiles = files.filter(file => {
       const ext = path.extname(file).toLowerCase();
       return ['.png', '.jpg', '.jpeg', '.heic', '.webp'].includes(ext);
@@ -1364,7 +1358,7 @@ async function handleListWallpapersWithThumbnails(_event: any, themeName: string
 async function handleClearThumbnailCache(): Promise<void> {
   try {
     logger.info('Clearing thumbnail cache...');
-    clearOldThumbnails();
+    await clearOldThumbnails();
     logger.info('Thumbnail cache cleared successfully');
   } catch (error) {
     logger.error('Error clearing thumbnail cache:', error);
@@ -1377,7 +1371,7 @@ async function handleClearThumbnailCache(): Promise<void> {
  */
 async function handleGetThumbnailCacheStats(): Promise<{ count: number; sizeBytes: number; sizeMB: number }> {
   try {
-    const stats = getThumbnailCacheStats();
+    const stats = await getThumbnailCacheStats();
     return {
       ...stats,
       sizeMB: Math.round((stats.sizeBytes / (1024 * 1024)) * 100) / 100,
@@ -1433,17 +1427,17 @@ async function handleApplyWallpaper(_event: any, wallpaperPath: string, displayI
 
     // Remove existing symlink if it exists
     if (existsSync(wallpaperSymlink)) {
-      fs.unlinkSync(wallpaperSymlink);
+      await unlink(wallpaperSymlink);
     }
 
     // Create new symlink
-    fs.symlinkSync(wallpaperPath, wallpaperSymlink);
+    await createSymlink(wallpaperPath, wallpaperSymlink, 'file');
 
     // Update state with current wallpaper
     const statePath = getStatePath();
-    const state: State = JSON.parse(fs.readFileSync(statePath, 'utf-8'));
+    const state: State = await readJson<State>(statePath);
     state.currentWallpaper = wallpaperPath;
-    fs.writeFileSync(statePath, JSON.stringify(state, null, 2));
+    await writeJson(statePath, state);
 
     // Show notification
     if (Notification.isSupported()) {
@@ -1564,7 +1558,7 @@ async function handleAddWallpapers(_event: any, themeName: string): Promise<{ ad
     // Ensure wallpapers directory exists
     const wallpapersDir = path.join(themePath, 'wallpapers');
     if (!existsSync(wallpapersDir)) {
-      fs.mkdirSync(wallpapersDir, { recursive: true });
+      await ensureDir(wallpapersDir);
     }
 
     const added: string[] = [];
@@ -1587,7 +1581,7 @@ async function handleAddWallpapers(_event: any, themeName: string): Promise<{ ad
           }
         }
 
-        fs.copyFileSync(sourcePath, destPath);
+        await copyFile(sourcePath, destPath);
         added.push(destPath);
         logger.info(`Added wallpaper: ${destPath}`);
       } catch (err) {
@@ -1633,7 +1627,7 @@ async function handleRemoveWallpaper(_event: any, wallpaperPath: string): Promis
     }
 
     // Delete the file
-    fs.unlinkSync(wallpaperPath);
+    await unlink(wallpaperPath);
     logger.info(`Removed wallpaper: ${wallpaperPath}`);
 
     // Check if this was the current wallpaper and clear the symlink if so
@@ -1642,14 +1636,14 @@ async function handleRemoveWallpaper(_event: any, wallpaperPath: string): Promis
 
     if (existsSync(wallpaperSymlink)) {
       try {
-        const currentWallpaper = fs.readlinkSync(wallpaperSymlink);
+        const currentWallpaper = await readSymlink(wallpaperSymlink);
         if (currentWallpaper === wallpaperPath) {
-          fs.unlinkSync(wallpaperSymlink);
+          await unlink(wallpaperSymlink);
           // Update state to clear current wallpaper
           const statePath = getStatePath();
-          const state: State = JSON.parse(fs.readFileSync(statePath, 'utf-8'));
+          const state: State = await readJson<State>(statePath);
           delete state.currentWallpaper;
-          fs.writeFileSync(statePath, JSON.stringify(state, null, 2));
+          await writeJson(statePath, state);
           logger.info('Cleared current wallpaper reference');
         }
       } catch {
@@ -1934,13 +1928,13 @@ async function setupEditorApp(
 
   // Create settings directory if it doesn't exist
   if (!existsSync(settingsDir)) {
-    fs.mkdirSync(settingsDir, { recursive: true });
+    await ensureDir(settingsDir);
   }
 
   // Create backup if settings file exists
   if (existsSync(settingsPath)) {
     const backupPath = `${settingsPath}.mactheme-backup`;
-    fs.copyFileSync(settingsPath, backupPath);
+    await copyFile(settingsPath, backupPath);
     logger.info(`Created backup at: ${backupPath}`);
   }
 
@@ -2104,7 +2098,7 @@ after-startup-command = [
 
     // Create config directory if it doesn't exist
     if (!existsSync(configDir)) {
-      fs.mkdirSync(configDir, { recursive: true });
+      await ensureDir(configDir);
     }
 
     // Read existing config or create new one
@@ -2112,10 +2106,10 @@ after-startup-command = [
     if (existsSync(configPath)) {
       // Create backup
       const backupPath = `${configPath}.bak`;
-      fs.copyFileSync(configPath, backupPath);
+      await copyFile(configPath, backupPath);
       logger.info(`Created backup at: ${backupPath}`);
 
-      configContent = fs.readFileSync(configPath, 'utf-8');
+      configContent = await readFile(configPath);
 
       // Check if import already exists
       if (configContent.includes(importLine) || configContent.includes('MacTheme/current/theme')) {
@@ -2125,7 +2119,7 @@ after-startup-command = [
 
     // Add import statement at the top of the file
     const newContent = importLine + '\n\n' + configContent;
-    fs.writeFileSync(configPath, newContent, 'utf-8');
+    await writeFile(configPath, newContent);
 
     logger.info(`Successfully configured ${appName} at ${configPath}`);
 
@@ -2257,7 +2251,7 @@ async function handleRefreshApp(_event: any, appName: string): Promise<void> {
           const weztermThemeDest = path.join(os.homedir(), 'Library', 'Application Support', 'MacTheme', 'wezterm-colors.lua');
 
           if (existsSync(weztermThemeSrc)) {
-            fs.copyFileSync(weztermThemeSrc, weztermThemeDest);
+            await copyFile(weztermThemeSrc, weztermThemeDest);
             logger.info('WezTerm theme file updated - will auto-reload');
           } else {
             logger.info('WezTerm theme source not found');
@@ -2328,8 +2322,7 @@ async function handleGetPreferences(): Promise<Preferences> {
   const prefsPath = getPreferencesPath();
 
   try {
-    const prefsContent = fs.readFileSync(prefsPath, 'utf-8');
-    return JSON.parse(prefsContent);
+    return await readJson<Preferences>(prefsPath);
   } catch (error) {
     // This should never happen after ensurePreferences(), but just in case...
     logger.error('Failed to read preferences after validation:', error);
@@ -2348,10 +2341,10 @@ async function handleSetPreferences(_event: any, prefs: Preferences): Promise<vo
   const prefsPath = getPreferencesPath();
 
   // Read old preferences to detect changes
-  const oldPrefs = JSON.parse(fs.readFileSync(prefsPath, 'utf-8')) as Preferences;
+  const oldPrefs = await readJson<Preferences>(prefsPath);
 
   // Write new preferences
-  fs.writeFileSync(prefsPath, JSON.stringify(prefs, null, 2));
+  await writeJson(prefsPath, prefs);
   logger.info('Preferences updated');
 
   // Check if showInMenuBar preference changed
@@ -2414,8 +2407,7 @@ async function handleBackupPreferences(): Promise<string | null> {
 
     // Read current preferences
     const prefsPath = getPreferencesPath();
-    const prefsContent = fs.readFileSync(prefsPath, 'utf-8');
-    const prefs = JSON.parse(prefsContent);
+    const prefs = await readJson<Preferences>(prefsPath);
 
     // Add metadata to backup
     const backup = {
@@ -2425,7 +2417,7 @@ async function handleBackupPreferences(): Promise<string | null> {
     };
 
     // Write to backup file
-    fs.writeFileSync(filePath, JSON.stringify(backup, null, 2));
+    await writeJson(filePath, backup);
     logger.info('Preferences backed up to:', filePath);
 
     return filePath;
@@ -2459,8 +2451,7 @@ async function handleRestorePreferences(): Promise<boolean> {
     const backupPath = filePaths[0];
 
     // Read and parse backup file
-    const backupContent = fs.readFileSync(backupPath, 'utf-8');
-    const backup = JSON.parse(backupContent);
+    const backup = await readJson<{ version: string; timestamp: string; preferences: Preferences }>(backupPath);
 
     // Validate backup structure
     if (!backup.preferences) {
@@ -2472,11 +2463,11 @@ async function handleRestorePreferences(): Promise<boolean> {
 
     // Create backup of current preferences before restoring
     const currentBackupPath = `${prefsPath}.pre-restore-${Date.now()}.bak`;
-    fs.copyFileSync(prefsPath, currentBackupPath);
+    await copyFile(prefsPath, currentBackupPath);
     logger.info(`Created safety backup at: ${currentBackupPath}`);
 
     // Write restored preferences
-    fs.writeFileSync(prefsPath, JSON.stringify(backup.preferences, null, 2));
+    await writeJson(prefsPath, backup.preferences);
     logger.info('Preferences restored from:', backupPath);
 
     // Update tray visibility if showInMenuBar changed
@@ -2587,7 +2578,7 @@ async function applyDynamicWallpaper(appearance: 'light' | 'dark', themeName: st
     }
 
     // List all files in wallpapers directory
-    const files = fs.readdirSync(wallpapersDir);
+    const files = await readDir(wallpapersDir);
 
     // Look for appearance-specific wallpapers
     // Naming convention: light.png, light.jpg, light-*.png, dark.png, dark.jpg, dark-*.png
@@ -2913,8 +2904,7 @@ async function handleGetState(): Promise<State> {
   ensureDirectories();
   ensureState();
   const statePath = getStatePath();
-  const stateContent = fs.readFileSync(statePath, 'utf-8');
-  return JSON.parse(stateContent);
+  return await readJson<State>(statePath);
 }
 
 /**
@@ -2928,7 +2918,7 @@ async function handleSaveUIState(_event: any, uiState: any): Promise<void> {
       ...uiState,
       timestamp: Date.now(),
     };
-    fs.writeFileSync(uiStatePath, JSON.stringify(stateToSave, null, 2));
+    await writeJson(uiStatePath, stateToSave);
     logger.debug('UI state saved for crash recovery', stateToSave);
   } catch (error) {
     logger.error('Failed to save UI state', error);
@@ -2949,15 +2939,14 @@ async function handleGetUIState(): Promise<any | null> {
       return null;
     }
 
-    const stateContent = fs.readFileSync(uiStatePath, 'utf-8');
-    const uiState = JSON.parse(stateContent);
+    const uiState = await readJson<any>(uiStatePath);
 
     // Check if state is not too old (24 hours = 86400000 ms)
     const stateAge = Date.now() - (uiState.timestamp || 0);
     if (stateAge > 86400000) {
       logger.info('UI state is too old, ignoring', { ageHours: Math.round(stateAge / 3600000) });
       // Delete old state file
-      fs.unlinkSync(uiStatePath);
+      await unlink(uiStatePath);
       return null;
     }
 
@@ -2999,9 +2988,9 @@ async function handleSetDebugEnabled(_event: any, enabled: boolean): Promise<voi
   // Also update preferences
   try {
     const prefsPath = getPreferencesPath();
-    const prefs = JSON.parse(fs.readFileSync(prefsPath, 'utf-8'));
+    const prefs = await readJson<Preferences>(prefsPath);
     prefs.debugLogging = enabled;
-    fs.writeFileSync(prefsPath, JSON.stringify(prefs, null, 2));
+    await writeJson(prefsPath, prefs);
   } catch (err) {
     logger.error('Failed to update debug logging preference', err);
   }
@@ -3030,7 +3019,7 @@ async function handleCheckForUpdates(): Promise<{
     let currentVersion = '0.1.0';
 
     try {
-      const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+      const packageJson = await readJson<{ version: string }>(packageJsonPath);
       currentVersion = packageJson.version;
     } catch (err) {
       logger.error('Failed to read current version', err);

@@ -3,11 +3,33 @@ import path from 'path';
 import { getThemesDir } from './directories';
 import { logger } from './logger';
 import type { ThemeMetadata, ThemeColors } from '../shared/types';
+import {
+  ensureDir,
+  writeJson,
+  writeFile,
+  readDir,
+  isDirectory,
+  existsSync,
+  copyFile,
+  copyDir,
+  stat,
+} from './utils/asyncFs';
+
+/**
+ * Write multiple theme files in parallel for better performance
+ */
+async function writeThemeFiles(themeDir: string, files: Record<string, string>): Promise<void> {
+  await Promise.all(
+    Object.entries(files).map(([filename, content]) =>
+      writeFile(path.join(themeDir, filename), content)
+    )
+  );
+}
 
 /**
  * Install bundled themes to the themes directory
  */
-export function installBundledThemes(): void {
+export async function installBundledThemes(): Promise<void> {
   const themesDir = getThemesDir();
   const bundledThemesDir = path.join(__dirname, '../../bundled-themes');
 
@@ -17,36 +39,39 @@ export function installBundledThemes(): void {
 
   // Check if bundled themes directory exists and has complete themes (with theme.json)
   let hasBundledThemes = false;
-  if (fs.existsSync(bundledThemesDir)) {
-    const themes = fs.readdirSync(bundledThemesDir);
-    const completeThemes = themes.filter(name => {
-      const themePath = path.join(bundledThemesDir, name);
-      const themeJsonPath = path.join(themePath, 'theme.json');
-      return fs.statSync(themePath).isDirectory() && fs.existsSync(themeJsonPath);
-    });
-    hasBundledThemes = completeThemes.length > 0;
+  if (existsSync(bundledThemesDir)) {
+    const themes = await readDir(bundledThemesDir);
+    const completeThemesChecks = await Promise.all(
+      themes.map(async (name) => {
+        const themePath = path.join(bundledThemesDir, name);
+        const themeJsonPath = path.join(themePath, 'theme.json');
+        const isDir = await isDirectory(themePath);
+        return isDir && existsSync(themeJsonPath);
+      })
+    );
+    hasBundledThemes = completeThemesChecks.some(Boolean);
   }
 
   if (!hasBundledThemes) {
     logger.info('No bundled themes found, creating themes from templates...');
-    createThemesFromTemplates();
+    await createThemesFromTemplates();
     return;
   }
 
   // Copy all bundled themes to themes directory
-  const themes = fs.readdirSync(bundledThemesDir);
+  const themes = await readDir(bundledThemesDir);
   for (const themeName of themes) {
     const srcPath = path.join(bundledThemesDir, themeName);
     const destPath = path.join(themesDir, themeName);
 
     // Skip if not a directory
-    if (!fs.statSync(srcPath).isDirectory()) {
+    if (!(await isDirectory(srcPath))) {
       continue;
     }
 
     // Only install if theme doesn't already exist
-    if (!fs.existsSync(destPath)) {
-      copyRecursive(srcPath, destPath);
+    if (!existsSync(destPath)) {
+      await copyDir(srcPath, destPath);
       logger.info(`Installed theme: ${themeName}`);
     } else {
       logger.info(`Theme already exists: ${themeName}`);
@@ -57,105 +82,72 @@ export function installBundledThemes(): void {
 }
 
 /**
- * Copy directory recursively
- */
-function copyRecursive(src: string, dest: string): void {
-  if (fs.statSync(src).isDirectory()) {
-    fs.mkdirSync(dest, { recursive: true });
-    const entries = fs.readdirSync(src);
-    for (const entry of entries) {
-      copyRecursive(path.join(src, entry), path.join(dest, entry));
-    }
-  } else {
-    fs.copyFileSync(src, dest);
-  }
-}
-
-/**
  * Create themes from code templates (fallback if bundled themes not found)
  */
-function createThemesFromTemplates(): void {
+async function createThemesFromTemplates(): Promise<void> {
   const themesDir = getThemesDir();
 
-  // Create Tokyo Night theme
-  createTokyoNightTheme(themesDir);
-
-  // Create Catppuccin Mocha theme
-  createCatppuccinMochaTheme(themesDir);
-
-  // Create Catppuccin Latte theme
-  createCatppuccinLatteTheme(themesDir);
-
-  // Create Gruvbox Dark theme
-  createGruvboxDarkTheme(themesDir);
-
-  // Create Gruvbox Light theme
-  createGruvboxLightTheme(themesDir);
-
-  // Create Nord theme
-  createNordTheme(themesDir);
-
-  // Create Dracula theme
-  createDraculaTheme(themesDir);
-
-  // Create One Dark theme
-  createOneDarkTheme(themesDir);
-
-  // Create Solarized Dark theme
-  createSolarizedDarkTheme(themesDir);
-
-  // Create Solarized Light theme
-  createSolarizedLightTheme(themesDir);
-
-  // Create Rose Pine theme
-  createRosePineTheme(themesDir);
+  // Create all themes in parallel for better performance
+  await Promise.all([
+    createTokyoNightTheme(themesDir),
+    createCatppuccinMochaTheme(themesDir),
+    createCatppuccinLatteTheme(themesDir),
+    createGruvboxDarkTheme(themesDir),
+    createGruvboxLightTheme(themesDir),
+    createNordTheme(themesDir),
+    createDraculaTheme(themesDir),
+    createOneDarkTheme(themesDir),
+    createSolarizedDarkTheme(themesDir),
+    createSolarizedLightTheme(themesDir),
+    createRosePineTheme(themesDir),
+  ]);
 
   logger.info('Created all 11 bundled themes from templates');
 
   // Copy wallpapers from bundled-themes if available
-  copyBundledWallpapers(themesDir);
+  await copyBundledWallpapers(themesDir);
 }
 
 /**
  * Copy wallpapers from bundled-themes directory to created themes
  * This allows wallpapers to be distributed with the app without duplicating theme configs
  */
-function copyBundledWallpapers(themesDir: string): void {
+async function copyBundledWallpapers(themesDir: string): Promise<void> {
   const bundledThemesDir = path.join(__dirname, '../../bundled-themes');
 
-  if (!fs.existsSync(bundledThemesDir)) {
+  if (!existsSync(bundledThemesDir)) {
     logger.info('No bundled-themes directory found, skipping wallpaper copy');
     return;
   }
 
-  const bundledThemes = fs.readdirSync(bundledThemesDir);
+  const bundledThemes = await readDir(bundledThemesDir);
   for (const themeName of bundledThemes) {
     const bundledWallpapersDir = path.join(bundledThemesDir, themeName, 'wallpapers');
 
-    if (!fs.existsSync(bundledWallpapersDir)) {
+    if (!existsSync(bundledWallpapersDir)) {
       continue;
     }
 
     const destThemeDir = path.join(themesDir, themeName);
-    if (!fs.existsSync(destThemeDir)) {
+    if (!existsSync(destThemeDir)) {
       logger.info(`Theme ${themeName} not found in themes directory, skipping wallpaper copy`);
       continue;
     }
 
     const destWallpapersDir = path.join(destThemeDir, 'wallpapers');
-    if (!fs.existsSync(destWallpapersDir)) {
-      fs.mkdirSync(destWallpapersDir, { recursive: true });
+    if (!existsSync(destWallpapersDir)) {
+      await ensureDir(destWallpapersDir);
     }
 
     // Copy all wallpapers
-    const wallpaperFiles = fs.readdirSync(bundledWallpapersDir);
+    const wallpaperFiles = await readDir(bundledWallpapersDir);
     for (const file of wallpaperFiles) {
       const srcPath = path.join(bundledWallpapersDir, file);
       const destPath = path.join(destWallpapersDir, file);
 
       // Only copy if destination doesn't exist
-      if (!fs.existsSync(destPath)) {
-        fs.copyFileSync(srcPath, destPath);
+      if (!existsSync(destPath)) {
+        await copyFile(srcPath, destPath);
         logger.info(`Copied wallpaper: ${themeName}/${file}`);
       }
     }
@@ -164,9 +156,9 @@ function copyBundledWallpapers(themesDir: string): void {
   logger.info('Finished copying bundled wallpapers');
 }
 
-function createTokyoNightTheme(themesDir: string): void {
+async function createTokyoNightTheme(themesDir: string): Promise<void> {
   const themeDir = path.join(themesDir, 'tokyo-night');
-  fs.mkdirSync(themeDir, { recursive: true });
+  await ensureDir(themeDir);
 
   const metadata = {
     name: 'Tokyo Night',
@@ -199,30 +191,30 @@ function createTokyoNightTheme(themesDir: string): void {
     },
   };
 
-  fs.writeFileSync(path.join(themeDir, 'theme.json'), JSON.stringify(metadata, null, 2));
+  await writeJson(path.join(themeDir, 'theme.json'), metadata);
 
   // Create placeholder config files
-  fs.writeFileSync(path.join(themeDir, 'alacritty.toml'), generateAlacrittyConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'kitty.conf'), generateKittyConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'cursor.json'), generateCursorConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'bat.conf'), generateBatConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'alacritty.toml'), generateAlacrittyConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'kitty.conf'), generateKittyConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
+  await writeFile(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'cursor.json'), generateCursorConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'bat.conf'), generateBatConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
 }
 
-function createCatppuccinMochaTheme(themesDir: string): void {
+async function createCatppuccinMochaTheme(themesDir: string): Promise<void> {
   const themeDir = path.join(themesDir, 'catppuccin-mocha');
-  fs.mkdirSync(themeDir, { recursive: true });
+  await ensureDir(themeDir);
 
   const metadata = {
     name: 'Catppuccin Mocha',
@@ -255,29 +247,29 @@ function createCatppuccinMochaTheme(themesDir: string): void {
     },
   };
 
-  fs.writeFileSync(path.join(themeDir, 'theme.json'), JSON.stringify(metadata, null, 2));
-  fs.writeFileSync(path.join(themeDir, 'alacritty.toml'), generateAlacrittyConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'kitty.conf'), generateKittyConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'wezterm.lua'), generateWeztermConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'cursor.json'), generateCursorConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'bat.conf'), generateBatConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
+  await writeJson(path.join(themeDir, 'theme.json'), metadata);
+  await writeFile(path.join(themeDir, 'alacritty.toml'), generateAlacrittyConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'kitty.conf'), generateKittyConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
+  await writeFile(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'wezterm.lua'), generateWeztermConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'cursor.json'), generateCursorConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'bat.conf'), generateBatConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
 }
 
-function createCatppuccinLatteTheme(themesDir: string): void {
+async function createCatppuccinLatteTheme(themesDir: string): Promise<void> {
   const themeDir = path.join(themesDir, 'catppuccin-latte');
-  fs.mkdirSync(themeDir, { recursive: true });
+  await ensureDir(themeDir);
 
   const metadata = {
     name: 'Catppuccin Latte',
@@ -310,29 +302,29 @@ function createCatppuccinLatteTheme(themesDir: string): void {
     },
   };
 
-  fs.writeFileSync(path.join(themeDir, 'theme.json'), JSON.stringify(metadata, null, 2));
-  fs.writeFileSync(path.join(themeDir, 'light.mode'), ''); // Marker file for light theme
-  fs.writeFileSync(path.join(themeDir, 'alacritty.toml'), generateAlacrittyConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'kitty.conf'), generateKittyConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'cursor.json'), generateCursorConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'bat.conf'), generateBatConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
+  await writeJson(path.join(themeDir, 'theme.json'), metadata);
+  await writeFile(path.join(themeDir, 'light.mode'), ''); // Marker file for light theme
+  await writeFile(path.join(themeDir, 'alacritty.toml'), generateAlacrittyConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'kitty.conf'), generateKittyConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
+  await writeFile(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'cursor.json'), generateCursorConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'bat.conf'), generateBatConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
 }
 
-function createGruvboxDarkTheme(themesDir: string): void {
+async function createGruvboxDarkTheme(themesDir: string): Promise<void> {
   const themeDir = path.join(themesDir, 'gruvbox-dark');
-  fs.mkdirSync(themeDir, { recursive: true });
+  await ensureDir(themeDir);
 
   const metadata = {
     name: 'Gruvbox Dark',
@@ -365,29 +357,29 @@ function createGruvboxDarkTheme(themesDir: string): void {
     },
   };
 
-  fs.writeFileSync(path.join(themeDir, 'theme.json'), JSON.stringify(metadata, null, 2));
-  fs.writeFileSync(path.join(themeDir, 'alacritty.toml'), generateAlacrittyConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'kitty.conf'), generateKittyConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'wezterm.lua'), generateWeztermConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'cursor.json'), generateCursorConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'bat.conf'), generateBatConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
+  await writeJson(path.join(themeDir, 'theme.json'), metadata);
+  await writeFile(path.join(themeDir, 'alacritty.toml'), generateAlacrittyConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'kitty.conf'), generateKittyConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
+  await writeFile(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'wezterm.lua'), generateWeztermConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'cursor.json'), generateCursorConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'bat.conf'), generateBatConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
 }
 
-function createGruvboxLightTheme(themesDir: string): void {
+async function createGruvboxLightTheme(themesDir: string): Promise<void> {
   const themeDir = path.join(themesDir, 'gruvbox-light');
-  fs.mkdirSync(themeDir, { recursive: true });
+  await ensureDir(themeDir);
 
   const metadata = {
     name: 'Gruvbox Light',
@@ -420,29 +412,29 @@ function createGruvboxLightTheme(themesDir: string): void {
     },
   };
 
-  fs.writeFileSync(path.join(themeDir, 'theme.json'), JSON.stringify(metadata, null, 2));
-  fs.writeFileSync(path.join(themeDir, 'light.mode'), '');
-  fs.writeFileSync(path.join(themeDir, 'alacritty.toml'), generateAlacrittyConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'kitty.conf'), generateKittyConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'cursor.json'), generateCursorConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'bat.conf'), generateBatConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
+  await writeJson(path.join(themeDir, 'theme.json'), metadata);
+  await writeFile(path.join(themeDir, 'light.mode'), '');
+  await writeFile(path.join(themeDir, 'alacritty.toml'), generateAlacrittyConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'kitty.conf'), generateKittyConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
+  await writeFile(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'cursor.json'), generateCursorConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'bat.conf'), generateBatConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
 }
 
-function createNordTheme(themesDir: string): void {
+async function createNordTheme(themesDir: string): Promise<void> {
   const themeDir = path.join(themesDir, 'nord');
-  fs.mkdirSync(themeDir, { recursive: true });
+  await ensureDir(themeDir);
 
   const metadata = {
     name: 'Nord',
@@ -475,29 +467,29 @@ function createNordTheme(themesDir: string): void {
     },
   };
 
-  fs.writeFileSync(path.join(themeDir, 'theme.json'), JSON.stringify(metadata, null, 2));
-  fs.writeFileSync(path.join(themeDir, 'alacritty.toml'), generateAlacrittyConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'kitty.conf'), generateKittyConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'wezterm.lua'), generateWeztermConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'cursor.json'), generateCursorConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'bat.conf'), generateBatConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
+  await writeJson(path.join(themeDir, 'theme.json'), metadata);
+  await writeFile(path.join(themeDir, 'alacritty.toml'), generateAlacrittyConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'kitty.conf'), generateKittyConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
+  await writeFile(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'wezterm.lua'), generateWeztermConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'cursor.json'), generateCursorConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'bat.conf'), generateBatConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
 }
 
-function createDraculaTheme(themesDir: string): void {
+async function createDraculaTheme(themesDir: string): Promise<void> {
   const themeDir = path.join(themesDir, 'dracula');
-  fs.mkdirSync(themeDir, { recursive: true });
+  await ensureDir(themeDir);
 
   const metadata = {
     name: 'Dracula',
@@ -530,29 +522,29 @@ function createDraculaTheme(themesDir: string): void {
     },
   };
 
-  fs.writeFileSync(path.join(themeDir, 'theme.json'), JSON.stringify(metadata, null, 2));
-  fs.writeFileSync(path.join(themeDir, 'alacritty.toml'), generateAlacrittyConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'kitty.conf'), generateKittyConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'wezterm.lua'), generateWeztermConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'cursor.json'), generateCursorConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'bat.conf'), generateBatConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
+  await writeJson(path.join(themeDir, 'theme.json'), metadata);
+  await writeFile(path.join(themeDir, 'alacritty.toml'), generateAlacrittyConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'kitty.conf'), generateKittyConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
+  await writeFile(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'wezterm.lua'), generateWeztermConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'cursor.json'), generateCursorConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'bat.conf'), generateBatConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
 }
 
-function createOneDarkTheme(themesDir: string): void {
+async function createOneDarkTheme(themesDir: string): Promise<void> {
   const themeDir = path.join(themesDir, 'one-dark');
-  fs.mkdirSync(themeDir, { recursive: true });
+  await ensureDir(themeDir);
 
   const metadata = {
     name: 'One Dark',
@@ -585,29 +577,29 @@ function createOneDarkTheme(themesDir: string): void {
     },
   };
 
-  fs.writeFileSync(path.join(themeDir, 'theme.json'), JSON.stringify(metadata, null, 2));
-  fs.writeFileSync(path.join(themeDir, 'alacritty.toml'), generateAlacrittyConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'kitty.conf'), generateKittyConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'wezterm.lua'), generateWeztermConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'cursor.json'), generateCursorConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'bat.conf'), generateBatConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
+  await writeJson(path.join(themeDir, 'theme.json'), metadata);
+  await writeFile(path.join(themeDir, 'alacritty.toml'), generateAlacrittyConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'kitty.conf'), generateKittyConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
+  await writeFile(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'wezterm.lua'), generateWeztermConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'cursor.json'), generateCursorConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'bat.conf'), generateBatConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
 }
 
-function createSolarizedDarkTheme(themesDir: string): void {
+async function createSolarizedDarkTheme(themesDir: string): Promise<void> {
   const themeDir = path.join(themesDir, 'solarized-dark');
-  fs.mkdirSync(themeDir, { recursive: true });
+  await ensureDir(themeDir);
 
   const metadata = {
     name: 'Solarized Dark',
@@ -640,29 +632,29 @@ function createSolarizedDarkTheme(themesDir: string): void {
     },
   };
 
-  fs.writeFileSync(path.join(themeDir, 'theme.json'), JSON.stringify(metadata, null, 2));
-  fs.writeFileSync(path.join(themeDir, 'alacritty.toml'), generateAlacrittyConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'kitty.conf'), generateKittyConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'wezterm.lua'), generateWeztermConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'cursor.json'), generateCursorConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'bat.conf'), generateBatConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
+  await writeJson(path.join(themeDir, 'theme.json'), metadata);
+  await writeFile(path.join(themeDir, 'alacritty.toml'), generateAlacrittyConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'kitty.conf'), generateKittyConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
+  await writeFile(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'wezterm.lua'), generateWeztermConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'cursor.json'), generateCursorConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'bat.conf'), generateBatConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
 }
 
-function createSolarizedLightTheme(themesDir: string): void {
+async function createSolarizedLightTheme(themesDir: string): Promise<void> {
   const themeDir = path.join(themesDir, 'solarized-light');
-  fs.mkdirSync(themeDir, { recursive: true });
+  await ensureDir(themeDir);
 
   const metadata = {
     name: 'Solarized Light',
@@ -695,29 +687,29 @@ function createSolarizedLightTheme(themesDir: string): void {
     },
   };
 
-  fs.writeFileSync(path.join(themeDir, 'theme.json'), JSON.stringify(metadata, null, 2));
-  fs.writeFileSync(path.join(themeDir, 'light.mode'), '');
-  fs.writeFileSync(path.join(themeDir, 'alacritty.toml'), generateAlacrittyConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'kitty.conf'), generateKittyConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'cursor.json'), generateCursorConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'bat.conf'), generateBatConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
+  await writeJson(path.join(themeDir, 'theme.json'), metadata);
+  await writeFile(path.join(themeDir, 'light.mode'), '');
+  await writeFile(path.join(themeDir, 'alacritty.toml'), generateAlacrittyConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'kitty.conf'), generateKittyConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
+  await writeFile(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'cursor.json'), generateCursorConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'bat.conf'), generateBatConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
 }
 
-function createRosePineTheme(themesDir: string): void {
+async function createRosePineTheme(themesDir: string): Promise<void> {
   const themeDir = path.join(themesDir, 'rose-pine');
-  fs.mkdirSync(themeDir, { recursive: true });
+  await ensureDir(themeDir);
 
   const metadata = {
     name: 'Rosé Pine',
@@ -750,24 +742,24 @@ function createRosePineTheme(themesDir: string): void {
     },
   };
 
-  fs.writeFileSync(path.join(themeDir, 'theme.json'), JSON.stringify(metadata, null, 2));
-  fs.writeFileSync(path.join(themeDir, 'alacritty.toml'), generateAlacrittyConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'kitty.conf'), generateKittyConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'wezterm.lua'), generateWeztermConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'cursor.json'), generateCursorConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'bat.conf'), generateBatConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
+  await writeJson(path.join(themeDir, 'theme.json'), metadata);
+  await writeFile(path.join(themeDir, 'alacritty.toml'), generateAlacrittyConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'kitty.conf'), generateKittyConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
+  await writeFile(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'wezterm.lua'), generateWeztermConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'cursor.json'), generateCursorConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'bat.conf'), generateBatConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
 }
 
 // Config generators
@@ -1359,31 +1351,31 @@ borders active_color="$ACTIVE_COLOR" inactive_color="$INACTIVE_COLOR" width="$BO
  * Generate all config files for a theme in a directory
  * This is used by both theme creation and bundled theme generation
  */
-export function generateThemeConfigFiles(themeDir: string, metadata: ThemeMetadata): void {
+export async function generateThemeConfigFiles(themeDir: string, metadata: ThemeMetadata): Promise<void> {
   // Create theme directory if it doesn't exist
-  if (!fs.existsSync(themeDir)) {
-    fs.mkdirSync(themeDir, { recursive: true });
+  if (!existsSync(themeDir)) {
+    await ensureDir(themeDir);
   }
 
   // Write theme metadata
-  fs.writeFileSync(path.join(themeDir, 'theme.json'), JSON.stringify(metadata, null, 2));
+  await writeJson(path.join(themeDir, 'theme.json'), metadata);
 
   // Generate all config files
-  fs.writeFileSync(path.join(themeDir, 'alacritty.toml'), generateAlacrittyConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'kitty.conf'), generateKittyConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'wezterm.lua'), generateWeztermConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'cursor.json'), generateCursorConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'bat.conf'), generateBatConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
-  fs.writeFileSync(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'alacritty.toml'), generateAlacrittyConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'kitty.conf'), generateKittyConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
+  await writeFile(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'wezterm.lua'), generateWeztermConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'cursor.json'), generateCursorConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'bat.conf'), generateBatConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
 }

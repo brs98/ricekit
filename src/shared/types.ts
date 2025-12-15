@@ -82,6 +82,7 @@ export interface Preferences {
   };
   hookScript?: string; // Optional path to user-defined hook script
   onboardingCompleted: boolean; // Whether user has completed the onboarding wizard
+  debugLogging?: boolean; // Enable verbose debug logging
   dynamicWallpaper?: {
     enabled: boolean; // Enable automatic wallpaper switching based on system appearance
   };

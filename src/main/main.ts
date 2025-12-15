@@ -369,7 +369,7 @@ if (!gotTheLock) {
   });
 
   // This method will be called when Electron has finished initialization
-  app.whenReady().then(() => {
+  app.whenReady().then(async () => {
     // Register custom protocol handler for loading local files
     // This is required because file:// URLs are blocked in renderer with contextIsolation
     protocol.handle('local-file', (request) => {
@@ -399,7 +399,7 @@ if (!gotTheLock) {
     initializeApp();
     logger.info('App directories initialized');
 
-    installBundledThemes();
+    await installBundledThemes();
     logger.info('Bundled themes installed');
 
     // Initialize theme symlink after themes are installed
