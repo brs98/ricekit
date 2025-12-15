@@ -1425,9 +1425,16 @@ async function handleApplyWallpaper(_event: any, wallpaperPath: string, displayI
     const currentDir = getCurrentDir();
     const wallpaperSymlink = path.join(currentDir, 'wallpaper');
 
-    // Remove existing symlink if it exists
-    if (existsSync(wallpaperSymlink)) {
+    // Remove existing symlink/file if it exists
+    // Note: Always try to unlink first because existsSync() follows symlinks
+    // and returns false for broken symlinks, but the symlink itself still exists
+    try {
       await unlink(wallpaperSymlink);
+    } catch (err: any) {
+      // Ignore ENOENT (file doesn't exist), re-throw other errors
+      if (err.code !== 'ENOENT') {
+        throw err;
+      }
     }
 
     // Create new symlink
