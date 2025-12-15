@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { getThemesDir } from './directories';
+import { logger } from './logger';
 import type { ThemeMetadata, ThemeColors } from '../shared/types';
 
 /**
@@ -10,9 +11,9 @@ export function installBundledThemes(): void {
   const themesDir = getThemesDir();
   const bundledThemesDir = path.join(__dirname, '../../bundled-themes');
 
-  console.log('Installing bundled themes...');
-  console.log('Bundled themes dir:', bundledThemesDir);
-  console.log('Target themes dir:', themesDir);
+  logger.info('Installing bundled themes...');
+  logger.info('Bundled themes dir:', bundledThemesDir);
+  logger.info('Target themes dir:', themesDir);
 
   // Check if bundled themes directory exists and has complete themes (with theme.json)
   let hasBundledThemes = false;
@@ -27,7 +28,7 @@ export function installBundledThemes(): void {
   }
 
   if (!hasBundledThemes) {
-    console.log('No bundled themes found, creating themes from templates...');
+    logger.info('No bundled themes found, creating themes from templates...');
     createThemesFromTemplates();
     return;
   }
@@ -46,13 +47,13 @@ export function installBundledThemes(): void {
     // Only install if theme doesn't already exist
     if (!fs.existsSync(destPath)) {
       copyRecursive(srcPath, destPath);
-      console.log(`Installed theme: ${themeName}`);
+      logger.info(`Installed theme: ${themeName}`);
     } else {
-      console.log(`Theme already exists: ${themeName}`);
+      logger.info(`Theme already exists: ${themeName}`);
     }
   }
 
-  console.log('Bundled themes installation complete!');
+  logger.info('Bundled themes installation complete!');
 }
 
 /**
@@ -109,7 +110,7 @@ function createThemesFromTemplates(): void {
   // Create Rose Pine theme
   createRosePineTheme(themesDir);
 
-  console.log('Created all 11 bundled themes from templates');
+  logger.info('Created all 11 bundled themes from templates');
 
   // Copy wallpapers from bundled-themes if available
   copyBundledWallpapers(themesDir);
@@ -123,7 +124,7 @@ function copyBundledWallpapers(themesDir: string): void {
   const bundledThemesDir = path.join(__dirname, '../../bundled-themes');
 
   if (!fs.existsSync(bundledThemesDir)) {
-    console.log('No bundled-themes directory found, skipping wallpaper copy');
+    logger.info('No bundled-themes directory found, skipping wallpaper copy');
     return;
   }
 
@@ -137,7 +138,7 @@ function copyBundledWallpapers(themesDir: string): void {
 
     const destThemeDir = path.join(themesDir, themeName);
     if (!fs.existsSync(destThemeDir)) {
-      console.log(`Theme ${themeName} not found in themes directory, skipping wallpaper copy`);
+      logger.info(`Theme ${themeName} not found in themes directory, skipping wallpaper copy`);
       continue;
     }
 
@@ -155,12 +156,12 @@ function copyBundledWallpapers(themesDir: string): void {
       // Only copy if destination doesn't exist
       if (!fs.existsSync(destPath)) {
         fs.copyFileSync(srcPath, destPath);
-        console.log(`Copied wallpaper: ${themeName}/${file}`);
+        logger.info(`Copied wallpaper: ${themeName}/${file}`);
       }
     }
   }
 
-  console.log('Finished copying bundled wallpapers');
+  logger.info('Finished copying bundled wallpapers');
 }
 
 function createTokyoNightTheme(themesDir: string): void {

@@ -1,6 +1,7 @@
 import { app } from 'electron';
 import fs from 'fs';
 import path from 'path';
+import { logger } from './logger';
 
 /**
  * Get the MacTheme application data directory
@@ -65,7 +66,7 @@ export function ensureDirectories(): void {
   for (const dir of dirs) {
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
-      console.log(`Created directory: ${dir}`);
+      logger.info(`Created directory: ${dir}`);
     }
   }
 }
@@ -116,7 +117,7 @@ export function ensurePreferences(): void {
   // If file doesn't exist, create it
   if (!fs.existsSync(prefsPath)) {
     fs.writeFileSync(prefsPath, JSON.stringify(defaultPreferences, null, 2));
-    console.log(`Created preferences file: ${prefsPath}`);
+    logger.info(`Created preferences file: ${prefsPath}`);
     return;
   }
 
@@ -136,25 +137,25 @@ export function ensurePreferences(): void {
     // If new fields were added, update the file
     if (hasNewFields) {
       fs.writeFileSync(prefsPath, JSON.stringify(mergedPrefs, null, 2));
-      console.log(`Updated preferences with new fields: ${prefsPath}`);
+      logger.info(`Updated preferences with new fields: ${prefsPath}`);
     }
   } catch (error) {
     // File exists but contains invalid JSON - log error and recreate with defaults
-    console.error(`Corrupted preferences file detected: ${prefsPath}`);
-    console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+    logger.error(`Corrupted preferences file detected: ${prefsPath}`);
+    logger.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
 
     // Backup the corrupted file
     try {
       const backupPath = `${prefsPath}.corrupted.${Date.now()}.backup`;
       fs.copyFileSync(prefsPath, backupPath);
-      console.log(`Backed up corrupted file to: ${backupPath}`);
+      logger.info(`Backed up corrupted file to: ${backupPath}`);
     } catch (backupError) {
-      console.error('Failed to backup corrupted file:', backupError);
+      logger.error('Failed to backup corrupted file:', backupError);
     }
 
     // Replace with default preferences
     fs.writeFileSync(prefsPath, JSON.stringify(defaultPreferences, null, 2));
-    console.log(`Replaced corrupted preferences with defaults: ${prefsPath}`);
+    logger.info(`Replaced corrupted preferences with defaults: ${prefsPath}`);
   }
 }
 
@@ -171,7 +172,7 @@ export function ensureState(): void {
     };
 
     fs.writeFileSync(statePath, JSON.stringify(defaultState, null, 2));
-    console.log(`Created state file: ${statePath}`);
+    logger.info(`Created state file: ${statePath}`);
   }
 }
 
@@ -192,21 +193,21 @@ export function ensureThemeSymlink(): void {
       try {
         const target = fs.readlinkSync(symlinkPath);
         if (fs.existsSync(target)) {
-          console.log(`Theme symlink already exists: ${symlinkPath} -> ${target}`);
+          logger.info(`Theme symlink already exists: ${symlinkPath} -> ${target}`);
           return;
         } else {
           // Symlink points to non-existent theme, remove it
-          console.log(`Theme symlink points to non-existent theme, removing: ${target}`);
+          logger.info(`Theme symlink points to non-existent theme, removing: ${target}`);
           fs.unlinkSync(symlinkPath);
         }
       } catch (err) {
-        console.error('Error reading symlink:', err);
+        logger.error('Error reading symlink:', err);
         // Remove invalid symlink
         fs.unlinkSync(symlinkPath);
       }
     } else {
       // Not a symlink, remove it
-      console.log('theme path exists but is not a symlink, removing');
+      logger.info('theme path exists but is not a symlink, removing');
       fs.rmSync(symlinkPath, { recursive: true, force: true });
     }
   }
@@ -221,7 +222,7 @@ export function ensureThemeSymlink(): void {
         currentTheme = state.currentTheme;
       }
     } catch (err) {
-      console.error('Error reading state file:', err);
+      logger.error('Error reading state file:', err);
     }
   }
 
@@ -230,11 +231,11 @@ export function ensureThemeSymlink(): void {
 
   // Verify theme directory exists
   if (!fs.existsSync(themePath)) {
-    console.error(`Theme directory not found: ${themePath}`);
+    logger.error(`Theme directory not found: ${themePath}`);
     // Try to use tokyo-night as fallback
     const fallbackPath = path.join(getThemesDir(), 'tokyo-night');
     if (fs.existsSync(fallbackPath)) {
-      console.log('Using tokyo-night as fallback theme');
+      logger.info('Using tokyo-night as fallback theme');
       currentTheme = 'tokyo-night';
       // Update state file
       const state = {
@@ -243,7 +244,7 @@ export function ensureThemeSymlink(): void {
       };
       fs.writeFileSync(statePath, JSON.stringify(state, null, 2));
     } else {
-      console.error('No themes available, cannot create symlink');
+      logger.error('No themes available, cannot create symlink');
       return;
     }
   }
@@ -251,9 +252,9 @@ export function ensureThemeSymlink(): void {
   // Create the symlink
   try {
     fs.symlinkSync(path.join(getThemesDir(), currentTheme), symlinkPath, 'dir');
-    console.log(`Created theme symlink: ${symlinkPath} -> ${path.join(getThemesDir(), currentTheme)}`);
+    logger.info(`Created theme symlink: ${symlinkPath} -> ${path.join(getThemesDir(), currentTheme)}`);
   } catch (err) {
-    console.error('Failed to create theme symlink:', err);
+    logger.error('Failed to create theme symlink:', err);
   }
 }
 
@@ -261,11 +262,11 @@ export function ensureThemeSymlink(): void {
  * Initialize all MacTheme directories and files
  */
 export function initializeApp(): void {
-  console.log('Initializing MacTheme application directories...');
+  logger.info('Initializing MacTheme application directories...');
   ensureDirectories();
   ensurePreferences();
   ensureState();
-  console.log('MacTheme initialization complete!');
+  logger.info('MacTheme initialization complete!');
 }
 
 /**
@@ -273,7 +274,7 @@ export function initializeApp(): void {
  * This must be called AFTER installBundledThemes() to ensure themes exist
  */
 export function initializeAppAfterThemes(): void {
-  console.log('Initializing theme symlink...');
+  logger.info('Initializing theme symlink...');
   ensureThemeSymlink();
-  console.log('Theme symlink initialization complete!');
+  logger.info('Theme symlink initialization complete!');
 }

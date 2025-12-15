@@ -82,7 +82,7 @@ function updateTrayMenu() {
               await (handleApplyTheme as any)(null, themeName);
               updateTrayMenu(); // Refresh menu
             } catch (err) {
-              console.error('Failed to apply theme from tray:', err);
+              logger.error('Failed to apply theme from tray:', err);
             }
           },
         });
@@ -127,7 +127,7 @@ function updateTrayMenu() {
     const contextMenu = Menu.buildFromTemplate(menuItems);
     tray.setContextMenu(contextMenu);
   } catch (err) {
-    console.error('Error updating tray menu:', err);
+    logger.error('Error updating tray menu:', err);
   }
 }
 
@@ -144,7 +144,7 @@ export function refreshTrayMenu() {
 export function updateWindowTitle(themeName: string) {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.setTitle(`MacTheme - ${themeName}`);
-    console.log(`Window title updated to: MacTheme - ${themeName}`);
+    logger.info(`Window title updated to: MacTheme - ${themeName}`);
   }
 }
 
@@ -182,18 +182,18 @@ export function updateQuickSwitcherShortcut(shortcut: string) {
 
   // Register new shortcut
   const ret = globalShortcut.register(accelerator, () => {
-    console.log('Quick switcher shortcut triggered:', shortcut);
+    logger.info('Quick switcher shortcut triggered:', shortcut);
     toggleQuickSwitcher();
   });
 
   if (!ret) {
-    console.error('Failed to register new shortcut:', shortcut);
+    logger.error('Failed to register new shortcut:', shortcut);
   } else {
-    console.log('Quick switcher shortcut updated to:', shortcut);
+    logger.info('Quick switcher shortcut updated to:', shortcut);
   }
 
   // Verify shortcut is registered
-  console.log('Shortcut registered:', globalShortcut.isRegistered(accelerator));
+  logger.info('Shortcut registered:', globalShortcut.isRegistered(accelerator));
 }
 
 function createWindow() {
@@ -218,11 +218,11 @@ function createWindow() {
     const statePath = getStatePath();
     const state = JSON.parse(fs.readFileSync(statePath, 'utf-8'));
     const currentTheme = state.currentTheme || 'tokyo-night';
-    console.log(`Setting window title to: MacTheme - ${currentTheme}`);
+    logger.info(`Setting window title to: MacTheme - ${currentTheme}`);
     mainWindow.setTitle(`MacTheme - ${currentTheme}`);
-    console.log(`Window title set successfully`);
+    logger.info(`Window title set successfully`);
   } catch (err) {
-    console.error('Error setting initial window title:', err);
+    logger.error('Error setting initial window title:', err);
     mainWindow.setTitle('MacTheme');
   }
 
@@ -245,9 +245,9 @@ function createWindow() {
       const state = JSON.parse(fs.readFileSync(statePath, 'utf-8'));
       const currentTheme = state.currentTheme || 'tokyo-night';
       mainWindow?.setTitle(`MacTheme - ${currentTheme}`);
-      console.log(`Window title set after load: MacTheme - ${currentTheme}`);
+      logger.info(`Window title set after load: MacTheme - ${currentTheme}`);
     } catch (err) {
-      console.error('Error setting window title after load:', err);
+      logger.error('Error setting window title after load:', err);
       mainWindow?.setTitle('MacTheme');
     }
   });
@@ -347,13 +347,13 @@ const gotTheLock = app.requestSingleInstanceLock();
 
 if (!gotTheLock) {
   // Another instance is already running, quit this one
-  console.log('Another instance is already running. Quitting this instance.');
+  logger.info('Another instance is already running. Quitting this instance.');
   app.quit();
 } else {
   // This is the first instance, register second-instance handler
   app.on('second-instance', (_event, _commandLine, _workingDirectory) => {
     // Someone tried to run a second instance, focus our window instead
-    console.log('Second instance detected. Focusing existing window.');
+    logger.info('Second instance detected. Focusing existing window.');
     if (mainWindow) {
       if (mainWindow.isMinimized()) {
         mainWindow.restore();
@@ -382,7 +382,7 @@ if (!gotTheLock) {
 
     // Initialize application directories and files
     logger.info('=== MacTheme Starting ===');
-    console.log('=== MacTheme Starting ===');
+    logger.info('=== MacTheme Starting ===');
 
     // Load preferences to check if debug logging is enabled
     try {
@@ -410,12 +410,12 @@ if (!gotTheLock) {
 
   // Setup system appearance change listener
   nativeTheme.on('updated', () => {
-    console.log('Native theme updated event fired');
+    logger.info('Native theme updated event fired');
     handleAppearanceChange();
   });
 
   // Log current appearance on startup
-  console.log(`Current system appearance: ${nativeTheme.shouldUseDarkColors ? 'dark' : 'light'}`);
+  logger.info(`Current system appearance: ${nativeTheme.shouldUseDarkColors ? 'dark' : 'light'}`);
 
   // Create menu bar tray icon only if enabled in preferences
   try {
@@ -424,12 +424,12 @@ if (!gotTheLock) {
     if (prefs.showInMenuBar !== false) {
       // Default to true if not set
       createTray();
-      console.log('Menu bar tray icon created');
+      logger.info('Menu bar tray icon created');
     } else {
-      console.log('Menu bar tray icon disabled by preference');
+      logger.info('Menu bar tray icon disabled by preference');
     }
   } catch (err) {
-    console.error('Error reading preferences for tray:', err);
+    logger.error('Error reading preferences for tray:', err);
     // Default to creating tray if preferences can't be read
     createTray();
   }
@@ -456,20 +456,20 @@ if (!gotTheLock) {
     const accelerator = shortcut.replace(/Cmd/g, 'CommandOrControl');
 
     const ret = globalShortcut.register(accelerator, () => {
-      console.log('Quick switcher shortcut triggered');
+      logger.info('Quick switcher shortcut triggered');
       toggleQuickSwitcher();
     });
 
     if (!ret) {
-      console.error('Global shortcut registration failed');
+      logger.error('Global shortcut registration failed');
     } else {
-      console.log('Quick switcher shortcut registered:', shortcut);
+      logger.info('Quick switcher shortcut registered:', shortcut);
     }
 
     // Verify shortcut is registered
-    console.log('Shortcut registered:', globalShortcut.isRegistered(accelerator));
+    logger.info('Shortcut registered:', globalShortcut.isRegistered(accelerator));
   } catch (err) {
-    console.error('Failed to register keyboard shortcut:', err);
+    logger.error('Failed to register keyboard shortcut:', err);
   }
 
   app.on('activate', () => {

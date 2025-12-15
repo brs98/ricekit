@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Theme } from '../../shared/types';
 import { ThemeCard } from './ThemeCard';
 import { ThemeDetailModal } from './ThemeDetailModal';
+import { showErrorAlert } from '../utils/errorDisplay';
 
 interface ThemeGridProps {
   searchQuery?: string;
@@ -74,41 +75,9 @@ export function ThemeGrid({ searchQuery = '', filterMode = 'all', sortMode = 'de
       const prefs = await window.electronAPI.getPreferences();
       const recentThemes = [themeName, ...prefs.recentThemes.filter(t => t !== themeName)].slice(0, 10);
       await window.electronAPI.setPreferences({ ...prefs, recentThemes });
-    } catch (err: any) {
+    } catch (err) {
       console.error('Failed to apply theme:', err);
-
-      // Extract user-friendly error message
-      let userMessage = 'Failed to apply theme. Please try again.';
-
-      if (err.message) {
-        // Parse structured error messages (e.g., "PERMISSION_ERROR: message")
-        const match = err.message.match(/^([A-Z_]+):\s*(.+)$/);
-        if (match) {
-          const [, errorCode, message] = match;
-
-          switch (errorCode) {
-            case 'PERMISSION_ERROR':
-              userMessage = `Permission Error\n\n${message}\n\nTry running: chmod -R u+w ~/Library/Application\\ Support/MacTheme`;
-              break;
-            case 'THEME_NOT_FOUND':
-              userMessage = `Theme Not Found\n\n${message}`;
-              break;
-            case 'NO_SPACE':
-              userMessage = `Disk Space Error\n\n${message}`;
-              break;
-            case 'FILE_EXISTS':
-              userMessage = `File Conflict\n\n${message}`;
-              break;
-            default:
-              userMessage = message;
-          }
-        } else {
-          // Unstructured error - use as-is
-          userMessage = err.message;
-        }
-      }
-
-      alert(userMessage);
+      showErrorAlert(err);
     }
   };
 
@@ -140,7 +109,7 @@ export function ThemeGrid({ searchQuery = '', filterMode = 'all', sortMode = 'de
       }
     } catch (err) {
       console.error('Failed to delete theme:', err);
-      alert(err instanceof Error ? err.message : 'Failed to delete theme. Please try again.');
+      showErrorAlert(err);
     }
   };
 
@@ -151,7 +120,7 @@ export function ThemeGrid({ searchQuery = '', filterMode = 'all', sortMode = 'de
       await loadThemes();
     } catch (err) {
       console.error('Failed to duplicate theme:', err);
-      alert('Failed to duplicate theme. Please try again.');
+      showErrorAlert(err);
     }
   };
 

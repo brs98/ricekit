@@ -17,8 +17,28 @@ import {
   ensureState,
 } from './directories';
 import type { Theme, ThemeMetadata, Preferences, State } from '../shared/types';
+import { createError } from '../shared/errors';
 import { logger } from './logger';
 import { generateThumbnails, clearOldThumbnails, getThumbnailCacheStats } from './thumbnails';
+import {
+  readJson,
+  writeJson,
+  readDir,
+  isDirectory,
+  existsSync,
+  readFile,
+  writeFile,
+  ensureDir,
+  copyFile,
+  copyDir,
+  unlink,
+  rmdir,
+  isSymlink,
+  readSymlink,
+  createSymlink,
+  isExecutable,
+  stat,
+} from './utils/asyncFs';
 
 /**
  * Setup all IPC handlers
@@ -90,7 +110,7 @@ export function setupIpcHandlers(): void {
   ipcMain.handle('system:checkForUpdates', handleCheckForUpdates);
 
   logger.info('IPC handlers registered');
-  console.log('IPC handlers registered');
+  logger.info('IPC handlers registered');
 }
 
 /**
@@ -102,12 +122,12 @@ async function handleListThemes(): Promise<Theme[]> {
   const customThemesDir = getCustomThemesDir();
 
   // Load bundled themes
-  if (fs.existsSync(themesDir)) {
-    const themeNames = fs.readdirSync(themesDir);
+  if (existsSync(themesDir)) {
+    const themeNames = await readDir(themesDir);
     for (const themeName of themeNames) {
       const themePath = path.join(themesDir, themeName);
-      if (fs.statSync(themePath).isDirectory()) {
-        const theme = loadTheme(themePath, themeName, false);
+      if (await isDirectory(themePath)) {
+        const theme = await loadTheme(themePath, themeName, false);
         if (theme) {
           themes.push(theme);
         }
@@ -116,12 +136,12 @@ async function handleListThemes(): Promise<Theme[]> {
   }
 
   // Load custom themes
-  if (fs.existsSync(customThemesDir)) {
-    const themeNames = fs.readdirSync(customThemesDir);
+  if (existsSync(customThemesDir)) {
+    const themeNames = await readDir(customThemesDir);
     for (const themeName of themeNames) {
       const themePath = path.join(customThemesDir, themeName);
-      if (fs.statSync(themePath).isDirectory()) {
-        const theme = loadTheme(themePath, themeName, true);
+      if (await isDirectory(themePath)) {
+        const theme = await loadTheme(themePath, themeName, true);
         if (theme) {
           themes.push(theme);
         }
@@ -129,27 +149,26 @@ async function handleListThemes(): Promise<Theme[]> {
     }
   }
 
-  console.log(`Loaded ${themes.length} themes`);
+  logger.debug(`Loaded ${themes.length} themes`);
   return themes;
 }
 
 /**
  * Load a single theme from directory
  */
-function loadTheme(themePath: string, themeName: string, isCustom: boolean): Theme | null {
+async function loadTheme(themePath: string, themeName: string, isCustom: boolean): Promise<Theme | null> {
   const metadataPath = path.join(themePath, 'theme.json');
 
-  if (!fs.existsSync(metadataPath)) {
-    console.warn(`No theme.json found for ${themeName}`);
+  if (!existsSync(metadataPath)) {
+    logger.warn(`No theme.json found for ${themeName}`);
     return null;
   }
 
   try {
-    const metadataContent = fs.readFileSync(metadataPath, 'utf-8');
-    const metadata: ThemeMetadata = JSON.parse(metadataContent);
+    const metadata = await readJson<ThemeMetadata>(metadataPath);
 
     // Check if this is a light theme (based on light.mode file)
-    const isLight = fs.existsSync(path.join(themePath, 'light.mode'));
+    const isLight = existsSync(path.join(themePath, 'light.mode'));
 
     return {
       name: themeName,
@@ -159,7 +178,7 @@ function loadTheme(themePath: string, themeName: string, isCustom: boolean): The
       isLight,
     };
   } catch (error) {
-    console.error(`Error loading theme ${themeName}:`, error);
+    logger.error(`Error loading theme ${themeName}`, error);
     return null;
   }
 }
@@ -179,7 +198,7 @@ async function handleGetTheme(_event: any, name: string): Promise<Theme | null> 
  * Execute user-defined hook script if configured
  */
 async function executeHookScript(themeName: string, hookScriptPath: string): Promise<void> {
-  console.log(`Executing hook script: ${hookScriptPath}`);
+  logger.debug(`Executing hook script: ${hookScriptPath}`);
 
   // Expand ~ to home directory
   const expandedPath = hookScriptPath.startsWith('~')
@@ -187,62 +206,59 @@ async function executeHookScript(themeName: string, hookScriptPath: string): Pro
     : hookScriptPath;
 
   // Check if hook script exists
-  if (!fs.existsSync(expandedPath)) {
-    console.error(`Hook script not found: ${expandedPath}`);
-    throw new Error(`Hook script not found: ${expandedPath}`);
+  if (!existsSync(expandedPath)) {
+    logger.error(`Hook script not found: ${expandedPath}`);
+    throw createError('HOOK_ERROR', `Hook script not found: ${expandedPath}`);
   }
 
   // Check if hook script is executable
-  try {
-    fs.accessSync(expandedPath, fs.constants.X_OK);
-  } catch (err) {
-    console.error(`Hook script is not executable: ${expandedPath}`);
-    throw new Error(`Hook script is not executable: ${expandedPath}. Run: chmod +x ${expandedPath}`);
+  if (!(await isExecutable(expandedPath))) {
+    logger.error(`Hook script is not executable: ${expandedPath}`);
+    throw createError('HOOK_ERROR', `Hook script is not executable: ${expandedPath}. Run: chmod +x ${expandedPath}`);
   }
 
   // Execute the hook script with theme name as argument
   return new Promise((resolve, reject) => {
     exec(`"${expandedPath}" "${themeName}"`, (error, stdout, stderr) => {
       if (error) {
-        console.error(`Hook script execution failed: ${error.message}`);
-        console.error(`stderr: ${stderr}`);
-        reject(new Error(`Hook script failed: ${error.message}`));
+        logger.error(`Hook script execution failed: ${error.message}`, { stderr });
+        reject(createError('HOOK_ERROR', `Hook script failed: ${error.message}`));
         return;
       }
 
       if (stdout) {
-        console.log(`Hook script output: ${stdout.trim()}`);
+        logger.debug(`Hook script output: ${stdout.trim()}`);
       }
 
       if (stderr) {
-        console.log(`Hook script stderr: ${stderr.trim()}`);
+        logger.debug(`Hook script stderr: ${stderr.trim()}`);
       }
 
-      console.log('✓ Hook script executed successfully');
+      logger.info('Hook script executed successfully');
       resolve();
     });
   });
 }
 
 async function notifyTerminalsToReload(themePath: string): Promise<void> {
-  console.log('Notifying terminals to reload themes...');
+  logger.debug('Notifying terminals to reload themes...');
 
   // Get the colors from the theme for Kitty
   const themeJsonPath = path.join(themePath, 'theme.json');
   let themeColors: any = null;
 
   try {
-    const themeData = JSON.parse(fs.readFileSync(themeJsonPath, 'utf-8'));
+    const themeData = await readJson<ThemeMetadata>(themeJsonPath);
     themeColors = themeData.colors;
   } catch (err) {
-    console.error('Failed to read theme colors:', err);
+    logger.error('Failed to read theme colors', err);
   }
 
   // 1. Notify Kitty terminal
   // Check if Kitty is running and has remote control enabled
   try {
     const kittyConfigPath = path.join(themePath, 'kitty.conf');
-    if (fs.existsSync(kittyConfigPath) && themeColors) {
+    if (existsSync(kittyConfigPath) && themeColors) {
       // Build kitty @ set-colors command with theme colors
       const colorArgs: string[] = [];
 
@@ -276,21 +292,21 @@ async function notifyTerminalsToReload(themePath: string): Promise<void> {
         const kittyCommand = `kitty @ set-colors ${colorArgs.join(' ')}`;
         exec(kittyCommand, (error, stdout, stderr) => {
           if (error) {
-            console.log('Kitty not available or remote control disabled:', error.message);
+            logger.info('Kitty not available or remote control disabled:', error.message);
           } else {
-            console.log('✓ Kitty terminal reloaded successfully');
+            logger.info('✓ Kitty terminal reloaded successfully');
           }
         });
       }
     }
   } catch (err) {
-    console.log('Could not notify Kitty:', err);
+    logger.info('Could not notify Kitty:', err);
   }
 
   // 2. Notify iTerm2 using AppleScript
   try {
     const iterm2ConfigPath = path.join(themePath, 'iterm2.itermcolors');
-    if (fs.existsSync(iterm2ConfigPath)) {
+    if (existsSync(iterm2ConfigPath)) {
       // AppleScript to reload iTerm2 profile
       const appleScript = `
         tell application "iTerm2"
@@ -303,14 +319,14 @@ async function notifyTerminalsToReload(themePath: string): Promise<void> {
 
       exec(`osascript -e '${appleScript}'`, (error, stdout, stderr) => {
         if (error) {
-          console.log('iTerm2 not available or not running:', error.message);
+          logger.info('iTerm2 not available or not running:', error.message);
         } else {
-          console.log('✓ iTerm2 reloaded (profile refresh triggered)');
+          logger.info('✓ iTerm2 reloaded (profile refresh triggered)');
         }
       });
     }
   } catch (err) {
-    console.log('Could not notify iTerm2:', err);
+    logger.info('Could not notify iTerm2:', err);
   }
 
   // Note: Alacritty auto-reloads when config changes (watches config file)
@@ -324,13 +340,13 @@ async function notifyTerminalsToReload(themePath: string): Promise<void> {
     const weztermThemeSrc = path.join(themePath, 'wezterm.lua');
     const weztermThemeDest = path.join(os.homedir(), 'Library', 'Application Support', 'MacTheme', 'wezterm-colors.lua');
 
-    if (fs.existsSync(weztermThemeSrc)) {
+    if (existsSync(weztermThemeSrc)) {
       // Copy theme content to the fixed location (this triggers WezTerm's file watcher)
       fs.copyFileSync(weztermThemeSrc, weztermThemeDest);
-      console.log('✓ WezTerm theme file updated - will auto-reload');
+      logger.info('✓ WezTerm theme file updated - will auto-reload');
     }
   } catch (err) {
-    console.log('Could not notify WezTerm:', err);
+    logger.info('Could not notify WezTerm:', err);
   }
 
   // 4. Reload SketchyBar
@@ -339,13 +355,13 @@ async function notifyTerminalsToReload(themePath: string): Promise<void> {
       stdio: 'pipe',
       timeout: 5000,
     });
-    console.log('✓ SketchyBar reloaded');
+    logger.info('✓ SketchyBar reloaded');
   } catch (err) {
     // SketchyBar may not be installed or running - that's ok
-    console.log('SketchyBar not available or not running');
+    logger.info('SketchyBar not available or not running');
   }
 
-  console.log('Terminal reload notifications sent');
+  logger.info('Terminal reload notifications sent');
 }
 
 /**
@@ -375,15 +391,15 @@ async function updateEditorSettings(
   themeName: string,
   themePath: string
 ): Promise<void> {
-  console.log(`Updating ${editorName} settings.json...`);
+  logger.info(`Updating ${editorName} settings.json...`);
 
   try {
     const settingsDir = path.dirname(settingsPath);
 
     // Check if settings file exists
-    if (!fs.existsSync(settingsPath)) {
-      console.log(`${editorName} settings.json not found, creating it...`);
-      if (!fs.existsSync(settingsDir)) {
+    if (!existsSync(settingsPath)) {
+      logger.info(`${editorName} settings.json not found, creating it...`);
+      if (!existsSync(settingsDir)) {
         fs.mkdirSync(settingsDir, { recursive: true });
       }
       // Create empty settings file
@@ -399,7 +415,7 @@ async function updateEditorSettings(
         settings = JSON.parse(settingsContent);
       }
     } catch (parseError) {
-      console.warn(`Failed to parse ${editorName} settings.json, starting with empty object:`, parseError);
+      logger.warn(`Failed to parse ${editorName} settings.json, starting with empty object:`, parseError);
       settings = {};
     }
 
@@ -411,9 +427,9 @@ async function updateEditorSettings(
 
     // Write back the settings file with formatting
     fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf-8');
-    console.log(`✓ ${editorName} theme updated to: ${editorThemeName}`);
+    logger.info(`✓ ${editorName} theme updated to: ${editorThemeName}`);
   } catch (error) {
-    console.error(`Failed to update ${editorName} settings:`, error);
+    logger.error(`Failed to update ${editorName} settings:`, error);
     // Don't throw - this is a non-critical error
   }
 }
@@ -441,7 +457,7 @@ async function updateCursorSettings(themeName: string, themePath: string): Promi
  */
 export async function handleApplyTheme(_event: any, name: string): Promise<void> {
   logger.info(`Applying theme: ${name}`);
-  console.log(`Applying theme: ${name}`);
+  logger.info(`Applying theme: ${name}`);
 
   try {
     // Ensure all required directories exist
@@ -461,16 +477,16 @@ export async function handleApplyTheme(_event: any, name: string): Promise<void>
 
     // Remove existing symlink if it exists
     try {
-      if (fs.existsSync(symlinkPath)) {
+      if (existsSync(symlinkPath)) {
         // Check if it's a symlink
         const stats = fs.lstatSync(symlinkPath);
         if (stats.isSymbolicLink()) {
           fs.unlinkSync(symlinkPath);
-          console.log(`Removed existing symlink: ${symlinkPath}`);
+          logger.info(`Removed existing symlink: ${symlinkPath}`);
         } else if (stats.isDirectory()) {
           // If it's a directory (shouldn't happen), remove it
           fs.rmSync(symlinkPath, { recursive: true, force: true });
-          console.log(`Removed existing directory: ${symlinkPath}`);
+          logger.info(`Removed existing directory: ${symlinkPath}`);
         }
       }
     } catch (err: any) {
@@ -484,10 +500,10 @@ export async function handleApplyTheme(_event: any, name: string): Promise<void>
     try {
       fs.symlinkSync(theme.path, symlinkPath, 'dir');
       logger.debug(`Created symlink: ${symlinkPath} -> ${theme.path}`);
-      console.log(`Created symlink: ${symlinkPath} -> ${theme.path}`);
+      logger.info(`Created symlink: ${symlinkPath} -> ${theme.path}`);
     } catch (err: any) {
       logger.error('Failed to create symlink', err);
-      console.error('Failed to create symlink:', err);
+      logger.error('Failed to create symlink:', err);
       if (err.code === 'EACCES' || err.code === 'EPERM') {
         throw new Error(`PERMISSION_ERROR: Cannot create theme link due to insufficient permissions. Please check folder permissions in ~/Library/Application Support/MacTheme.`);
       } else if (err.code === 'EEXIST') {
@@ -552,12 +568,12 @@ export async function handleApplyTheme(_event: any, name: string): Promise<void>
       fs.writeFileSync(prefsPath, JSON.stringify(prefs, null, 2));
     } catch (err: any) {
       // Don't fail the theme application if we can't update preferences
-      console.error('Failed to update preferences:', err);
+      logger.error('Failed to update preferences:', err);
     }
 
     logger.info(`Theme applied successfully: ${name}`, { recentThemes: prefs.recentThemes.slice(0, 5) });
-    console.log(`Updated recent themes: ${prefs.recentThemes.slice(0, 5).join(', ')}`);
-    console.log(`Theme ${name} applied successfully`);
+    logger.info(`Updated recent themes: ${prefs.recentThemes.slice(0, 5).join(', ')}`);
+    logger.info(`Theme ${name} applied successfully`);
 
     // Show notification if enabled
     const shouldShowNotification = prefs.notifications?.onThemeChange ?? prefs.showNotifications ?? true;
@@ -576,7 +592,7 @@ export async function handleApplyTheme(_event: any, name: string): Promise<void>
       refreshTrayMenu();
       updateWindowTitle(name);
     } catch (err) {
-      console.error('Failed to refresh tray menu:', err);
+      logger.error('Failed to refresh tray menu:', err);
     }
 
     // Update VS Code settings if enabled
@@ -584,10 +600,10 @@ export async function handleApplyTheme(_event: any, name: string): Promise<void>
       if (prefs.enabledApps && prefs.enabledApps.includes('vscode')) {
         await updateVSCodeSettings(name, theme.path);
       } else {
-        console.log('VS Code integration disabled in preferences');
+        logger.info('VS Code integration disabled in preferences');
       }
     } catch (err) {
-      console.error('Failed to update VS Code settings:', err);
+      logger.error('Failed to update VS Code settings:', err);
     }
 
     // Update Cursor settings if enabled
@@ -595,17 +611,17 @@ export async function handleApplyTheme(_event: any, name: string): Promise<void>
       if (prefs.enabledApps && prefs.enabledApps.includes('cursor')) {
         await updateCursorSettings(name, theme.path);
       } else {
-        console.log('Cursor integration disabled in preferences');
+        logger.info('Cursor integration disabled in preferences');
       }
     } catch (err) {
-      console.error('Failed to update Cursor settings:', err);
+      logger.error('Failed to update Cursor settings:', err);
     }
 
     // Notify terminal applications to reload themes
     try {
       await notifyTerminalsToReload(theme.path);
     } catch (err) {
-      console.error('Failed to notify terminals:', err);
+      logger.error('Failed to notify terminals:', err);
     }
 
     // Execute user-defined hook script if configured
@@ -613,10 +629,10 @@ export async function handleApplyTheme(_event: any, name: string): Promise<void>
       if (prefs.hookScript && prefs.hookScript.trim() !== '') {
         await executeHookScript(name, prefs.hookScript);
       } else {
-        console.log('No hook script configured');
+        logger.info('No hook script configured');
       }
     } catch (err) {
-      console.error('Failed to execute hook script:', err);
+      logger.error('Failed to execute hook script:', err);
       // Don't throw - hook script failure shouldn't block theme application
     }
 
@@ -625,7 +641,7 @@ export async function handleApplyTheme(_event: any, name: string): Promise<void>
       const isAerospaceEnabled = !prefs.enabledApps || prefs.enabledApps.length === 0 || prefs.enabledApps.includes('aerospace');
       if (isAerospaceEnabled) {
         const bordersScript = path.join(theme.path, 'aerospace-borders.sh');
-        if (fs.existsSync(bordersScript)) {
+        if (existsSync(bordersScript)) {
           // Check if borders is running before trying to refresh
           try {
             execSync('pgrep -x borders', { stdio: 'pipe' });
@@ -635,15 +651,15 @@ export async function handleApplyTheme(_event: any, name: string): Promise<void>
               stdio: 'pipe',
               timeout: 5000,
             });
-            console.log('AeroSpace/JankyBorders theme refreshed automatically');
+            logger.info('AeroSpace/JankyBorders theme refreshed automatically');
           } catch {
             // Borders not running, skip refresh (not an error)
-            console.log('JankyBorders not running, skipping border refresh');
+            logger.info('JankyBorders not running, skipping border refresh');
           }
         }
       }
     } catch (err) {
-      console.error('Failed to refresh AeroSpace/JankyBorders:', err);
+      logger.error('Failed to refresh AeroSpace/JankyBorders:', err);
       // Don't throw - borders failure shouldn't block theme application
     }
 
@@ -651,18 +667,18 @@ export async function handleApplyTheme(_event: any, name: string): Promise<void>
     try {
       const wallpapers = await handleListWallpapers(null, name);
       if (wallpapers.length > 0) {
-        console.log(`Automatically applying first wallpaper: ${wallpapers[0]}`);
+        logger.info(`Automatically applying first wallpaper: ${wallpapers[0]}`);
         await handleApplyWallpaper(null, wallpapers[0]);
       } else {
-        console.log('No wallpapers found in theme, skipping automatic wallpaper');
+        logger.info('No wallpapers found in theme, skipping automatic wallpaper');
       }
     } catch (err) {
-      console.error('Failed to apply automatic wallpaper:', err);
+      logger.error('Failed to apply automatic wallpaper:', err);
       // Don't throw - wallpaper failure shouldn't block theme application
     }
   } catch (err: any) {
     // Log the full error for debugging
-    console.error('Error applying theme:', err);
+    logger.error('Error applying theme:', err);
 
     // Re-throw with user-friendly message
     if (err.message && err.message.includes(':')) {
@@ -680,7 +696,7 @@ export async function handleApplyTheme(_event: any, name: string): Promise<void>
  */
 async function handleCreateTheme(_event: any, data: ThemeMetadata): Promise<void> {
   logger.info(`Creating theme: ${data.name}`);
-  console.log(`Creating theme: ${data.name}`);
+  logger.info(`Creating theme: ${data.name}`);
 
   ensureDirectories();
   const customThemesDir = getCustomThemesDir();
@@ -690,7 +706,7 @@ async function handleCreateTheme(_event: any, data: ThemeMetadata): Promise<void
   const themeDir = path.join(customThemesDir, themeDirName);
 
   // Check if theme already exists
-  if (fs.existsSync(themeDir)) {
+  if (existsSync(themeDir)) {
     logger.warn(`Attempt to create duplicate theme: ${data.name}`);
     throw new Error(`Theme "${data.name}" already exists`);
   }
@@ -702,7 +718,7 @@ async function handleCreateTheme(_event: any, data: ThemeMetadata): Promise<void
   generateThemeConfigFiles(themeDir, data);
 
   logger.info(`Theme created successfully: ${data.name}`, { path: themeDir });
-  console.log(`Theme "${data.name}" created successfully at ${themeDir}`);
+  logger.info(`Theme "${data.name}" created successfully at ${themeDir}`);
 
   // Show notification
   if (Notification.isSupported()) {
@@ -719,7 +735,7 @@ async function handleCreateTheme(_event: any, data: ThemeMetadata): Promise<void
  * Update an existing custom theme
  */
 async function handleUpdateTheme(_event: any, name: string, data: ThemeMetadata): Promise<void> {
-  console.log(`Updating theme: ${name}`);
+  logger.info(`Updating theme: ${name}`);
 
   try {
     // Only allow updating custom themes
@@ -730,17 +746,17 @@ async function handleUpdateTheme(_event: any, name: string, data: ThemeMetadata)
     const themeDir = path.join(customThemesDir, themeDirName);
 
     // Check if theme exists in custom themes directory
-    if (!fs.existsSync(themeDir)) {
-      throw new Error('Theme not found in custom themes directory. Only custom themes can be updated.');
+    if (!existsSync(themeDir)) {
+      throw createError('THEME_NOT_FOUND', 'Theme not found in custom themes directory. Only custom themes can be updated.');
     }
 
     // Read existing theme metadata to preserve any fields not in the update
     const existingMetadataPath = path.join(themeDir, 'theme.json');
     let existingMetadata: ThemeMetadata;
-    if (fs.existsSync(existingMetadataPath)) {
-      existingMetadata = JSON.parse(fs.readFileSync(existingMetadataPath, 'utf-8'));
+    if (existsSync(existingMetadataPath)) {
+      existingMetadata = await readJson<ThemeMetadata>(existingMetadataPath);
     } else {
-      throw new Error('Theme metadata (theme.json) not found');
+      throw createError('THEME_INVALID', 'Theme metadata (theme.json) not found');
     }
 
     // Merge existing metadata with updates
@@ -774,7 +790,7 @@ async function handleUpdateTheme(_event: any, name: string, data: ThemeMetadata)
 
     for (const file of configFiles) {
       const filePath = path.join(themeDir, file);
-      if (fs.existsSync(filePath)) {
+      if (existsSync(filePath)) {
         fs.unlinkSync(filePath);
       }
     }
@@ -782,7 +798,7 @@ async function handleUpdateTheme(_event: any, name: string, data: ThemeMetadata)
     // Regenerate all config files with the updated metadata
     generateThemeConfigFiles(themeDir, updatedMetadata);
 
-    console.log(`Theme "${name}" updated successfully at ${themeDir}`);
+    logger.info(`Theme "${name}" updated successfully at ${themeDir}`);
 
     // Show notification
     if (Notification.isSupported()) {
@@ -797,15 +813,15 @@ async function handleUpdateTheme(_event: any, name: string, data: ThemeMetadata)
     // If this is the currently active theme, we may want to notify terminals to reload
     const state = await handleGetState();
     if (state.currentTheme === name) {
-      console.log('Updated theme is currently active, notifying terminals to reload...');
+      logger.info('Updated theme is currently active, notifying terminals to reload...');
       try {
         await notifyTerminalsToReload(themeDir);
       } catch (err) {
-        console.error('Failed to notify terminals:', err);
+        logger.error('Failed to notify terminals:', err);
       }
     }
   } catch (error) {
-    console.error('Error updating theme:', error);
+    logger.error('Error updating theme:', error);
     throw error;
   }
 }
@@ -814,7 +830,7 @@ async function handleUpdateTheme(_event: any, name: string, data: ThemeMetadata)
  * Delete a custom theme
  */
 async function handleDeleteTheme(_event: any, name: string): Promise<void> {
-  console.log(`Deleting theme: ${name}`);
+  logger.info(`Deleting theme: ${name}`);
 
   try {
     // Only allow deletion of custom themes
@@ -822,19 +838,19 @@ async function handleDeleteTheme(_event: any, name: string): Promise<void> {
     const themeDir = path.join(customThemesDir, name);
 
     // Check if theme exists in custom themes directory
-    if (!fs.existsSync(themeDir)) {
-      throw new Error('Theme not found in custom themes directory');
+    if (!existsSync(themeDir)) {
+      throw createError('THEME_NOT_FOUND', 'Theme not found in custom themes directory');
     }
 
     // Check if this is the currently active theme
     const state = await handleGetState();
     if (state.currentTheme === name) {
-      throw new Error('Cannot delete the currently active theme. Please switch to a different theme first.');
+      throw createError('THEME_ACTIVE', 'Cannot delete the currently active theme. Please switch to a different theme first.');
     }
 
     // Delete the theme directory recursively
-    fs.rmSync(themeDir, { recursive: true, force: true });
-    console.log(`Successfully deleted theme: ${name}`);
+    await rmdir(themeDir);
+    logger.info(`Successfully deleted theme: ${name}`);
 
     // Show notification
     if (Notification.isSupported()) {
@@ -846,7 +862,7 @@ async function handleDeleteTheme(_event: any, name: string): Promise<void> {
       notification.show();
     }
   } catch (error) {
-    console.error('Error deleting theme:', error);
+    logger.error('Error deleting theme:', error);
     throw error;
   }
 }
@@ -855,7 +871,7 @@ async function handleDeleteTheme(_event: any, name: string): Promise<void> {
  * Duplicate a theme (creates a copy in custom-themes)
  */
 async function handleDuplicateTheme(_event: any, sourceThemeName: string): Promise<void> {
-  console.log(`Duplicating theme: ${sourceThemeName}`);
+  logger.info(`Duplicating theme: ${sourceThemeName}`);
 
   try {
     // Find the source theme
@@ -863,24 +879,24 @@ async function handleDuplicateTheme(_event: any, sourceThemeName: string): Promi
     const customThemesDir = getCustomThemesDir();
 
     let sourceThemeDir: string;
-    if (fs.existsSync(path.join(themesDir, sourceThemeName))) {
+    if (existsSync(path.join(themesDir, sourceThemeName))) {
       sourceThemeDir = path.join(themesDir, sourceThemeName);
-    } else if (fs.existsSync(path.join(customThemesDir, sourceThemeName))) {
+    } else if (existsSync(path.join(customThemesDir, sourceThemeName))) {
       sourceThemeDir = path.join(customThemesDir, sourceThemeName);
     } else {
-      throw new Error('Source theme not found');
+      throw createError('THEME_NOT_FOUND', 'Source theme not found');
     }
 
     // Read source theme metadata
     const sourceMetadataPath = path.join(sourceThemeDir, 'theme.json');
-    const sourceMetadata = JSON.parse(fs.readFileSync(sourceMetadataPath, 'utf-8'));
+    const sourceMetadata = await readJson<ThemeMetadata>(sourceMetadataPath);
 
     // Generate new theme name
     let copyNumber = 1;
     let newThemeName = `${sourceMetadata.name} (Copy)`;
     let newThemeDir = path.join(customThemesDir, `${sourceThemeName}-copy`);
 
-    while (fs.existsSync(newThemeDir)) {
+    while (existsSync(newThemeDir)) {
       copyNumber++;
       newThemeName = `${sourceMetadata.name} (Copy ${copyNumber})`;
       newThemeDir = path.join(customThemesDir, `${sourceThemeName}-copy-${copyNumber}`);
@@ -915,7 +931,7 @@ async function handleDuplicateTheme(_event: any, sourceThemeName: string): Promi
       JSON.stringify(newMetadata, null, 2)
     );
 
-    console.log(`Successfully duplicated theme to: ${newThemeName}`);
+    logger.info(`Successfully duplicated theme to: ${newThemeName}`);
 
     // Show notification
     if (Notification.isSupported()) {
@@ -927,7 +943,7 @@ async function handleDuplicateTheme(_event: any, sourceThemeName: string): Promi
       notification.show();
     }
   } catch (error) {
-    console.error('Error duplicating theme:', error);
+    logger.error('Error duplicating theme:', error);
     throw error;
   }
 }
@@ -938,7 +954,7 @@ async function handleDuplicateTheme(_event: any, sourceThemeName: string): Promi
  * Returns the path where the theme was exported
  */
 async function handleExportTheme(_event: any, name: string, exportPath?: string): Promise<string> {
-  console.log(`Exporting theme ${name}`);
+  logger.info(`Exporting theme ${name}`);
 
   try {
     const themesDir = getThemesDir();
@@ -946,9 +962,9 @@ async function handleExportTheme(_event: any, name: string, exportPath?: string)
 
     // Find the theme directory
     let themePath = path.join(themesDir, name);
-    if (!fs.existsSync(themePath)) {
+    if (!existsSync(themePath)) {
       themePath = path.join(customThemesDir, name);
-      if (!fs.existsSync(themePath)) {
+      if (!existsSync(themePath)) {
         throw new Error(`Theme "${name}" not found`);
       }
     }
@@ -969,7 +985,7 @@ async function handleExportTheme(_event: any, name: string, exportPath?: string)
       });
 
       if (result.canceled || !result.filePath) {
-        throw new Error('Export canceled');
+        throw createError('EXPORT_CANCELED', 'Export canceled');
       }
 
       exportPath = result.filePath;
@@ -988,7 +1004,7 @@ async function handleExportTheme(_event: any, name: string, exportPath?: string)
       });
 
       output.on('close', () => {
-        console.log(`Theme exported: ${archive.pointer()} bytes written to ${exportPath}`);
+        logger.info(`Theme exported: ${archive.pointer()} bytes written to ${exportPath}`);
         resolve();
       });
 
@@ -1004,10 +1020,10 @@ async function handleExportTheme(_event: any, name: string, exportPath?: string)
       archive.finalize();
     });
 
-    console.log(`Successfully exported theme "${name}" to ${exportPath}`);
+    logger.info(`Successfully exported theme "${name}" to ${exportPath}`);
     return exportPath;
   } catch (error) {
-    console.error('Failed to export theme:', error);
+    logger.error('Failed to export theme:', error);
     throw error;
   }
 }
@@ -1017,7 +1033,7 @@ async function handleExportTheme(_event: any, name: string, exportPath?: string)
  * If importPath is null/undefined, shows an open dialog
  */
 async function handleImportTheme(_event: any, importPath?: string): Promise<void> {
-  console.log(`Importing theme${importPath ? ` from ${importPath}` : ''}`);
+  logger.info(`Importing theme${importPath ? ` from ${importPath}` : ''}`);
 
   try {
     const execAsync = promisify(exec);
@@ -1037,53 +1053,57 @@ async function handleImportTheme(_event: any, importPath?: string): Promise<void
       });
 
       if (result.canceled || !result.filePaths || result.filePaths.length === 0) {
-        throw new Error('Import canceled');
+        throw createError('IMPORT_CANCELED', 'Import canceled');
       }
 
       importPath = result.filePaths[0];
     }
 
     // Validate file exists
-    if (!fs.existsSync(importPath)) {
-      throw new Error(`File not found: ${importPath}`);
+    if (!existsSync(importPath)) {
+      throw createError('FILE_NOT_FOUND', `File not found: ${importPath}`);
     }
 
     // Create temporary directory for extraction
     const tmpDir = path.join(os.tmpdir(), `mactheme-import-${Date.now()}`);
-    fs.mkdirSync(tmpDir, { recursive: true });
+    await ensureDir(tmpDir);
 
     try {
       // Extract the zip archive
-      console.log(`Extracting archive to: ${tmpDir}`);
+      logger.info(`Extracting archive to: ${tmpDir}`);
       await execAsync(`unzip -q "${importPath}" -d "${tmpDir}"`);
 
       // Find the theme directory (should be the only directory in tmpDir)
-      const extractedContents = fs.readdirSync(tmpDir);
+      const extractedContents = await readDir(tmpDir);
 
       if (extractedContents.length === 0) {
-        throw new Error('Archive is empty');
+        throw createError('INVALID_ARCHIVE', 'Archive is empty');
       }
 
       // Get the theme directory (first directory in the extracted contents)
-      const themeDir = extractedContents.find(name => {
+      let themeDir: string | undefined;
+      for (const name of extractedContents) {
         const itemPath = path.join(tmpDir, name);
-        return fs.statSync(itemPath).isDirectory();
-      });
+        if (await isDirectory(itemPath)) {
+          themeDir = name;
+          break;
+        }
+      }
 
       if (!themeDir) {
-        throw new Error('No theme directory found in archive');
+        throw createError('INVALID_ARCHIVE', 'No theme directory found in archive');
       }
 
       const extractedThemePath = path.join(tmpDir, themeDir);
 
       // Validate theme structure - must have theme.json
       const themeMetadataPath = path.join(extractedThemePath, 'theme.json');
-      if (!fs.existsSync(themeMetadataPath)) {
-        throw new Error('Invalid theme: missing theme.json');
+      if (!existsSync(themeMetadataPath)) {
+        throw createError('THEME_INVALID', 'Invalid theme: missing theme.json');
       }
 
       // Read and parse theme metadata
-      const themeMetadata = JSON.parse(fs.readFileSync(themeMetadataPath, 'utf-8'));
+      const themeMetadata = await readJson<ThemeMetadata>(themeMetadataPath);
       const themeName = themeMetadata.name || themeDir;
 
       // Determine destination directory
@@ -1091,19 +1111,19 @@ async function handleImportTheme(_event: any, importPath?: string): Promise<void
       let destThemeDir = path.join(customThemesDir, themeDir);
 
       // Check if theme already exists
-      if (fs.existsSync(destThemeDir)) {
+      if (existsSync(destThemeDir)) {
         // Generate unique name by appending number
         let counter = 1;
-        while (fs.existsSync(path.join(customThemesDir, `${themeDir}-${counter}`))) {
+        while (existsSync(path.join(customThemesDir, `${themeDir}-${counter}`))) {
           counter++;
         }
         destThemeDir = path.join(customThemesDir, `${themeDir}-${counter}`);
-        console.log(`Theme already exists, importing as: ${path.basename(destThemeDir)}`);
+        logger.info(`Theme already exists, importing as: ${path.basename(destThemeDir)}`);
       }
 
       // Copy theme to custom-themes directory
       fs.cpSync(extractedThemePath, destThemeDir, { recursive: true });
-      console.log(`Theme imported to: ${destThemeDir}`);
+      logger.info(`Theme imported to: ${destThemeDir}`);
 
       // Clean up temp directory
       fs.rmSync(tmpDir, { recursive: true, force: true });
@@ -1118,16 +1138,16 @@ async function handleImportTheme(_event: any, importPath?: string): Promise<void
         notification.show();
       }
 
-      console.log(`Successfully imported theme: ${themeName}`);
+      logger.info(`Successfully imported theme: ${themeName}`);
     } catch (extractError) {
       // Clean up temp directory on error
-      if (fs.existsSync(tmpDir)) {
+      if (existsSync(tmpDir)) {
         fs.rmSync(tmpDir, { recursive: true, force: true });
       }
       throw extractError;
     }
   } catch (error) {
-    console.error('Failed to import theme:', error);
+    logger.error('Failed to import theme:', error);
     throw error;
   }
 }
@@ -1136,7 +1156,7 @@ async function handleImportTheme(_event: any, importPath?: string): Promise<void
  * Import theme from URL
  */
 async function handleImportThemeFromUrl(_event: any, url: string): Promise<void> {
-  console.log(`Importing theme from URL: ${url}`);
+  logger.info(`Importing theme from URL: ${url}`);
 
   try {
     const https = await import('https');
@@ -1168,7 +1188,7 @@ async function handleImportThemeFromUrl(_event: any, url: string): Promise<void>
     try {
       // Download file from URL
       const downloadPath = path.join(tmpDir, 'theme.zip');
-      console.log(`Downloading from ${url} to ${downloadPath}`);
+      logger.info(`Downloading from ${url} to ${downloadPath}`);
 
       await new Promise<void>((resolve, reject) => {
         const file = fs.createWriteStream(downloadPath);
@@ -1179,7 +1199,7 @@ async function handleImportThemeFromUrl(_event: any, url: string): Promise<void>
           if (response.statusCode === 301 || response.statusCode === 302) {
             const redirectUrl = response.headers.location;
             if (redirectUrl) {
-              console.log(`Following redirect to: ${redirectUrl}`);
+              logger.info(`Following redirect to: ${redirectUrl}`);
               file.close();
 
               // Recursively handle redirect
@@ -1232,7 +1252,7 @@ async function handleImportThemeFromUrl(_event: any, url: string): Promise<void>
         });
       });
 
-      console.log(`Download complete: ${downloadPath}`);
+      logger.info(`Download complete: ${downloadPath}`);
 
       // Verify file was downloaded and is not empty
       const stats = fs.statSync(downloadPath);
@@ -1240,7 +1260,7 @@ async function handleImportThemeFromUrl(_event: any, url: string): Promise<void>
         throw new Error('Downloaded file is empty');
       }
 
-      console.log(`Downloaded file size: ${stats.size} bytes`);
+      logger.info(`Downloaded file size: ${stats.size} bytes`);
 
       // Use the existing import logic to process the downloaded file
       await handleImportTheme(_event, downloadPath);
@@ -1248,16 +1268,16 @@ async function handleImportThemeFromUrl(_event: any, url: string): Promise<void>
       // Clean up temp directory
       fs.rmSync(tmpDir, { recursive: true, force: true });
 
-      console.log(`Successfully imported theme from URL: ${url}`);
+      logger.info(`Successfully imported theme from URL: ${url}`);
     } catch (downloadError) {
       // Clean up temp directory on error
-      if (fs.existsSync(tmpDir)) {
+      if (existsSync(tmpDir)) {
         fs.rmSync(tmpDir, { recursive: true, force: true });
       }
       throw downloadError;
     }
   } catch (error: any) {
-    console.error('Failed to import theme from URL:', error);
+    logger.error('Failed to import theme from URL:', error);
     throw new Error(`Failed to import theme from URL: ${error.message}`);
   }
 }
@@ -1266,7 +1286,7 @@ async function handleImportThemeFromUrl(_event: any, url: string): Promise<void>
  * List wallpapers for a theme
  */
 async function handleListWallpapers(_event: any, themeName: string): Promise<string[]> {
-  console.log(`Listing wallpapers for theme: ${themeName}`);
+  logger.info(`Listing wallpapers for theme: ${themeName}`);
 
   try {
     const themesDir = getThemesDir();
@@ -1274,15 +1294,15 @@ async function handleListWallpapers(_event: any, themeName: string): Promise<str
 
     // Try bundled themes first
     let themePath = path.join(themesDir, themeName);
-    if (!fs.existsSync(themePath)) {
+    if (!existsSync(themePath)) {
       // Try custom themes
       themePath = path.join(customThemesDir, themeName);
     }
 
     const wallpapersDir = path.join(themePath, 'wallpapers');
 
-    if (!fs.existsSync(wallpapersDir)) {
-      console.log(`No wallpapers directory found for theme: ${themeName}`);
+    if (!existsSync(wallpapersDir)) {
+      logger.info(`No wallpapers directory found for theme: ${themeName}`);
       return [];
     }
 
@@ -1295,10 +1315,10 @@ async function handleListWallpapers(_event: any, themeName: string): Promise<str
     // Return full paths to the wallpaper files
     const wallpaperPaths = imageFiles.map(file => path.join(wallpapersDir, file));
 
-    console.log(`Found ${wallpaperPaths.length} wallpapers for theme: ${themeName}`);
+    logger.info(`Found ${wallpaperPaths.length} wallpapers for theme: ${themeName}`);
     return wallpaperPaths;
   } catch (error) {
-    console.error(`Error listing wallpapers for theme ${themeName}:`, error);
+    logger.error(`Error listing wallpapers for theme ${themeName}:`, error);
     return [];
   }
 }
@@ -1372,7 +1392,7 @@ async function handleGetThumbnailCacheStats(): Promise<{ count: number; sizeByte
  * Apply a wallpaper
  */
 async function handleApplyWallpaper(_event: any, wallpaperPath: string, displayIndex?: number): Promise<void> {
-  console.log(`Applying wallpaper: ${wallpaperPath}`, displayIndex !== undefined ? `to display ${displayIndex}` : 'to all displays');
+  logger.info(`Applying wallpaper: ${wallpaperPath}`, displayIndex !== undefined ? `to display ${displayIndex}` : 'to all displays');
 
   try {
     const { exec } = require('child_process');
@@ -1380,7 +1400,7 @@ async function handleApplyWallpaper(_event: any, wallpaperPath: string, displayI
     const execAsync = promisify(exec);
 
     // Check if wallpaper file exists
-    if (!fs.existsSync(wallpaperPath)) {
+    if (!existsSync(wallpaperPath)) {
       throw new Error(`Wallpaper file not found: ${wallpaperPath}`);
     }
 
@@ -1412,7 +1432,7 @@ async function handleApplyWallpaper(_event: any, wallpaperPath: string, displayI
     const wallpaperSymlink = path.join(currentDir, 'wallpaper');
 
     // Remove existing symlink if it exists
-    if (fs.existsSync(wallpaperSymlink)) {
+    if (existsSync(wallpaperSymlink)) {
       fs.unlinkSync(wallpaperSymlink);
     }
 
@@ -1439,9 +1459,9 @@ async function handleApplyWallpaper(_event: any, wallpaperPath: string, displayI
       notification.show();
     }
 
-    console.log(`Wallpaper applied successfully: ${wallpaperPath}`);
+    logger.info(`Wallpaper applied successfully: ${wallpaperPath}`);
   } catch (error) {
-    console.error(`Error applying wallpaper:`, error);
+    logger.error(`Error applying wallpaper:`, error);
     throw error;
   }
 }
@@ -1450,7 +1470,7 @@ async function handleApplyWallpaper(_event: any, wallpaperPath: string, displayI
  * Get list of connected displays
  */
 async function handleGetDisplays(): Promise<any[]> {
-  console.log('Getting connected displays');
+  logger.info('Getting connected displays');
 
   try {
     const { exec } = require('child_process');
@@ -1491,10 +1511,10 @@ async function handleGetDisplays(): Promise<any[]> {
       });
     }
 
-    console.log(`Found ${displays.length} display(s):`, displays);
+    logger.info(`Found ${displays.length} display(s):`, displays);
     return displays;
   } catch (error) {
-    console.error('Error getting displays:', error);
+    logger.error('Error getting displays:', error);
     // Return a default display on error
     return [{
       id: 'display-0-0',
@@ -1533,17 +1553,17 @@ async function handleAddWallpapers(_event: any, themeName: string): Promise<{ ad
     const customThemesDir = getCustomThemesDir();
 
     let themePath = path.join(themesDir, themeName);
-    if (!fs.existsSync(themePath)) {
+    if (!existsSync(themePath)) {
       themePath = path.join(customThemesDir, themeName);
     }
 
-    if (!fs.existsSync(themePath)) {
+    if (!existsSync(themePath)) {
       throw new Error(`Theme not found: ${themeName}`);
     }
 
     // Ensure wallpapers directory exists
     const wallpapersDir = path.join(themePath, 'wallpapers');
-    if (!fs.existsSync(wallpapersDir)) {
+    if (!existsSync(wallpapersDir)) {
       fs.mkdirSync(wallpapersDir, { recursive: true });
     }
 
@@ -1557,11 +1577,11 @@ async function handleAddWallpapers(_event: any, themeName: string): Promise<{ ad
         let destPath = path.join(wallpapersDir, fileName);
 
         // Handle duplicate filenames by adding a suffix
-        if (fs.existsSync(destPath)) {
+        if (existsSync(destPath)) {
           const ext = path.extname(fileName);
           const baseName = path.basename(fileName, ext);
           let counter = 1;
-          while (fs.existsSync(destPath)) {
+          while (existsSync(destPath)) {
             destPath = path.join(wallpapersDir, `${baseName}-${counter}${ext}`);
             counter++;
           }
@@ -1602,7 +1622,7 @@ async function handleRemoveWallpaper(_event: any, wallpaperPath: string): Promis
 
   try {
     // Verify the file exists
-    if (!fs.existsSync(wallpaperPath)) {
+    if (!existsSync(wallpaperPath)) {
       throw new Error(`Wallpaper not found: ${wallpaperPath}`);
     }
 
@@ -1620,7 +1640,7 @@ async function handleRemoveWallpaper(_event: any, wallpaperPath: string): Promis
     const currentDir = getCurrentDir();
     const wallpaperSymlink = path.join(currentDir, 'wallpaper');
 
-    if (fs.existsSync(wallpaperSymlink)) {
+    if (existsSync(wallpaperSymlink)) {
       try {
         const currentWallpaper = fs.readlinkSync(wallpaperSymlink);
         if (currentWallpaper === wallpaperPath) {
@@ -1657,7 +1677,7 @@ async function handleRemoveWallpaper(_event: any, wallpaperPath: string): Promis
  * Detect installed applications
  */
 async function handleDetectApps(): Promise<any[]> {
-  console.log('Detecting installed applications');
+  logger.info('Detecting installed applications');
 
   const apps = [
     // Terminals
@@ -1879,10 +1899,10 @@ async function handleDetectApps(): Promise<any[]> {
   // Check which apps are installed and configured
   const detectedApps = apps.map(app => {
     // Check if app is installed
-    const isInstalled = app.paths.some(p => fs.existsSync(p));
+    const isInstalled = app.paths.some(p => existsSync(p));
 
     // Check if config file exists (means it might be configured)
-    const isConfigured = fs.existsSync(app.configPath);
+    const isConfigured = existsSync(app.configPath);
 
     return {
       name: app.name,
@@ -1894,7 +1914,7 @@ async function handleDetectApps(): Promise<any[]> {
     };
   });
 
-  console.log(`Detected ${detectedApps.filter(a => a.isInstalled).length} installed apps`);
+  logger.info(`Detected ${detectedApps.filter(a => a.isInstalled).length} installed apps`);
   return detectedApps;
 }
 
@@ -1908,20 +1928,20 @@ async function setupEditorApp(
   displayName: string,
   settingsPath: string
 ): Promise<void> {
-  console.log(`Setting up ${displayName}...`);
+  logger.info(`Setting up ${displayName}...`);
 
   const settingsDir = path.dirname(settingsPath);
 
   // Create settings directory if it doesn't exist
-  if (!fs.existsSync(settingsDir)) {
+  if (!existsSync(settingsDir)) {
     fs.mkdirSync(settingsDir, { recursive: true });
   }
 
   // Create backup if settings file exists
-  if (fs.existsSync(settingsPath)) {
+  if (existsSync(settingsPath)) {
     const backupPath = `${settingsPath}.mactheme-backup`;
     fs.copyFileSync(settingsPath, backupPath);
-    console.log(`Created backup at: ${backupPath}`);
+    logger.info(`Created backup at: ${backupPath}`);
   }
 
   // Get current theme to apply
@@ -1948,10 +1968,10 @@ async function setupEditorApp(
   if (!prefs.enabledApps.includes(appName)) {
     prefs.enabledApps.push(appName);
     await handleSetPreferences(null, prefs);
-    console.log(`Added ${appName} to enabled apps`);
+    logger.info(`Added ${appName} to enabled apps`);
   }
 
-  console.log(`Successfully configured ${displayName}`);
+  logger.info(`Successfully configured ${displayName}`);
 }
 
 /**
@@ -1959,7 +1979,7 @@ async function setupEditorApp(
  * Automatically configures the app's config file to import MacTheme themes
  */
 async function handleSetupApp(_event: any, appName: string): Promise<void> {
-  console.log(`Setting up app: ${appName}`);
+  logger.info(`Setting up app: ${appName}`);
 
   const homeDir = os.homedir();
   const themeBasePath = '~/Library/Application Support/MacTheme/current/theme';
@@ -2003,7 +2023,7 @@ async function handleSetupApp(_event: any, appName: string): Promise<void> {
       const slackThemePath = path.join(homeDir, 'Library', 'Application Support', 'MacTheme', 'current', 'theme', 'slack-theme.txt');
       
       // Check if theme file exists
-      if (fs.existsSync(slackThemePath)) {
+      if (existsSync(slackThemePath)) {
         // Open the theme file in the default text editor
         const { shell } = require('electron');
         await shell.openPath(slackThemePath);
@@ -2083,17 +2103,17 @@ after-startup-command = [
     const configDir = path.dirname(configPath);
 
     // Create config directory if it doesn't exist
-    if (!fs.existsSync(configDir)) {
+    if (!existsSync(configDir)) {
       fs.mkdirSync(configDir, { recursive: true });
     }
 
     // Read existing config or create new one
     let configContent = '';
-    if (fs.existsSync(configPath)) {
+    if (existsSync(configPath)) {
       // Create backup
       const backupPath = `${configPath}.bak`;
       fs.copyFileSync(configPath, backupPath);
-      console.log(`Created backup at: ${backupPath}`);
+      logger.info(`Created backup at: ${backupPath}`);
 
       configContent = fs.readFileSync(configPath, 'utf-8');
 
@@ -2107,7 +2127,7 @@ after-startup-command = [
     const newContent = importLine + '\n\n' + configContent;
     fs.writeFileSync(configPath, newContent, 'utf-8');
 
-    console.log(`Successfully configured ${appName} at ${configPath}`);
+    logger.info(`Successfully configured ${appName} at ${configPath}`);
 
     // Add to enabledApps in preferences so the app is tracked
     const prefs = await handleGetPreferences();
@@ -2117,7 +2137,7 @@ after-startup-command = [
     if (!prefs.enabledApps.includes(appName)) {
       prefs.enabledApps.push(appName);
       await handleSetPreferences(null, prefs);
-      console.log(`Added ${appName} to enabled apps`);
+      logger.info(`Added ${appName} to enabled apps`);
     }
 
     // Show notification
@@ -2130,7 +2150,7 @@ after-startup-command = [
       notification.show();
     }
   } catch (error: any) {
-    console.error(`Failed to setup ${appName}:`, error);
+    logger.error(`Failed to setup ${appName}:`, error);
     throw new Error(`Failed to setup ${appName}: ${error.message}`);
   }
 }
@@ -2140,7 +2160,7 @@ after-startup-command = [
  * Sends reload signal to supported applications
  */
 async function handleRefreshApp(_event: any, appName: string): Promise<void> {
-  console.log(`Refreshing app: ${appName}`);
+  logger.info(`Refreshing app: ${appName}`);
 
   try {
     switch (appName.toLowerCase()) {
@@ -2152,11 +2172,11 @@ async function handleRefreshApp(_event: any, appName: string): Promise<void> {
             stdio: 'pipe',
             timeout: 5000,
           });
-          console.log('Kitty theme refreshed successfully');
+          logger.info('Kitty theme refreshed successfully');
         } catch (error: any) {
           // If socket doesn't exist or kitty isn't running, that's ok
           if (error.message.includes('No such file') || error.message.includes('Connection refused')) {
-            console.log('Kitty is not running or remote control is not enabled');
+            logger.info('Kitty is not running or remote control is not enabled');
           } else {
             throw error;
           }
@@ -2170,10 +2190,10 @@ async function handleRefreshApp(_event: any, appName: string): Promise<void> {
             stdio: 'pipe',
             timeout: 5000,
           });
-          console.log('iTerm2 theme refreshed successfully');
+          logger.info('iTerm2 theme refreshed successfully');
         } catch (error: any) {
           if (error.message.includes('not running')) {
-            console.log('iTerm2 is not running');
+            logger.info('iTerm2 is not running');
           } else {
             throw error;
           }
@@ -2183,12 +2203,12 @@ async function handleRefreshApp(_event: any, appName: string): Promise<void> {
       case 'alacritty':
         // Alacritty watches config file, so just touching it triggers reload
         const alacrittyConfig = path.join(os.homedir(), '.config', 'alacritty', 'alacritty.toml');
-        if (fs.existsSync(alacrittyConfig)) {
+        if (existsSync(alacrittyConfig)) {
           const now = new Date();
           fs.utimesSync(alacrittyConfig, now, now);
-          console.log('Alacritty config touched - will auto-reload');
+          logger.info('Alacritty config touched - will auto-reload');
         } else {
-          console.log('Alacritty config not found');
+          logger.info('Alacritty config not found');
         }
         break;
 
@@ -2200,11 +2220,11 @@ async function handleRefreshApp(_event: any, appName: string): Promise<void> {
             const theme = await handleGetTheme(null, state.currentTheme);
             if (theme) {
               await updateVSCodeSettings(state.currentTheme, theme.path);
-              console.log('VS Code theme settings refreshed');
+              logger.info('VS Code theme settings refreshed');
             }
           }
         } catch (err) {
-          console.log('Could not refresh VS Code:', err);
+          logger.info('Could not refresh VS Code:', err);
         }
         break;
 
@@ -2216,16 +2236,16 @@ async function handleRefreshApp(_event: any, appName: string): Promise<void> {
             const theme = await handleGetTheme(null, state.currentTheme);
             if (theme) {
               await updateCursorSettings(state.currentTheme, theme.path);
-              console.log('Cursor theme settings refreshed');
+              logger.info('Cursor theme settings refreshed');
             }
           }
         } catch (err) {
-          console.log('Could not refresh Cursor:', err);
+          logger.info('Could not refresh Cursor:', err);
         }
         break;
 
       case 'neovim':
-        console.log('Neovim requires manual reload (:source $MYVIMRC) to apply theme changes');
+        logger.info('Neovim requires manual reload (:source $MYVIMRC) to apply theme changes');
         break;
 
       case 'wezterm':
@@ -2236,14 +2256,14 @@ async function handleRefreshApp(_event: any, appName: string): Promise<void> {
           const weztermThemeSrc = path.join(currentThemePath, 'wezterm.lua');
           const weztermThemeDest = path.join(os.homedir(), 'Library', 'Application Support', 'MacTheme', 'wezterm-colors.lua');
 
-          if (fs.existsSync(weztermThemeSrc)) {
+          if (existsSync(weztermThemeSrc)) {
             fs.copyFileSync(weztermThemeSrc, weztermThemeDest);
-            console.log('WezTerm theme file updated - will auto-reload');
+            logger.info('WezTerm theme file updated - will auto-reload');
           } else {
-            console.log('WezTerm theme source not found');
+            logger.info('WezTerm theme source not found');
           }
         } catch (err) {
-          console.log('Could not refresh WezTerm:', err);
+          logger.info('Could not refresh WezTerm:', err);
         }
         break;
 
@@ -2254,16 +2274,16 @@ async function handleRefreshApp(_event: any, appName: string): Promise<void> {
             stdio: 'pipe',
             timeout: 5000,
           });
-          console.log('SketchyBar theme refreshed successfully');
+          logger.info('SketchyBar theme refreshed successfully');
         } catch (err) {
-          console.log('Could not refresh SketchyBar - it may not be running:', err);
+          logger.info('Could not refresh SketchyBar - it may not be running:', err);
         }
         break;
 
       case 'slack':
         // Slack doesn't support automatic theme refresh
         // Users need to manually paste the theme string from the theme file
-        console.log('Slack requires manual theme application. Open Preferences → Themes → Create custom theme and paste the theme string from the slack-theme.txt file.');
+        logger.info('Slack requires manual theme application. Open Preferences → Themes → Create custom theme and paste the theme string from the slack-theme.txt file.');
         break;
 
       case 'aerospace':
@@ -2273,7 +2293,7 @@ async function handleRefreshApp(_event: any, appName: string): Promise<void> {
           const currentThemePath = path.join(os.homedir(), 'Library', 'Application Support', 'MacTheme', 'current', 'theme');
           const bordersScript = path.join(currentThemePath, 'aerospace-borders.sh');
           
-          if (fs.existsSync(bordersScript)) {
+          if (existsSync(bordersScript)) {
             // Execute the borders script to apply new colors
             // The script handles killing existing borders process and starting fresh
             execSync(`bash "${bordersScript}"`, {
@@ -2281,20 +2301,20 @@ async function handleRefreshApp(_event: any, appName: string): Promise<void> {
               stdio: 'pipe',
               timeout: 5000,
             });
-            console.log('AeroSpace/JankyBorders theme refreshed successfully');
+            logger.info('AeroSpace/JankyBorders theme refreshed successfully');
           } else {
-            console.log('AeroSpace borders script not found');
+            logger.info('AeroSpace borders script not found');
           }
         } catch (err) {
-          console.log('Could not refresh AeroSpace/JankyBorders - borders may not be installed:', err);
+          logger.info('Could not refresh AeroSpace/JankyBorders - borders may not be installed:', err);
         }
         break;
 
       default:
-        console.log(`App refresh not supported for ${appName}`);
+        logger.info(`App refresh not supported for ${appName}`);
     }
   } catch (error: any) {
-    console.error(`Failed to refresh ${appName}:`, error);
+    logger.error(`Failed to refresh ${appName}:`, error);
     throw new Error(`Failed to refresh ${appName}: ${error.message}`);
   }
 }
@@ -2312,7 +2332,7 @@ async function handleGetPreferences(): Promise<Preferences> {
     return JSON.parse(prefsContent);
   } catch (error) {
     // This should never happen after ensurePreferences(), but just in case...
-    console.error('Failed to read preferences after validation:', error);
+    logger.error('Failed to read preferences after validation:', error);
     // Import the function to get defaults
     const { getDefaultPreferences } = await import('./directories');
     return getDefaultPreferences();
@@ -2332,16 +2352,16 @@ async function handleSetPreferences(_event: any, prefs: Preferences): Promise<vo
 
   // Write new preferences
   fs.writeFileSync(prefsPath, JSON.stringify(prefs, null, 2));
-  console.log('Preferences updated');
+  logger.info('Preferences updated');
 
   // Check if showInMenuBar preference changed
   if (oldPrefs.showInMenuBar !== prefs.showInMenuBar) {
     try {
       const { updateTrayVisibility } = await import('./main');
       updateTrayVisibility(prefs.showInMenuBar);
-      console.log(`Menu bar icon ${prefs.showInMenuBar ? 'shown' : 'hidden'}`);
+      logger.info(`Menu bar icon ${prefs.showInMenuBar ? 'shown' : 'hidden'}`);
     } catch (err) {
-      console.error('Failed to update tray visibility:', err);
+      logger.error('Failed to update tray visibility:', err);
     }
   }
 
@@ -2350,9 +2370,9 @@ async function handleSetPreferences(_event: any, prefs: Preferences): Promise<vo
     try {
       const { updateQuickSwitcherShortcut } = await import('./main');
       updateQuickSwitcherShortcut(prefs.keyboardShortcuts.quickSwitcher);
-      console.log(`Keyboard shortcut updated to: ${prefs.keyboardShortcuts.quickSwitcher}`);
+      logger.info(`Keyboard shortcut updated to: ${prefs.keyboardShortcuts.quickSwitcher}`);
     } catch (err) {
-      console.error('Failed to update keyboard shortcut:', err);
+      logger.error('Failed to update keyboard shortcut:', err);
     }
   }
 
@@ -2406,11 +2426,11 @@ async function handleBackupPreferences(): Promise<string | null> {
 
     // Write to backup file
     fs.writeFileSync(filePath, JSON.stringify(backup, null, 2));
-    console.log('Preferences backed up to:', filePath);
+    logger.info('Preferences backed up to:', filePath);
 
     return filePath;
   } catch (err) {
-    console.error('Failed to backup preferences:', err);
+    logger.error('Failed to backup preferences:', err);
     throw new Error('Failed to backup preferences: ' + (err as Error).message);
   }
 }
@@ -2453,23 +2473,23 @@ async function handleRestorePreferences(): Promise<boolean> {
     // Create backup of current preferences before restoring
     const currentBackupPath = `${prefsPath}.pre-restore-${Date.now()}.bak`;
     fs.copyFileSync(prefsPath, currentBackupPath);
-    console.log(`Created safety backup at: ${currentBackupPath}`);
+    logger.info(`Created safety backup at: ${currentBackupPath}`);
 
     // Write restored preferences
     fs.writeFileSync(prefsPath, JSON.stringify(backup.preferences, null, 2));
-    console.log('Preferences restored from:', backupPath);
+    logger.info('Preferences restored from:', backupPath);
 
     // Update tray visibility if showInMenuBar changed
     try {
       const { updateTrayVisibility } = await import('./main');
       updateTrayVisibility(backup.preferences.showInMenuBar || false);
     } catch (err) {
-      console.error('Failed to update tray visibility after restore:', err);
+      logger.error('Failed to update tray visibility after restore:', err);
     }
 
     return true;
   } catch (err) {
-    console.error('Failed to restore preferences:', err);
+    logger.error('Failed to restore preferences:', err);
     throw new Error('Failed to restore preferences: ' + (err as Error).message);
   }
 }
@@ -2489,7 +2509,7 @@ async function handleOpenExternal(_event: any, url: string): Promise<void> {
   try {
     await shell.openExternal(url);
   } catch (error: any) {
-    console.error('Failed to open external URL:', error);
+    logger.error('Failed to open external URL:', error);
     throw new Error(`Failed to open URL: ${error.message}`);
   }
 }
@@ -2502,13 +2522,13 @@ async function handleOpenPath(_event: any, filePath: string): Promise<void> {
     // Expand ~ to home directory
     const expandedPath = filePath.replace(/^~/, os.homedir());
 
-    if (!fs.existsSync(expandedPath)) {
+    if (!existsSync(expandedPath)) {
       throw new Error(`Path does not exist: ${filePath}`);
     }
 
     await shell.openPath(expandedPath);
   } catch (error: any) {
-    console.error('Failed to open path:', error);
+    logger.error('Failed to open path:', error);
     throw new Error(`Failed to open path: ${error.message}`);
   }
 }
@@ -2534,8 +2554,8 @@ async function handleOpenHelp(_event: any): Promise<void> {
     }
 
     // Check if file exists
-    if (!fs.existsSync(helpFilePath)) {
-      console.warn('HELP.md not found at:', helpFilePath);
+    if (!existsSync(helpFilePath)) {
+      logger.warn('HELP.md not found at:', helpFilePath);
       // Fall back to opening GitHub URL
       await shell.openExternal('https://github.com/yourusername/mactheme#readme');
       return;
@@ -2544,9 +2564,9 @@ async function handleOpenHelp(_event: any): Promise<void> {
     // Open the help file with the default markdown viewer/editor
     await shell.openPath(helpFilePath);
 
-    console.log('Opened help file:', helpFilePath);
+    logger.info('Opened help file:', helpFilePath);
   } catch (error: any) {
-    console.error('Failed to open help:', error);
+    logger.error('Failed to open help:', error);
     throw new Error(`Failed to open help: ${error.message}`);
   }
 }
@@ -2561,8 +2581,8 @@ async function applyDynamicWallpaper(appearance: 'light' | 'dark', themeName: st
     const wallpapersDir = path.join(themePath, 'wallpapers');
 
     // Check if wallpapers directory exists
-    if (!fs.existsSync(wallpapersDir)) {
-      console.log(`No wallpapers directory found for theme: ${themeName}`);
+    if (!existsSync(wallpapersDir)) {
+      logger.info(`No wallpapers directory found for theme: ${themeName}`);
       return;
     }
 
@@ -2575,16 +2595,16 @@ async function applyDynamicWallpaper(appearance: 'light' | 'dark', themeName: st
     const matchingWallpaper = files.find(file => appearancePattern.test(file));
 
     if (!matchingWallpaper) {
-      console.log(`No ${appearance} wallpaper found for theme: ${themeName}`);
+      logger.info(`No ${appearance} wallpaper found for theme: ${themeName}`);
       return;
     }
 
     // Apply the wallpaper
     const wallpaperPath = path.join(wallpapersDir, matchingWallpaper);
-    console.log(`Applying dynamic ${appearance} wallpaper: ${wallpaperPath}`);
+    logger.info(`Applying dynamic ${appearance} wallpaper: ${wallpaperPath}`);
     await handleApplyWallpaper(null, wallpaperPath);
   } catch (error) {
-    console.error(`Error applying dynamic wallpaper:`, error);
+    logger.error(`Error applying dynamic wallpaper:`, error);
   }
 }
 
@@ -2596,7 +2616,7 @@ export async function handleAppearanceChange(): Promise<void> {
   try {
     // Get current system appearance
     const appearance = await handleGetSystemAppearance();
-    console.log(`System appearance changed to: ${appearance}`);
+    logger.info(`System appearance changed to: ${appearance}`);
 
     // Notify all renderer windows about the appearance change
     // This allows components to react to appearance changes via onAppearanceChange callback
@@ -2612,7 +2632,7 @@ export async function handleAppearanceChange(): Promise<void> {
     // Check if dynamic wallpaper is enabled (even if auto-switch is off)
     if (prefs.dynamicWallpaper?.enabled) {
       const state = await handleGetState();
-      console.log(`Dynamic wallpaper enabled, applying ${appearance} wallpaper for current theme: ${state.currentTheme}`);
+      logger.info(`Dynamic wallpaper enabled, applying ${appearance} wallpaper for current theme: ${state.currentTheme}`);
       await applyDynamicWallpaper(appearance, state.currentTheme);
     }
 
@@ -2627,24 +2647,24 @@ export async function handleAppearanceChange(): Promise<void> {
       : prefs.defaultLightTheme;
 
     if (!themeToApply) {
-      console.warn(`No default ${appearance} theme configured`);
+      logger.warn(`No default ${appearance} theme configured`);
       return;
     }
 
     // Get current state to avoid unnecessary theme switches
     const state = await handleGetState();
     if (state.currentTheme === themeToApply) {
-      console.log(`Already using theme: ${themeToApply}`);
+      logger.info(`Already using theme: ${themeToApply}`);
       return;
     }
 
     // Apply the theme
-    console.log(`Auto-switching to ${appearance} theme: ${themeToApply}`);
+    logger.info(`Auto-switching to ${appearance} theme: ${themeToApply}`);
     await handleApplyTheme(null, themeToApply);
 
     // Apply dynamic wallpaper if enabled
     if (prefs.dynamicWallpaper?.enabled) {
-      console.log(`Dynamic wallpaper enabled, applying ${appearance} wallpaper for theme: ${themeToApply}`);
+      logger.info(`Dynamic wallpaper enabled, applying ${appearance} wallpaper for theme: ${themeToApply}`);
       await applyDynamicWallpaper(appearance, themeToApply);
     }
 
@@ -2659,7 +2679,7 @@ export async function handleAppearanceChange(): Promise<void> {
       notification.show();
     }
   } catch (error) {
-    console.error('Error handling appearance change:', error);
+    logger.error('Error handling appearance change:', error);
   }
 }
 
@@ -2679,7 +2699,7 @@ export async function checkScheduleAndApplyTheme(): Promise<void> {
 
     // Check if schedule is configured
     if (!prefs.schedule?.light || !prefs.schedule?.dark) {
-      console.warn('Schedule times not configured');
+      logger.warn('Schedule times not configured');
       return;
     }
 
@@ -2715,7 +2735,7 @@ export async function checkScheduleAndApplyTheme(): Promise<void> {
       : prefs.defaultLightTheme;
 
     if (!themeToApply) {
-      console.warn(`No default ${shouldUseDarkTheme ? 'dark' : 'light'} theme configured`);
+      logger.warn(`No default ${shouldUseDarkTheme ? 'dark' : 'light'} theme configured`);
       return;
     }
 
@@ -2727,7 +2747,7 @@ export async function checkScheduleAndApplyTheme(): Promise<void> {
     }
 
     // Apply the theme
-    console.log(`Schedule-based auto-switching to ${shouldUseDarkTheme ? 'dark' : 'light'} theme: ${themeToApply}`);
+    logger.info(`Schedule-based auto-switching to ${shouldUseDarkTheme ? 'dark' : 'light'} theme: ${themeToApply}`);
     await handleApplyTheme(null, themeToApply);
 
     // Show notification if enabled
@@ -2741,7 +2761,7 @@ export async function checkScheduleAndApplyTheme(): Promise<void> {
       notification.show();
     }
   } catch (error) {
-    console.error('Error checking schedule:', error);
+    logger.error('Error checking schedule:', error);
   }
 }
 
@@ -2844,13 +2864,13 @@ async function getUserLocation(): Promise<{ latitude: number; longitude: number 
 
     // Default to San Francisco coordinates if we can't get location
     // In a production app, you'd prompt the user or use a better fallback
-    console.warn('Could not determine user location, using San Francisco as default');
+    logger.warn('Could not determine user location, using San Francisco as default');
     return {
       latitude: 37.7749,
       longitude: -122.4194
     };
   } catch (error) {
-    console.error('Error getting user location:', error);
+    logger.error('Error getting user location:', error);
     return null;
   }
 }
@@ -2881,7 +2901,7 @@ async function handleGetSunriseSunset(): Promise<{ sunrise: string; sunset: stri
       location: `${location.latitude.toFixed(2)}°, ${location.longitude.toFixed(2)}°`
     };
   } catch (error) {
-    console.error('Error calculating sunrise/sunset:', error);
+    logger.error('Error calculating sunrise/sunset:', error);
     return null;
   }
 }
@@ -2924,7 +2944,7 @@ async function handleGetUIState(): Promise<any | null> {
   try {
     const uiStatePath = getUIStatePath();
 
-    if (!fs.existsSync(uiStatePath)) {
+    if (!existsSync(uiStatePath)) {
       logger.debug('No UI state file found');
       return null;
     }

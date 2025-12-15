@@ -3,6 +3,7 @@ import * as path from 'path';
 import * as crypto from 'crypto';
 import sharp from 'sharp';
 import { app } from 'electron';
+import { logger } from './logger';
 
 const THUMBNAIL_WIDTH = 400;
 const THUMBNAIL_HEIGHT = 250;
@@ -48,12 +49,12 @@ export async function generateThumbnail(imagePath: string): Promise<string> {
 
     // Check if thumbnail already exists in cache
     if (fs.existsSync(thumbnailPath)) {
-      console.log(`[Thumbnail] Using cached thumbnail for: ${path.basename(imagePath)}`);
+      logger.info(`[Thumbnail] Using cached thumbnail for: ${path.basename(imagePath)}`);
       return thumbnailPath;
     }
 
     // Generate new thumbnail
-    console.log(`[Thumbnail] Generating thumbnail for: ${path.basename(imagePath)}`);
+    logger.info(`[Thumbnail] Generating thumbnail for: ${path.basename(imagePath)}`);
 
     await sharp(imagePath)
       .resize(THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, {
@@ -63,10 +64,10 @@ export async function generateThumbnail(imagePath: string): Promise<string> {
       .jpeg({ quality: THUMBNAIL_QUALITY })
       .toFile(thumbnailPath);
 
-    console.log(`[Thumbnail] Generated thumbnail: ${path.basename(thumbnailPath)}`);
+    logger.info(`[Thumbnail] Generated thumbnail: ${path.basename(thumbnailPath)}`);
     return thumbnailPath;
   } catch (error) {
-    console.error(`[Thumbnail] Error generating thumbnail for ${imagePath}:`, error);
+    logger.error(`[Thumbnail] Error generating thumbnail for ${imagePath}:`, error);
     // Return original path as fallback
     return imagePath;
   }
@@ -120,10 +121,10 @@ export function clearOldThumbnails(): void {
     });
 
     if (deletedCount > 0) {
-      console.log(`[Thumbnail] Cleared ${deletedCount} old thumbnails from cache`);
+      logger.info(`[Thumbnail] Cleared ${deletedCount} old thumbnails from cache`);
     }
   } catch (error) {
-    console.error('[Thumbnail] Error clearing old thumbnails:', error);
+    logger.error('[Thumbnail] Error clearing old thumbnails:', error);
   }
 }
 
@@ -139,9 +140,9 @@ export function clearAllThumbnails(): void {
       fs.unlinkSync(path.join(cacheDir, file));
     });
 
-    console.log(`[Thumbnail] Cleared ${files.length} thumbnails from cache`);
+    logger.info(`[Thumbnail] Cleared ${files.length} thumbnails from cache`);
   } catch (error) {
-    console.error('[Thumbnail] Error clearing thumbnails:', error);
+    logger.error('[Thumbnail] Error clearing thumbnails:', error);
   }
 }
 
@@ -164,7 +165,7 @@ export function getThumbnailCacheStats(): { count: number; sizeBytes: number } {
       sizeBytes: totalSize,
     };
   } catch (error) {
-    console.error('[Thumbnail] Error getting cache stats:', error);
+    logger.error('[Thumbnail] Error getting cache stats:', error);
     return { count: 0, sizeBytes: 0 };
   }
 }
