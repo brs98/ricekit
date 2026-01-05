@@ -17,9 +17,11 @@
     "lint": "eslint src --ext .ts,.tsx",
     "format": "prettier --write \"src/**/*.{ts,tsx,json,css}\"",
     "type-check": "tsc --noEmit",
-    "package": "npm run build && electron-builder",
-    "package:all": "npm run build && electron-builder -mwl",
-    "package:mac": "npm run build && electron-builder --mac",
+    "postinstall": "electron-rebuild",
+    "rebuild": "electron-rebuild",
+    "package": "npm run rebuild && npm run build && electron-builder",
+    "package:all": "npm run rebuild && npm run build && electron-builder -mwl",
+    "package:mac": "npm run rebuild && npm run build && electron-builder --mac",
     "package:win": "npm run build && electron-builder --win",
     "package:linux": "npm run build && electron-builder --linux"
   },
@@ -32,6 +34,7 @@
     "sharp": "^0.34.5"
   },
   "devDependencies": {
+    "@electron/rebuild": "^4.0.2",
     "@iarna/toml": "^2.2.5",
     "@types/archiver": "^7.0.0",
     "@types/node": "^20.10.5",
@@ -66,7 +69,12 @@
     },
     "files": [
       "dist/**/*",
-      "package.json"
+      "package.json",
+      "node_modules/**/*"
+    ],
+    "asarUnpack": [
+      "node_modules/sharp/**/*",
+      "node_modules/@img/**/*"
     ],
     "mac": {
       "category": "public.app-category.utilities",
