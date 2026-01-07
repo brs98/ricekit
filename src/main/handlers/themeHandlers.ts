@@ -586,24 +586,17 @@ export async function handleApplyTheme(_event: any, name: string): Promise<void>
       if (isAerospaceEnabled) {
         const bordersScript = path.join(theme.path, 'aerospace-borders.sh');
         if (existsSync(bordersScript)) {
-          // Check if borders is running before trying to refresh
-          try {
-            execSync('pgrep -x borders', { stdio: 'pipe' });
-            // Borders is running, refresh it
-            execSync(`bash "${bordersScript}"`, {
-              shell: '/bin/bash',
-              stdio: 'pipe',
-              timeout: 5000,
-            });
-            logger.info('AeroSpace/JankyBorders theme refreshed automatically');
-          } catch {
-            // Borders not running, skip refresh (not an error)
-            logger.info('JankyBorders not running, skipping border refresh');
-          }
+          // The script handles both cases: kills borders if running, then starts fresh
+          execSync(`bash "${bordersScript}"`, {
+            shell: '/bin/bash',
+            stdio: 'pipe',
+            timeout: 5000,
+          });
+          logger.info('AeroSpace/JankyBorders theme applied');
         }
       }
     } catch (err) {
-      logger.error('Failed to refresh AeroSpace/JankyBorders:', err);
+      logger.error('Failed to apply AeroSpace/JankyBorders:', err);
       // Don't throw - borders failure shouldn't block theme application
     }
 
