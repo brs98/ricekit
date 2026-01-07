@@ -1340,10 +1340,23 @@ BORDER_WIDTH="5.0"
 pkill -x borders 2>/dev/null || true
 
 # Small delay to ensure clean shutdown
-sleep 0.1
+sleep 0.2
 
-# Start borders with theme colors
-borders active_color="$ACTIVE_COLOR" inactive_color="$INACTIVE_COLOR" width="$BORDER_WIDTH"
+# Find borders binary (check common Homebrew locations)
+BORDERS_BIN=""
+if [ -x "/opt/homebrew/bin/borders" ]; then
+  BORDERS_BIN="/opt/homebrew/bin/borders"
+elif [ -x "/usr/local/bin/borders" ]; then
+  BORDERS_BIN="/usr/local/bin/borders"
+elif command -v borders >/dev/null 2>&1; then
+  BORDERS_BIN="borders"
+fi
+
+# Start borders with theme colors if found
+if [ -n "$BORDERS_BIN" ]; then
+  nohup "$BORDERS_BIN" active_color="$ACTIVE_COLOR" inactive_color="$INACTIVE_COLOR" width="$BORDER_WIDTH" >/dev/null 2>&1 &
+  disown
+fi
 `;
 }
 
