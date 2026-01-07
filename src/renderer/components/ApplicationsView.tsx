@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import type { AppInfo } from '../../shared/types';
 import { SetupWizardModal } from './SetupWizardModal';
+import { Switch } from '@/renderer/components/ui/switch';
+import { Button } from '@/renderer/components/ui/button';
 
 export function ApplicationsView() {
   const [apps, setApps] = useState<AppInfo[]>([]);
@@ -165,9 +167,9 @@ export function ApplicationsView() {
       <div className="apps-view">
         <div className="error-state">
           <p className="error-message">{error}</p>
-          <button className="retry-button" onClick={loadApps}>
+          <Button variant="outline" onClick={loadApps}>
             Retry
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -180,9 +182,9 @@ export function ApplicationsView() {
           Configure which applications should use MacTheme themes.
           Detected: {apps.filter(a => a.isInstalled).length} / {apps.length} apps installed
         </p>
-        <button className="refresh-button" onClick={loadApps}>
+        <Button variant="outline" onClick={loadApps}>
           🔄 Refresh
-        </button>
+        </Button>
       </div>
 
       <div className="apps-list">
@@ -210,14 +212,11 @@ export function ApplicationsView() {
                       <div className="app-name-row">
                         <h4 className="app-name">{app.displayName}</h4>
                         {app.isInstalled && (
-                          <label className="toggle-switch">
-                            <input
-                              type="checkbox"
-                              checked={enabledApps.length === 0 || enabledApps.includes(app.name)}
-                              onChange={() => handleToggleApp(app.name)}
-                            />
-                            <span className="toggle-slider"></span>
-                          </label>
+                          <Switch
+                            checked={enabledApps.length === 0 || enabledApps.includes(app.name)}
+                            onCheckedChange={() => handleToggleApp(app.name)}
+                            aria-label={`Enable ${app.displayName}`}
+                          />
                         )}
                       </div>
                       <div className="app-badges">
@@ -246,41 +245,37 @@ export function ApplicationsView() {
 
                     <div className="app-card-actions">
                       {app.isInstalled && !app.isConfigured && (
-                        <button
-                          className="setup-button"
-                          onClick={() => setSetupApp(app)}
-                        >
+                        <Button onClick={() => setSetupApp(app)}>
                           Setup Integration
-                        </button>
+                        </Button>
                       )}
                       {app.isInstalled && app.isConfigured && (
                         <>
-                          <button
-                            className="secondary-button"
+                          <Button
+                            variant="outline"
                             onClick={() => setSetupApp(app)}
                             title="View setup instructions"
                           >
                             Setup Guide
-                          </button>
-                          <button
-                            className="secondary-button"
+                          </Button>
+                          <Button
+                            variant="outline"
                             onClick={() => handleViewConfig(app.configPath)}
                           >
                             View Config
-                          </button>
-                          <button
-                            className="primary-button"
+                          </Button>
+                          <Button
                             onClick={() => handleRefreshApp(app.name)}
                             disabled={refreshingApp === app.name}
                           >
                             {refreshingApp === app.name ? 'Refreshing...' : 'Refresh'}
-                          </button>
+                          </Button>
                         </>
                       )}
                       {!app.isInstalled && (
-                        <button className="install-guide-button" disabled>
+                        <Button variant="secondary" disabled>
                           Not Installed
-                        </button>
+                        </Button>
                       )}
                     </div>
                   </div>

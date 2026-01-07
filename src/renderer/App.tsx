@@ -8,6 +8,16 @@ import { SettingsView } from './components/SettingsView';
 import { QuickSwitcher } from './components/QuickSwitcher';
 import { OnboardingModal } from './components/OnboardingModal';
 import { Theme } from '../shared/types';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/renderer/components/ui/dialog';
+import { Button } from '@/renderer/components/ui/button';
+import { Input } from '@/renderer/components/ui/input';
 
 type FilterMode = 'all' | 'light' | 'dark' | 'favorites';
 type SortMode = 'default' | 'name-asc' | 'name-desc' | 'recent';
@@ -136,44 +146,47 @@ function App() {
       {showOnboarding && <OnboardingModal onComplete={handleOnboardingComplete} />}
 
       {/* Import from URL modal */}
-      {showImportUrlModal && (
-        <div className="modal-overlay" onClick={() => setShowImportUrlModal(false)}>
-          <div className="modal-content" style={{ maxWidth: '500px' }} onClick={(e) => e.stopPropagation()}>
-            <h3 className="modal-title">Import Theme from URL</h3>
-            <p className="modal-description">
+      <Dialog open={showImportUrlModal} onOpenChange={(open) => {
+        if (!open) {
+          setShowImportUrlModal(false);
+          setImportUrl('');
+        }
+      }}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Import Theme from URL</DialogTitle>
+            <DialogDescription>
               Enter the URL of a theme file (.zip or .mactheme) to import it.
-            </p>
-            <input
-              type="url"
-              className="modal-input"
-              placeholder="https://example.com/mytheme.zip"
-              value={importUrl}
-              onChange={(e) => setImportUrl(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleImportFromUrl()}
-              autoFocus
-            />
-            <div className="modal-buttons">
-              <button
-                className="secondary-button"
-                onClick={() => {
-                  setShowImportUrlModal(false);
-                  setImportUrl('');
-                }}
-                disabled={importing}
-              >
-                Cancel
-              </button>
-              <button
-                className="primary-button"
-                onClick={handleImportFromUrl}
-                disabled={importing || !importUrl.trim()}
-              >
-                {importing ? 'Importing...' : 'Import'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+            </DialogDescription>
+          </DialogHeader>
+          <Input
+            type="url"
+            placeholder="https://example.com/mytheme.zip"
+            value={importUrl}
+            onChange={(e) => setImportUrl(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleImportFromUrl()}
+            autoFocus
+          />
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowImportUrlModal(false);
+                setImportUrl('');
+              }}
+              disabled={importing}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleImportFromUrl}
+              disabled={importing || !importUrl.trim()}
+            >
+              {importing ? 'Importing...' : 'Import'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className="sidebar">
         <div className="sidebar-header">

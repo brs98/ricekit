@@ -1,6 +1,27 @@
 import { useState, useEffect } from 'react';
 import { Theme } from '../../shared/types';
-import { X, Check, Image as ImageIcon } from 'lucide-react';
+import { Check, Image as ImageIcon, Star, Copy, Pencil, Trash2 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/renderer/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/renderer/components/ui/alert-dialog';
+import { Button } from '@/renderer/components/ui/button';
+import { Input } from '@/renderer/components/ui/input';
+import { Label } from '@/renderer/components/ui/label';
 
 interface ThemeDetailModalProps {
   theme: Theme;
@@ -12,6 +33,43 @@ interface ThemeDetailModalProps {
   onDelete?: (themeName: string) => void;
   onDuplicate?: (themeName: string) => void;
   isFavorite: boolean;
+}
+
+// Color swatch component for displaying a single color
+function ColorSwatch({
+  name,
+  value,
+  copiedColor,
+  onCopy,
+}: {
+  name: string;
+  value: string;
+  copiedColor: string | null;
+  onCopy: (name: string, value: string) => void;
+}) {
+  return (
+    <button
+      className="flex items-center gap-3 p-2 rounded-[8px] hover:bg-accent transition-colors duration-150 text-left w-full"
+      onClick={() => onCopy(name, value)}
+      title="Click to copy"
+    >
+      <div
+        className="w-8 h-8 rounded-[6px] border border-border/50 shrink-0"
+        style={{ backgroundColor: value }}
+      />
+      <div className="min-w-0 flex-1">
+        <div className="text-sm font-medium truncate">{name}</div>
+        <div className="text-xs text-muted-foreground font-mono flex items-center gap-1">
+          {value}
+          {copiedColor === name && (
+            <span className="text-green-500 flex items-center gap-0.5">
+              <Check size={10} /> Copied!
+            </span>
+          )}
+        </div>
+      </div>
+    </button>
+  );
 }
 
 export function ThemeDetailModal({
@@ -57,12 +115,6 @@ export function ThemeDetailModal({
       setTimeout(() => setCopiedColor(null), 2000);
     } catch (err) {
       console.error('Failed to copy color:', err);
-    }
-  };
-
-  const handleDeleteClick = () => {
-    if (theme.isCustom && onDelete) {
-      setShowDeleteConfirm(true);
     }
   };
 
@@ -126,336 +178,304 @@ export function ThemeDetailModal({
   ];
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <div>
-            <h2 className="modal-title">{theme.metadata.name}</h2>
-            <p className="modal-subtitle">
+    <>
+      {/* Main Theme Detail Dialog */}
+      <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+        <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {theme.metadata.name}
+              {isFavorite && <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />}
+            </DialogTitle>
+            <DialogDescription>
               by {theme.metadata.author} · {theme.isLight ? 'Light' : 'Dark'} theme
-            </p>
-          </div>
-          <button className="modal-close-btn" onClick={onClose} aria-label="Close">
-            <X size={20} />
-          </button>
-        </div>
+            </DialogDescription>
+          </DialogHeader>
 
-        <div className="modal-body">
-          {/* Description */}
-          <div className="modal-section">
-            <p className="theme-description">{theme.metadata.description}</p>
-          </div>
+          <div className="flex-1 overflow-y-auto space-y-6 py-4">
+            {/* Description */}
+            <p className="text-sm text-muted-foreground">{theme.metadata.description}</p>
 
-          {/* Terminal Preview */}
-          <div className="modal-section">
-            <h3 className="section-title">Terminal Preview</h3>
-            <div
-              className="terminal-preview"
-              style={{
-                backgroundColor: colors.background,
-                color: colors.foreground,
-                borderColor: colors.border,
-              }}
-            >
-              <div className="terminal-line">
-                <span style={{ color: colors.green }}>user@macbook</span>
-                <span style={{ color: colors.foreground }}>:</span>
-                <span style={{ color: colors.blue }}>~/projects</span>
-                <span style={{ color: colors.foreground }}>$ </span>
-                <span style={{ color: colors.foreground }}>git status</span>
-              </div>
-              <div className="terminal-line">
-                <span style={{ color: colors.green }}>On branch main</span>
-              </div>
-              <div className="terminal-line">
-                <span style={{ color: colors.cyan }}>Changes not staged for commit:</span>
-              </div>
-              <div className="terminal-line">
-                <span style={{ color: colors.red }}>  modified:   src/main.ts</span>
-              </div>
-              <div className="terminal-line">
-                <span style={{ color: colors.green }}>  new file:   src/utils.ts</span>
-              </div>
-              <div className="terminal-line">
-                <span style={{ color: colors.foreground }}>$ </span>
-                <span style={{ color: colors.foreground }}>npm test</span>
-              </div>
-              <div className="terminal-line">
-                <span style={{ color: colors.green }}>✓</span>
-                <span style={{ color: colors.foreground }}> All tests passed</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Code Preview */}
-          <div className="modal-section">
-            <h3 className="section-title">Code Preview</h3>
-            <div
-              className="code-preview"
-              style={{
-                backgroundColor: colors.background,
-                color: colors.foreground,
-                borderColor: colors.border,
-              }}
-            >
-              <div className="code-line">
-                <span style={{ color: colors.magenta }}>function</span>
-                <span style={{ color: colors.blue }}> greet</span>
-                <span style={{ color: colors.foreground }}>(</span>
-                <span style={{ color: colors.cyan }}>name</span>
-                <span style={{ color: colors.foreground }}>: </span>
-                <span style={{ color: colors.yellow }}>string</span>
-                <span style={{ color: colors.foreground }}>) {'{'}</span>
-              </div>
-              <div className="code-line">
-                <span style={{ color: colors.foreground }}>  </span>
-                <span style={{ color: colors.magenta }}>return</span>
-                <span style={{ color: colors.foreground }}> </span>
-                <span style={{ color: colors.green }}>`Hello, ${'{'}name{'}'}`</span>
-                <span style={{ color: colors.foreground }}>;</span>
-              </div>
-              <div className="code-line">
-                <span style={{ color: colors.foreground }}>{'}'}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Wallpapers */}
-          {wallpapers.length > 0 && (
-            <div className="modal-section">
-              <h3 className="section-title">
-                <ImageIcon size={16} style={{ display: 'inline', marginRight: '8px' }} />
-                Wallpapers
-              </h3>
-              {wallpapersLoading ? (
-                <div className="wallpaper-loading">Loading wallpapers...</div>
-              ) : (
-                <div className="wallpaper-grid">
-                  {wallpapers.map((wallpaper, index) => (
-                    <div
-                      key={wallpaper}
-                      className="wallpaper-thumbnail"
-                      onClick={() => setSelectedWallpaper(wallpaper)}
-                      title="Click to preview"
-                    >
-                      <img
-                        src={`local-file://${wallpaper}`}
-                        alt={`Wallpaper ${index + 1}`}
-                        className="wallpaper-thumb-img"
-                      />
-                      <div className="wallpaper-thumb-overlay">
-                        <ImageIcon size={20} />
-                      </div>
-                    </div>
-                  ))}
+            {/* Terminal Preview */}
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold">Terminal Preview</h3>
+              <div
+                className="rounded-[10px] p-4 font-mono text-sm border"
+                style={{
+                  backgroundColor: colors.background,
+                  color: colors.foreground,
+                  borderColor: colors.border,
+                }}
+              >
+                <div>
+                  <span style={{ color: colors.green }}>user@macbook</span>
+                  <span style={{ color: colors.foreground }}>:</span>
+                  <span style={{ color: colors.blue }}>~/projects</span>
+                  <span style={{ color: colors.foreground }}>$ git status</span>
                 </div>
+                <div>
+                  <span style={{ color: colors.green }}>On branch main</span>
+                </div>
+                <div>
+                  <span style={{ color: colors.cyan }}>Changes not staged for commit:</span>
+                </div>
+                <div>
+                  <span style={{ color: colors.red }}>  modified:   src/main.ts</span>
+                </div>
+                <div>
+                  <span style={{ color: colors.green }}>  new file:   src/utils.ts</span>
+                </div>
+                <div>
+                  <span style={{ color: colors.foreground }}>$ npm test</span>
+                </div>
+                <div>
+                  <span style={{ color: colors.green }}>✓</span>
+                  <span style={{ color: colors.foreground }}> All tests passed</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Code Preview */}
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold">Code Preview</h3>
+              <div
+                className="rounded-[10px] p-4 font-mono text-sm border"
+                style={{
+                  backgroundColor: colors.background,
+                  color: colors.foreground,
+                  borderColor: colors.border,
+                }}
+              >
+                <div>
+                  <span style={{ color: colors.magenta }}>function</span>
+                  <span style={{ color: colors.blue }}> greet</span>
+                  <span style={{ color: colors.foreground }}>(</span>
+                  <span style={{ color: colors.cyan }}>name</span>
+                  <span style={{ color: colors.foreground }}>: </span>
+                  <span style={{ color: colors.yellow }}>string</span>
+                  <span style={{ color: colors.foreground }}>) {'{'}</span>
+                </div>
+                <div>
+                  <span style={{ color: colors.foreground }}>  </span>
+                  <span style={{ color: colors.magenta }}>return</span>
+                  <span style={{ color: colors.foreground }}> </span>
+                  <span style={{ color: colors.green }}>`Hello, ${'{'}name{'}'}`</span>
+                  <span style={{ color: colors.foreground }}>;</span>
+                </div>
+                <div>
+                  <span style={{ color: colors.foreground }}>{'}'}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Wallpapers */}
+            {wallpapers.length > 0 && (
+              <div className="space-y-2">
+                <h3 className="text-sm font-semibold flex items-center gap-2">
+                  <ImageIcon size={14} />
+                  Wallpapers
+                </h3>
+                {wallpapersLoading ? (
+                  <div className="text-sm text-muted-foreground">Loading wallpapers...</div>
+                ) : (
+                  <div className="grid grid-cols-3 gap-2">
+                    {wallpapers.map((wallpaper, index) => (
+                      <button
+                        key={wallpaper}
+                        className="relative aspect-video rounded-[8px] overflow-hidden border border-border/50 hover:border-primary transition-colors duration-150 group"
+                        onClick={() => setSelectedWallpaper(wallpaper)}
+                        title="Click to preview"
+                      >
+                        <img
+                          src={`local-file://${wallpaper}`}
+                          alt={`Wallpaper ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex items-center justify-center">
+                          <ImageIcon size={20} className="text-white" />
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Main Colors */}
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold">Main Colors</h3>
+              <div className="grid grid-cols-2 gap-1">
+                {mainColors.map(({ name, value }) => (
+                  <ColorSwatch
+                    key={name}
+                    name={name}
+                    value={value}
+                    copiedColor={copiedColor}
+                    onCopy={handleCopyColor}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* ANSI Colors */}
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold">ANSI Colors</h3>
+              <div className="grid grid-cols-2 gap-1">
+                {ansiColors.map(({ name, value }) => (
+                  <ColorSwatch
+                    key={name}
+                    name={name}
+                    value={value}
+                    copiedColor={copiedColor}
+                    onCopy={handleCopyColor}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Bright Colors */}
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold">Bright Colors</h3>
+              <div className="grid grid-cols-2 gap-1">
+                {brightColors.map(({ name, value }) => (
+                  <ColorSwatch
+                    key={name}
+                    name={name}
+                    value={value}
+                    copiedColor={copiedColor}
+                    onCopy={handleCopyColor}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Modal Actions */}
+          <DialogFooter className="flex-wrap gap-2 sm:justify-between border-t border-border pt-4">
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => onToggleFavorite(theme.name)}
+              >
+                <Star className={`h-4 w-4 mr-1 ${isFavorite ? 'fill-yellow-500 text-yellow-500' : ''}`} />
+                {isFavorite ? 'Favorited' : 'Favorite'}
+              </Button>
+              {onDuplicate && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleDuplicateClick}
+                >
+                  <Copy className="h-4 w-4 mr-1" />
+                  Duplicate
+                </Button>
+              )}
+              {onEdit && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    onEdit();
+                    onClose();
+                  }}
+                >
+                  <Pencil className="h-4 w-4 mr-1" />
+                  Edit
+                </Button>
+              )}
+              {theme.isCustom && onDelete && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setShowDeleteConfirm(true)}
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Delete
+                </Button>
               )}
             </div>
-          )}
-
-          {/* Wallpaper Preview Modal */}
-          {selectedWallpaper && (
-            <div className="wallpaper-preview-overlay" onClick={() => setSelectedWallpaper(null)}>
-              <div className="wallpaper-preview-content" onClick={(e) => e.stopPropagation()}>
-                <button
-                  className="wallpaper-preview-close"
-                  onClick={() => setSelectedWallpaper(null)}
-                  aria-label="Close preview"
-                >
-                  <X size={24} />
-                </button>
-                <img
-                  src={`local-file://${selectedWallpaper}`}
-                  alt="Wallpaper preview"
-                  className="wallpaper-preview-img"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Main Colors */}
-          <div className="modal-section">
-            <h3 className="section-title">Main Colors</h3>
-            <div className="color-grid">
-              {mainColors.map(({ name, value }) => (
-                <div
-                  key={name}
-                  className="color-item"
-                  onClick={() => handleCopyColor(name, value)}
-                  title="Click to copy"
-                >
-                  <div className="color-swatch" style={{ backgroundColor: value }}></div>
-                  <div className="color-info">
-                    <div className="color-name">{name}</div>
-                    <div className="color-value">
-                      {value}
-                      {copiedColor === name && (
-                        <span className="copied-indicator">
-                          <Check size={12} /> Copied!
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* ANSI Colors */}
-          <div className="modal-section">
-            <h3 className="section-title">ANSI Colors</h3>
-            <div className="color-grid">
-              {ansiColors.map(({ name, value }) => (
-                <div
-                  key={name}
-                  className="color-item"
-                  onClick={() => handleCopyColor(name, value)}
-                  title="Click to copy"
-                >
-                  <div className="color-swatch" style={{ backgroundColor: value }}></div>
-                  <div className="color-info">
-                    <div className="color-name">{name}</div>
-                    <div className="color-value">
-                      {value}
-                      {copiedColor === name && (
-                        <span className="copied-indicator">
-                          <Check size={12} /> Copied!
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Bright Colors */}
-          <div className="modal-section">
-            <h3 className="section-title">Bright Colors</h3>
-            <div className="color-grid">
-              {brightColors.map(({ name, value }) => (
-                <div
-                  key={name}
-                  className="color-item"
-                  onClick={() => handleCopyColor(name, value)}
-                  title="Click to copy"
-                >
-                  <div className="color-swatch" style={{ backgroundColor: value }}></div>
-                  <div className="color-info">
-                    <div className="color-name">{name}</div>
-                    <div className="color-value">
-                      {value}
-                      {copiedColor === name && (
-                        <span className="copied-indicator">
-                          <Check size={12} /> Copied!
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Modal Actions */}
-        <div className="modal-actions">
-          <button
-            className="btn-secondary"
-            onClick={() => onToggleFavorite(theme.name)}
-          >
-            {isFavorite ? '★ Favorited' : '☆ Add to Favorites'}
-          </button>
-          {onDuplicate && (
-            <button
-              className="btn-secondary"
-              onClick={handleDuplicateClick}
-            >
-              📋 Duplicate
-            </button>
-          )}
-          {onEdit && (
-            <button
-              className="btn-secondary"
+            <Button
               onClick={() => {
-                onEdit();
+                onApply(theme.name);
                 onClose();
               }}
+              disabled={isActive}
             >
-              ✏️ Edit
-            </button>
+              {isActive ? 'Currently Active' : 'Apply Theme'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Wallpaper Preview Dialog */}
+      <Dialog open={!!selectedWallpaper} onOpenChange={(open) => !open && setSelectedWallpaper(null)}>
+        <DialogContent className="sm:max-w-[90vw] sm:max-h-[90vh] p-0 overflow-hidden">
+          {selectedWallpaper && (
+            <img
+              src={`local-file://${selectedWallpaper}`}
+              alt="Wallpaper preview"
+              className="w-full h-full object-contain"
+            />
           )}
-          {theme.isCustom && onDelete && (
-            <button
-              className="btn-danger"
-              onClick={handleDeleteClick}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation AlertDialog */}
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Theme?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <strong>{theme.metadata.name}</strong>?
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              🗑️ Delete
-            </button>
-          )}
-          <button
-            className="btn-primary"
-            onClick={() => {
-              onApply(theme.name);
-              onClose();
-            }}
-            disabled={isActive}
-          >
-            {isActive ? 'Currently Active' : 'Apply Theme'}
-          </button>
-        </div>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
-        {/* Delete Confirmation Dialog */}
-        {showDeleteConfirm && (
-          <div className="confirmation-overlay" onClick={() => setShowDeleteConfirm(false)}>
-            <div className="confirmation-dialog" onClick={(e) => e.stopPropagation()}>
-              <h3>Delete Theme?</h3>
-              <p>
-                Are you sure you want to delete <strong>{theme.metadata.name}</strong>?
-                This action cannot be undone.
-              </p>
-              <div className="confirmation-actions">
-                <button className="btn-secondary" onClick={() => setShowDeleteConfirm(false)}>
-                  Cancel
-                </button>
-                <button className="btn-danger" onClick={handleConfirmDelete}>
-                  Delete
-                </button>
-              </div>
-            </div>
+      {/* Duplicate Theme Dialog */}
+      <Dialog open={showDuplicateDialog} onOpenChange={setShowDuplicateDialog}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Duplicate Theme</DialogTitle>
+            <DialogDescription>
+              Create a copy of <strong>{theme.metadata.name}</strong>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Label htmlFor="duplicate-name">New theme name</Label>
+            <Input
+              id="duplicate-name"
+              value={duplicateName}
+              onChange={(e) => setDuplicateName(e.target.value)}
+              placeholder="New theme name"
+              className="mt-2"
+              autoFocus
+            />
           </div>
-        )}
-
-        {/* Duplicate Dialog */}
-        {showDuplicateDialog && (
-          <div className="confirmation-overlay" onClick={() => setShowDuplicateDialog(false)}>
-            <div className="confirmation-dialog" onClick={(e) => e.stopPropagation()}>
-              <h3>Duplicate Theme</h3>
-              <p>Create a copy of <strong>{theme.metadata.name}</strong></p>
-              <input
-                type="text"
-                className="dialog-input"
-                value={duplicateName}
-                onChange={(e) => setDuplicateName(e.target.value)}
-                placeholder="New theme name"
-                autoFocus
-              />
-              <div className="confirmation-actions">
-                <button className="btn-secondary" onClick={() => setShowDuplicateDialog(false)}>
-                  Cancel
-                </button>
-                <button
-                  className="btn-primary"
-                  onClick={handleConfirmDuplicate}
-                  disabled={!duplicateName.trim()}
-                >
-                  Create Duplicate
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDuplicateDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirmDuplicate}
+              disabled={!duplicateName.trim()}
+            >
+              Create Duplicate
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

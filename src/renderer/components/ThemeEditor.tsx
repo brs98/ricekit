@@ -6,6 +6,34 @@ import {
   detectColorFormat
 } from '../../shared/colorUtils';
 import { Vibrant } from 'node-vibrant/browser';
+import { Button } from '@/renderer/components/ui/button';
+import { Input } from '@/renderer/components/ui/input';
+import { Label } from '@/renderer/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/renderer/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/renderer/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/renderer/components/ui/alert-dialog';
 
 interface ThemeEditorProps {
   initialTheme?: ThemeMetadata;
@@ -43,7 +71,7 @@ const defaultColors: ThemeColors = {
 const presetSchemes: { [key: string]: { name: string; colors: ThemeColors } } = {
   tokyoNight: {
     name: 'Tokyo Night (Dark)',
-    colors: defaultColors, // Already defined as Tokyo Night
+    colors: defaultColors,
   },
   catppuccinMocha: {
     name: 'Catppuccin Mocha (Dark)',
@@ -218,6 +246,7 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
         colors: { ...preset.colors },
       });
       setSelectedPreset(presetKey);
+      setHasChanges(true);
     }
   };
 
@@ -231,16 +260,10 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
 
     setExtractingColors(true);
     try {
-      // Create an image URL from the file
       const imageUrl = URL.createObjectURL(file);
-
-      // Extract colors using Vibrant
       const palette = await Vibrant.from(imageUrl).getPalette();
-
-      // Clean up the object URL
       URL.revokeObjectURL(imageUrl);
 
-      // Map extracted colors to our theme palette
       const extractedColors: Partial<ThemeColors> = {};
 
       if (palette.DarkVibrant) {
@@ -273,31 +296,18 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
         extractedColors.brightWhite = palette.LightMuted.hex;
       }
 
-      // For ANSI colors, use variations of the extracted colors
-      // Red - slightly adjust hue towards red
       extractedColors.red = palette.Vibrant?.hex || '#ff5555';
       extractedColors.brightRed = palette.Vibrant?.hex || '#ff6e6e';
-
-      // Green - use muted vibrant
       extractedColors.green = palette.Muted?.hex || '#50fa7b';
       extractedColors.brightGreen = palette.LightMuted?.hex || '#69ff94';
-
-      // Yellow - between vibrant and light
       extractedColors.yellow = palette.LightVibrant?.hex || '#f1fa8c';
       extractedColors.brightYellow = palette.LightVibrant?.hex || '#ffffa5';
-
-      // Magenta - vibrant
       extractedColors.magenta = palette.Vibrant?.hex || '#ff79c6';
       extractedColors.brightMagenta = palette.Vibrant?.hex || '#ff92df';
-
-      // Cyan - light vibrant
       extractedColors.cyan = palette.LightVibrant?.hex || '#8be9fd';
       extractedColors.brightCyan = palette.LightVibrant?.hex || '#a4ffff';
-
-      // Blue variations
       extractedColors.brightBlue = palette.Vibrant?.hex || '#bd93f9';
 
-      // Apply the extracted colors to the theme
       setMetadata({
         ...metadata,
         colors: {
@@ -306,14 +316,13 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
         },
       });
       setHasChanges(true);
-      setSelectedPreset(''); // Clear preset selection since we're using custom colors
+      setSelectedPreset('');
 
     } catch (error) {
       console.error('Error extracting colors from image:', error);
       alert('Failed to extract colors from image. Please try a different image.');
     } finally {
       setExtractingColors(false);
-      // Reset the file input so the same file can be selected again
       if (event.target) {
         event.target.value = '';
       }
@@ -321,18 +330,15 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
   };
 
   const updateColor = (colorKey: keyof ThemeColors, value: string) => {
-    // Detect what format the user entered
     const format = detectColorFormat(value);
     let hexValue = value;
     let errorMessage = '';
 
-    // Validate the color
     if (value.trim() === '') {
       errorMessage = 'Color cannot be empty';
     } else if (format === 'invalid') {
       errorMessage = 'Invalid color format. Use hex (#FF5733), RGB (255, 87, 51), or HSL (360, 100%, 50%)';
     } else {
-      // Convert to hex if not already
       const convertedHex = toHex(value);
       if (convertedHex) {
         hexValue = convertedHex;
@@ -341,7 +347,6 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
       }
     }
 
-    // Update the color value (store as hex internally)
     setMetadata({
       ...metadata,
       colors: {
@@ -351,14 +356,12 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
     });
     setHasChanges(true);
 
-    // Update error state
     if (errorMessage) {
       setColorErrors(prev => ({
         ...prev,
         [colorKey]: errorMessage
       }));
     } else {
-      // Valid - clear any error for this color
       setColorErrors(prev => {
         const newErrors = { ...prev };
         delete newErrors[colorKey];
@@ -376,22 +379,18 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
   };
 
   const handleSave = async () => {
-    // Check for validation errors
     if (Object.keys(colorErrors).length > 0) {
       alert('Please fix all color validation errors before saving.');
       return;
     }
 
-    // If editing a built-in theme, show save-as dialog
     if (sourceTheme && !sourceTheme.isCustom) {
       setShowSaveAsDialog(true);
       return;
     }
 
-    // Otherwise save directly
     try {
       setSaving(true);
-      // If editing an existing custom theme, update it; otherwise create new
       if (initialTheme && sourceTheme?.isCustom) {
         await window.electronAPI.updateTheme(initialTheme.name, metadata);
       } else {
@@ -415,7 +414,6 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
 
     try {
       setSaving(true);
-      // Create a new theme with the modified colors but new name
       const newMetadata: ThemeMetadata = {
         ...metadata,
         name: newThemeName.trim(),
@@ -434,17 +432,14 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
   };
 
   const handleCancel = () => {
-    // If there are unsaved changes, show confirmation dialog
     if (hasChanges) {
       setShowCancelConfirm(true);
       return;
     }
 
-    // Otherwise cancel immediately
     if (onCancel) {
       onCancel();
     } else {
-      // Reset to initial or default
       setMetadata(initialTheme || defaultMetadata);
       setHasChanges(false);
     }
@@ -456,40 +451,21 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
     if (onCancel) {
       onCancel();
     } else {
-      // Reset to initial or default
       setMetadata(initialTheme || defaultMetadata);
     }
   };
 
   const mainColorKeys: (keyof ThemeColors)[] = [
-    'background',
-    'foreground',
-    'cursor',
-    'selection',
-    'accent',
-    'border',
+    'background', 'foreground', 'cursor', 'selection', 'accent', 'border',
   ];
 
   const ansiColorKeys: (keyof ThemeColors)[] = [
-    'black',
-    'red',
-    'green',
-    'yellow',
-    'blue',
-    'magenta',
-    'cyan',
-    'white',
+    'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white',
   ];
 
   const brightColorKeys: (keyof ThemeColors)[] = [
-    'brightBlack',
-    'brightRed',
-    'brightGreen',
-    'brightYellow',
-    'brightBlue',
-    'brightMagenta',
-    'brightCyan',
-    'brightWhite',
+    'brightBlack', 'brightRed', 'brightGreen', 'brightYellow',
+    'brightBlue', 'brightMagenta', 'brightCyan', 'brightWhite',
   ];
 
   const formatColorName = (key: string): string => {
@@ -506,31 +482,30 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
     const hasError = Boolean(error);
 
     return (
-      <div className="color-input-item">
-        <div className="color-input-row">
-          <label className="color-input-label">{formatColorName(colorKey)}</label>
-          <div className="color-input-controls">
+      <div className="space-y-1">
+        <div className="flex items-center gap-2">
+          <Label className="w-24 text-xs shrink-0">{formatColorName(colorKey)}</Label>
+          <div className="flex items-center gap-2 flex-1">
             <input
               type="color"
               value={isValidHexColor(colorValue) ? colorValue : '#000000'}
               onChange={(e) => updateColor(colorKey, e.target.value)}
-              className="color-picker-input"
+              className="w-8 h-8 rounded-[4px] border border-border cursor-pointer"
               onClick={() => setSelectedColor(colorKey)}
               disabled={!isValidHexColor(colorValue)}
             />
-            <input
+            <Input
               type="text"
               value={colorValue}
               onChange={(e) => updateColor(colorKey, e.target.value)}
-              className={`color-hex-input ${isSelected ? 'selected' : ''} ${hasError ? 'error' : ''}`}
+              className={`flex-1 font-mono text-xs h-8 ${isSelected ? 'ring-2 ring-primary' : ''} ${hasError ? 'border-destructive' : ''}`}
               onFocus={() => setSelectedColor(colorKey)}
-              placeholder="#FF5733, rgb(255, 87, 51), or hsl(9, 100%, 60%)"
-              title="Accepts hex (#FF5733), RGB (255, 87, 51), or HSL (9, 100%, 60%) formats"
+              placeholder="#FF5733"
             />
           </div>
         </div>
         {error && (
-          <div className="color-input-error">{error}</div>
+          <p className="text-xs text-destructive pl-24">{error}</p>
         )}
       </div>
     );
@@ -539,338 +514,314 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
   return (
     <div className="theme-editor">
       <div className="theme-editor-sidebar">
-        <div className="theme-editor-section">
-          <h3 className="section-title">Start from Preset</h3>
-          <div className="preset-selector">
-            <select
-              value={selectedPreset}
-              onChange={(e) => applyPreset(e.target.value)}
-              className="preset-select"
-            >
-              <option value="">-- Select a preset --</option>
-              {Object.entries(presetSchemes).map(([key, preset]) => (
-                <option key={key} value={key}>
-                  {preset.name}
-                </option>
-              ))}
-            </select>
-            <p className="preset-hint">
+        <div className="space-y-6">
+          {/* Preset Section */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold">Start from Preset</h3>
+            <Select value={selectedPreset} onValueChange={applyPreset}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a preset..." />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(presetSchemes).map(([key, preset]) => (
+                  <SelectItem key={key} value={key}>
+                    {preset.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
               Choose a preset color scheme to start with, then customize colors below
             </p>
           </div>
-        </div>
 
-        <div className="theme-editor-section">
-          <h3 className="section-title">Import from Image</h3>
-          <div className="image-import-section">
+          {/* Image Import Section */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold">Import from Image</h3>
             <input
               ref={fileInputRef}
               type="file"
               accept="image/*"
               onChange={handleImageSelected}
-              style={{ display: 'none' }}
+              className="hidden"
             />
-            <button
+            <Button
+              variant="secondary"
               onClick={handleImageImport}
-              className="btn btn-secondary"
               disabled={extractingColors}
+              className="w-full"
             >
               {extractingColors ? 'Extracting Colors...' : 'Choose Image'}
-            </button>
-            <p className="preset-hint">
-              Select an image to extract dominant colors and create a color palette automatically
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              Select an image to extract dominant colors automatically
             </p>
           </div>
-        </div>
 
-        <div className="theme-editor-section">
-          <h3 className="section-title">Theme Information</h3>
-          <div className="metadata-form">
-            <div className="form-group">
-              <label htmlFor="theme-name">Theme Name</label>
-              <input
-                id="theme-name"
-                type="text"
-                value={metadata.name}
-                onChange={(e) => updateMetadataField('name', e.target.value)}
-                className="form-input"
-                placeholder="My Custom Theme"
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="theme-author">Author</label>
-              <input
-                id="theme-author"
-                type="text"
-                value={metadata.author}
-                onChange={(e) => updateMetadataField('author', e.target.value)}
-                className="form-input"
-                placeholder="Your Name"
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="theme-description">Description</label>
-              <textarea
-                id="theme-description"
-                value={metadata.description}
-                onChange={(e) => updateMetadataField('description', e.target.value)}
-                className="form-textarea"
-                placeholder="A brief description of your theme..."
-                rows={3}
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="theme-version">Version</label>
-              <input
-                id="theme-version"
-                type="text"
-                value={metadata.version}
-                onChange={(e) => updateMetadataField('version', e.target.value)}
-                className="form-input"
-                placeholder="1.0.0"
-              />
+          {/* Theme Information Section */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold">Theme Information</h3>
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <Label htmlFor="theme-name" className="text-xs">Theme Name</Label>
+                <Input
+                  id="theme-name"
+                  value={metadata.name}
+                  onChange={(e) => updateMetadataField('name', e.target.value)}
+                  placeholder="My Custom Theme"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="theme-author" className="text-xs">Author</Label>
+                <Input
+                  id="theme-author"
+                  value={metadata.author}
+                  onChange={(e) => updateMetadataField('author', e.target.value)}
+                  placeholder="Your Name"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="theme-description" className="text-xs">Description</Label>
+                <textarea
+                  id="theme-description"
+                  value={metadata.description}
+                  onChange={(e) => updateMetadataField('description', e.target.value)}
+                  className="flex min-h-[60px] w-full rounded-[8px] border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  placeholder="A brief description..."
+                  rows={2}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="theme-version" className="text-xs">Version</Label>
+                <Input
+                  id="theme-version"
+                  value={metadata.version}
+                  onChange={(e) => updateMetadataField('version', e.target.value)}
+                  placeholder="1.0.0"
+                />
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="theme-editor-section">
-          <h3 className="section-title">Main Colors</h3>
-          <div className="color-inputs">
-            {mainColorKeys.map((key) => (
-              <ColorInput key={key} colorKey={key} />
-            ))}
+          {/* Main Colors Section */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold">Main Colors</h3>
+            <div className="space-y-2">
+              {mainColorKeys.map((key) => (
+                <ColorInput key={key} colorKey={key} />
+              ))}
+            </div>
           </div>
-        </div>
 
-        <div className="theme-editor-section">
-          <h3 className="section-title">ANSI Colors</h3>
-          <div className="color-inputs">
-            {ansiColorKeys.map((key) => (
-              <ColorInput key={key} colorKey={key} />
-            ))}
+          {/* ANSI Colors Section */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold">ANSI Colors</h3>
+            <div className="space-y-2">
+              {ansiColorKeys.map((key) => (
+                <ColorInput key={key} colorKey={key} />
+              ))}
+            </div>
           </div>
-        </div>
 
-        <div className="theme-editor-section">
-          <h3 className="section-title">Bright Colors</h3>
-          <div className="color-inputs">
-            {brightColorKeys.map((key) => (
-              <ColorInput key={key} colorKey={key} />
-            ))}
+          {/* Bright Colors Section */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold">Bright Colors</h3>
+            <div className="space-y-2">
+              {brightColorKeys.map((key) => (
+                <ColorInput key={key} colorKey={key} />
+              ))}
+            </div>
           </div>
-        </div>
 
-        <div className="theme-editor-actions">
-          <button onClick={handleCancel} className="btn btn-secondary">
-            Cancel
-          </button>
-          <button onClick={handleSave} className="btn btn-primary" disabled={saving}>
-            {saving ? 'Saving...' : 'Save Theme'}
-          </button>
+          {/* Actions */}
+          <div className="flex gap-2 pt-4 border-t border-border">
+            <Button variant="outline" onClick={handleCancel} className="flex-1">
+              Cancel
+            </Button>
+            <Button onClick={handleSave} disabled={saving} className="flex-1">
+              {saving ? 'Saving...' : 'Save Theme'}
+            </Button>
+          </div>
         </div>
       </div>
 
       <div className="theme-editor-preview">
-        <h3 className="preview-title">Live Preview</h3>
+        <h3 className="text-lg font-semibold mb-4">Live Preview</h3>
 
-        <div className="preview-section">
-          <h4 className="preview-section-title">Terminal Preview</h4>
-          <div className="terminal-preview" style={{
-            backgroundColor: metadata.colors.background,
-            color: metadata.colors.foreground,
-            borderColor: metadata.colors.border,
-          }}>
-            <div className="terminal-line">
-              <span style={{ color: metadata.colors.green }}>➜</span>
-              <span style={{ color: metadata.colors.cyan }}> ~/projects</span>
-              <span style={{ color: metadata.colors.blue }}> git:(</span>
-              <span style={{ color: metadata.colors.red }}>main</span>
-              <span style={{ color: metadata.colors.blue }}>)</span>
-              <span> $ ls -la</span>
-            </div>
-            <div className="terminal-line" style={{ color: metadata.colors.blue }}>
-              drwxr-xr-x  10 user  staff   320 Dec  6 10:00 .
-            </div>
-            <div className="terminal-line" style={{ color: metadata.colors.blue }}>
-              drwxr-xr-x  50 user  staff  1600 Dec  6 09:00 ..
-            </div>
-            <div className="terminal-line" style={{ color: metadata.colors.green }}>
-              -rw-r--r--   1 user  staff   150 Dec  6 10:00 README.md
-            </div>
-            <div className="terminal-line" style={{ color: metadata.colors.cyan }}>
-              drwxr-xr-x   8 user  staff   256 Dec  6 09:30 src
-            </div>
-            <div className="terminal-line">
-              <span style={{ color: metadata.colors.green }}>➜</span>
-              <span style={{ color: metadata.colors.cyan }}> ~/projects</span>
-              <span style={{ color: metadata.colors.blue }}> git:(</span>
-              <span style={{ color: metadata.colors.red }}>main</span>
-              <span style={{ color: metadata.colors.blue }}>)</span>
-              <span> $ </span>
-              <span className="cursor-block" style={{ backgroundColor: metadata.colors.cursor }}></span>
+        <div className="space-y-6">
+          {/* Terminal Preview */}
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium">Terminal Preview</h4>
+            <div
+              className="rounded-[10px] p-4 font-mono text-sm border"
+              style={{
+                backgroundColor: metadata.colors.background,
+                color: metadata.colors.foreground,
+                borderColor: metadata.colors.border,
+              }}
+            >
+              <div>
+                <span style={{ color: metadata.colors.green }}>➜</span>
+                <span style={{ color: metadata.colors.cyan }}> ~/projects</span>
+                <span style={{ color: metadata.colors.blue }}> git:(</span>
+                <span style={{ color: metadata.colors.red }}>main</span>
+                <span style={{ color: metadata.colors.blue }}>)</span>
+                <span> $ ls -la</span>
+              </div>
+              <div style={{ color: metadata.colors.blue }}>
+                drwxr-xr-x  10 user  staff   320 Dec  6 10:00 .
+              </div>
+              <div style={{ color: metadata.colors.green }}>
+                -rw-r--r--   1 user  staff   150 Dec  6 10:00 README.md
+              </div>
+              <div style={{ color: metadata.colors.cyan }}>
+                drwxr-xr-x   8 user  staff   256 Dec  6 09:30 src
+              </div>
+              <div>
+                <span style={{ color: metadata.colors.green }}>➜</span>
+                <span style={{ color: metadata.colors.cyan }}> ~/projects</span>
+                <span> $ </span>
+                <span
+                  className="inline-block w-2 h-4 animate-pulse"
+                  style={{ backgroundColor: metadata.colors.cursor }}
+                />
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="preview-section">
-          <h4 className="preview-section-title">Code Preview</h4>
-          <div className="code-preview" style={{
-            backgroundColor: metadata.colors.background,
-            color: metadata.colors.foreground,
-            borderColor: metadata.colors.border,
-          }}>
-            <pre>
-              <code>
+          {/* Code Preview */}
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium">Code Preview</h4>
+            <div
+              className="rounded-[10px] p-4 font-mono text-sm border"
+              style={{
+                backgroundColor: metadata.colors.background,
+                color: metadata.colors.foreground,
+                borderColor: metadata.colors.border,
+              }}
+            >
+              <pre className="whitespace-pre-wrap">
                 <span style={{ color: metadata.colors.magenta }}>import</span>
-                <span> {'{ useState }'} </span>
+                {' { useState } '}
                 <span style={{ color: metadata.colors.magenta }}>from</span>
-                <span> </span>
-                <span style={{ color: metadata.colors.green }}>'react'</span>
-                <span>;</span>
+                {' '}
+                <span style={{ color: metadata.colors.green }}>'react'</span>;
                 {'\n\n'}
                 <span style={{ color: metadata.colors.magenta }}>function</span>
-                <span> </span>
+                {' '}
                 <span style={{ color: metadata.colors.yellow }}>App</span>
-                <span>{'() {'}</span>
-                {'\n  '}
+                {'() {\n  '}
                 <span style={{ color: metadata.colors.magenta }}>const</span>
-                <span> [count, setCount] = </span>
+                {' [count, setCount] = '}
                 <span style={{ color: metadata.colors.cyan }}>useState</span>
-                <span>(</span>
+                {'('}
                 <span style={{ color: metadata.colors.red }}>0</span>
-                <span>);</span>
-                {'\n  '}
+                {');\n  '}
                 <span style={{ color: metadata.colors.magenta }}>return</span>
-                <span> {'<'}div{'>'}Count: {'{'}</span>
+                {' <div>Count: {'}
                 <span style={{ color: metadata.colors.red }}>count</span>
-                <span>{'}</'}</span>
-                <span>div{'>'};</span>
-                {'\n}'}
-              </code>
-            </pre>
+                {'}</div>;\n}'}
+              </pre>
+            </div>
           </div>
-        </div>
 
-        <div className="preview-section">
-          <h4 className="preview-section-title">Color Palette</h4>
-          <div className="palette-preview">
-            <div className="palette-row">
-              {mainColorKeys.map((key) => (
-                <div key={key} className="palette-item">
+          {/* Color Palette */}
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium">Color Palette</h4>
+            <div className="space-y-2">
+              <div className="flex gap-2 flex-wrap">
+                {mainColorKeys.map((key) => (
+                  <div key={key} className="text-center">
+                    <div
+                      className="w-10 h-10 rounded-[6px] border border-border/50"
+                      style={{ backgroundColor: metadata.colors[key] }}
+                      title={formatColorName(key)}
+                    />
+                    <div className="text-[10px] text-muted-foreground mt-1 truncate w-10">
+                      {formatColorName(key).split(' ')[0]}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-1">
+                {ansiColorKeys.map((key) => (
                   <div
-                    className="palette-swatch"
-                    style={{ backgroundColor: metadata.colors[key] }}
-                  />
-                  <div className="palette-label">{formatColorName(key)}</div>
-                  <div className="palette-hex">{metadata.colors[key]}</div>
-                </div>
-              ))}
-            </div>
-            <div className="palette-row">
-              {ansiColorKeys.map((key) => (
-                <div key={key} className="palette-item-small">
-                  <div
-                    className="palette-swatch-small"
-                    style={{ backgroundColor: metadata.colors[key] }}
-                    title={formatColorName(key)}
-                  />
-                </div>
-              ))}
-            </div>
-            <div className="palette-row">
-              {brightColorKeys.map((key) => (
-                <div key={key} className="palette-item-small">
-                  <div
-                    className="palette-swatch-small"
+                    key={key}
+                    className="w-6 h-6 rounded-[4px] border border-border/30"
                     style={{ backgroundColor: metadata.colors[key] }}
                     title={formatColorName(key)}
                   />
-                </div>
-              ))}
+                ))}
+              </div>
+              <div className="flex gap-1">
+                {brightColorKeys.map((key) => (
+                  <div
+                    key={key}
+                    className="w-6 h-6 rounded-[4px] border border-border/30"
+                    style={{ backgroundColor: metadata.colors[key] }}
+                    title={formatColorName(key)}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Cancel Confirmation Dialog */}
-      {showCancelConfirm && (
-        <div className="modal-overlay" onClick={() => setShowCancelConfirm(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Discard Changes?</h3>
-              <button
-                className="modal-close"
-                onClick={() => setShowCancelConfirm(false)}
-              >
-                ×
-              </button>
-            </div>
-            <div className="modal-body">
-              <p>You have unsaved changes. Are you sure you want to discard them?</p>
-            </div>
-            <div className="modal-actions">
-              <button
-                className="btn btn-secondary"
-                onClick={() => setShowCancelConfirm(false)}
-              >
-                Keep Editing
-              </button>
-              <button className="btn btn-danger" onClick={confirmCancel}>
-                Discard Changes
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <AlertDialog open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard Changes?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved changes. Are you sure you want to discard them?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep Editing</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmCancel}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Discard Changes
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
-      {/* Save As Dialog for Built-in Themes */}
-      {showSaveAsDialog && (
-        <div className="modal-overlay" onClick={() => setShowSaveAsDialog(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Save as Custom Theme</h3>
-              <button
-                className="modal-close"
-                onClick={() => setShowSaveAsDialog(false)}
-              >
-                ×
-              </button>
-            </div>
-            <div className="modal-body">
-              <p>
-                You're editing a built-in theme. To preserve the original, your changes will be saved as a new custom theme.
-              </p>
-              <div className="form-group">
-                <label htmlFor="new-theme-name">New Theme Name</label>
-                <input
-                  id="new-theme-name"
-                  type="text"
-                  value={newThemeName}
-                  onChange={(e) => setNewThemeName(e.target.value)}
-                  className="form-input"
-                  placeholder={`${metadata.name} (Custom)`}
-                  autoFocus
-                />
-              </div>
-            </div>
-            <div className="modal-actions">
-              <button
-                className="btn btn-secondary"
-                onClick={() => setShowSaveAsDialog(false)}
-              >
-                Cancel
-              </button>
-              <button
-                className="btn btn-primary"
-                onClick={handleSaveAs}
-                disabled={saving || !newThemeName.trim()}
-              >
-                {saving ? 'Saving...' : 'Save as New Theme'}
-              </button>
-            </div>
+      {/* Save As Dialog */}
+      <Dialog open={showSaveAsDialog} onOpenChange={setShowSaveAsDialog}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Save as Custom Theme</DialogTitle>
+            <DialogDescription>
+              You're editing a built-in theme. To preserve the original, your changes will be saved as a new custom theme.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Label htmlFor="new-theme-name">New Theme Name</Label>
+            <Input
+              id="new-theme-name"
+              value={newThemeName}
+              onChange={(e) => setNewThemeName(e.target.value)}
+              placeholder={`${metadata.name} (Custom)`}
+              className="mt-2"
+              autoFocus
+            />
           </div>
-        </div>
-      )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSaveAsDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveAs}
+              disabled={saving || !newThemeName.trim()}
+            >
+              {saving ? 'Saving...' : 'Save as New Theme'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

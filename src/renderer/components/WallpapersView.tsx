@@ -1,4 +1,32 @@
 import React, { useState, useEffect } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/renderer/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/renderer/components/ui/alert-dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/renderer/components/ui/select';
+import { Button } from '@/renderer/components/ui/button';
+import { Input } from '@/renderer/components/ui/input';
+import { Label } from '@/renderer/components/ui/label';
+import { Switch } from '@/renderer/components/ui/switch';
 
 interface Display {
   id: string;
@@ -37,33 +65,30 @@ const WallpaperPreviewModal: React.FC<WallpaperPreviewModalProps> = ({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content wallpaper-preview-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>Wallpaper Preview</h2>
-          <button className="close-button" onClick={onClose}>
-            ✕
-          </button>
-        </div>
+    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-[700px]">
+        <DialogHeader>
+          <DialogTitle>Wallpaper Preview</DialogTitle>
+        </DialogHeader>
 
         <div className="wallpaper-preview-container">
           <img
             src={`local-file://${wallpaperPath}`}
             alt="Wallpaper preview"
-            className="wallpaper-preview-image"
+            className="wallpaper-preview-image rounded-lg"
           />
         </div>
 
-        <div className="modal-actions">
-          <button className="secondary-button" onClick={onClose}>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
             Cancel
-          </button>
-          <button className="primary-button" onClick={handleApply}>
+          </Button>
+          <Button onClick={handleApply}>
             {getApplyButtonText()}
-          </button>
-        </div>
-      </div>
-    </div>
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 
@@ -112,26 +137,19 @@ const ScheduleModal: React.FC<ScheduleModalProps> = ({ wallpapers, currentSchedu
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div
-        className="modal-content"
-        style={{ maxWidth: '700px', maxHeight: '80vh', overflow: 'auto' }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="modal-header">
-          <h2>Wallpaper Schedule</h2>
-          <button className="close-button" onClick={onClose}>
-            ✕
-          </button>
-        </div>
+    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-auto">
+        <DialogHeader>
+          <DialogTitle>Wallpaper Schedule</DialogTitle>
+        </DialogHeader>
 
-        <div style={{ padding: '16px' }}>
-          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px' }}>
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">
             Set different wallpapers for different times of day. Schedules are checked every minute.
           </p>
 
           {schedules.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
+            <div className="text-center py-8 text-muted-foreground">
               No schedules yet. Click "Add Schedule" to create one.
             </div>
           )}
@@ -139,143 +157,79 @@ const ScheduleModal: React.FC<ScheduleModalProps> = ({ wallpapers, currentSchedu
           {schedules.map((schedule, index) => (
             <div
               key={index}
-              style={{
-                padding: '16px',
-                marginBottom: '12px',
-                borderRadius: '8px',
-                border: '1px solid var(--border)',
-                backgroundColor: 'var(--background-secondary)',
-              }}
+              className="p-4 rounded-lg border border-border bg-muted/50 space-y-3"
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                <input
-                  type="text"
+              <div className="flex gap-2">
+                <Input
                   placeholder="Schedule name (e.g., Morning)"
                   value={schedule.name || ''}
                   onChange={(e) => updateSchedule(index, 'name', e.target.value)}
-                  style={{
-                    flex: 1,
-                    padding: '6px 12px',
-                    borderRadius: '6px',
-                    border: '1px solid var(--border)',
-                    backgroundColor: 'var(--background)',
-                    color: 'var(--text)',
-                    fontSize: '13px',
-                    marginRight: '8px',
-                  }}
+                  className="flex-1"
                 />
-                <button
-                  onClick={() => removeSchedule(index)}
-                  style={{
-                    padding: '6px 12px',
-                    borderRadius: '6px',
-                    border: '1px solid var(--border)',
-                    backgroundColor: 'var(--background)',
-                    color: 'var(--text-secondary)',
-                    fontSize: '13px',
-                    cursor: 'pointer',
-                  }}
-                >
+                <Button variant="outline" onClick={() => removeSchedule(index)}>
                   Remove
-                </button>
+                </Button>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
-                <div>
-                  <label style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
-                    Start Time
-                  </label>
-                  <input
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Start Time</Label>
+                  <Input
                     type="time"
                     value={schedule.timeStart}
                     onChange={(e) => updateSchedule(index, 'timeStart', e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '6px 12px',
-                      borderRadius: '6px',
-                      border: '1px solid var(--border)',
-                      backgroundColor: 'var(--background)',
-                      color: 'var(--text)',
-                      fontSize: '13px',
-                    }}
                   />
                 </div>
-                <div>
-                  <label style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
-                    End Time
-                  </label>
-                  <input
+                <div className="space-y-1.5">
+                  <Label className="text-xs">End Time</Label>
+                  <Input
                     type="time"
                     value={schedule.timeEnd}
                     onChange={(e) => updateSchedule(index, 'timeEnd', e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '6px 12px',
-                      borderRadius: '6px',
-                      border: '1px solid var(--border)',
-                      backgroundColor: 'var(--background)',
-                      color: 'var(--text)',
-                      fontSize: '13px',
-                    }}
                   />
                 </div>
               </div>
 
-              <div>
-                <label style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
-                  Wallpaper
-                </label>
-                <select
+              <div className="space-y-1.5">
+                <Label className="text-xs">Wallpaper</Label>
+                <Select
                   value={schedule.wallpaperPath}
-                  onChange={(e) => updateSchedule(index, 'wallpaperPath', e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '6px 12px',
-                    borderRadius: '6px',
-                    border: '1px solid var(--border)',
-                    backgroundColor: 'var(--background)',
-                    color: 'var(--text)',
-                    fontSize: '13px',
-                  }}
+                  onValueChange={(value) => updateSchedule(index, 'wallpaperPath', value)}
                 >
-                  {wallpapers.map((wallpaper) => (
-                    <option key={wallpaper.original} value={wallpaper.original}>
-                      {getWallpaperName(wallpaper.original)}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {wallpapers.map((wallpaper) => (
+                      <SelectItem key={wallpaper.original} value={wallpaper.original}>
+                        {getWallpaperName(wallpaper.original)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           ))}
 
-          <button
+          <Button
+            variant="outline"
             onClick={addSchedule}
-            style={{
-              width: '100%',
-              padding: '10px',
-              borderRadius: '6px',
-              border: '1px solid var(--border)',
-              backgroundColor: 'var(--background-secondary)',
-              color: 'var(--text)',
-              fontSize: '13px',
-              cursor: 'pointer',
-              marginTop: '8px',
-            }}
+            className="w-full"
           >
             + Add Schedule
-          </button>
+          </Button>
         </div>
 
-        <div className="modal-actions">
-          <button className="secondary-button" onClick={onClose}>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
             Cancel
-          </button>
-          <button className="primary-button" onClick={() => onSave(schedules)}>
+          </Button>
+          <Button onClick={() => onSave(schedules)}>
             Save Schedules
-          </button>
-        </div>
-      </div>
-    </div>
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 
@@ -475,9 +429,9 @@ export const WallpapersView: React.FC = () => {
           <h1>Wallpapers</h1>
           <p className="error-message">{error}</p>
         </div>
-        <button className="retry-button" onClick={loadWallpapers}>
+        <Button variant="outline" onClick={loadWallpapers}>
           Retry
-        </button>
+        </Button>
       </div>
     );
   }
@@ -494,14 +448,13 @@ export const WallpapersView: React.FC = () => {
           <p className="empty-state-hint">
             Add wallpapers to get started.
           </p>
-          <button
-            className="primary-button"
+          <Button
             onClick={handleAddWallpapers}
             disabled={isAdding}
-            style={{ marginTop: '16px' }}
+            className="mt-4"
           >
             {isAdding ? 'Adding...' : '+ Add Wallpapers'}
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -518,167 +471,71 @@ export const WallpapersView: React.FC = () => {
           </p>
         </div>
         <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '6px 12px',
-              borderRadius: '8px',
-              backgroundColor: 'var(--background-secondary)',
-              border: '1px solid var(--border)',
-            }}
-          >
-            <label
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-secondary border border-border">
+            <Label
               htmlFor="dynamic-wallpaper-toggle"
-              style={{
-                fontSize: '13px',
-                color: 'var(--text)',
-                fontWeight: 500,
-                cursor: 'pointer',
-                userSelect: 'none',
-              }}
+              className="text-sm font-medium cursor-pointer select-none"
             >
               Dynamic Wallpaper
-            </label>
-            <button
+            </Label>
+            <Switch
               id="dynamic-wallpaper-toggle"
-              onClick={toggleDynamicWallpaper}
-              style={{
-                width: '40px',
-                height: '22px',
-                borderRadius: '11px',
-                border: 'none',
-                backgroundColor: dynamicWallpaperEnabled ? 'var(--accent)' : 'var(--background-tertiary)',
-                position: 'relative',
-                cursor: 'pointer',
-                transition: 'background-color 0.2s ease',
-              }}
-              title={dynamicWallpaperEnabled ? 'Wallpaper changes with light/dark mode' : 'Click to enable dynamic wallpaper'}
-            >
-              <div
-                style={{
-                  width: '18px',
-                  height: '18px',
-                  borderRadius: '50%',
-                  backgroundColor: '#fff',
-                  position: 'absolute',
-                  top: '2px',
-                  left: dynamicWallpaperEnabled ? '20px' : '2px',
-                  transition: 'left 0.2s ease',
-                  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.3)',
-                }}
-              />
-            </button>
+              checked={dynamicWallpaperEnabled}
+              onCheckedChange={toggleDynamicWallpaper}
+              aria-label="Toggle dynamic wallpaper"
+            />
           </div>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '6px 12px',
-              borderRadius: '8px',
-              backgroundColor: 'var(--background-secondary)',
-              border: '1px solid var(--border)',
-            }}
-          >
-            <label
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-secondary border border-border">
+            <Label
               htmlFor="schedule-wallpaper-toggle"
-              style={{
-                fontSize: '13px',
-                color: 'var(--text)',
-                fontWeight: 500,
-                cursor: 'pointer',
-                userSelect: 'none',
-              }}
+              className="text-sm font-medium cursor-pointer select-none"
             >
               Scheduling
-            </label>
-            <button
+            </Label>
+            <Switch
               id="schedule-wallpaper-toggle"
-              onClick={toggleSchedule}
-              style={{
-                width: '40px',
-                height: '22px',
-                borderRadius: '11px',
-                border: 'none',
-                backgroundColor: scheduleEnabled ? 'var(--accent)' : 'var(--background-tertiary)',
-                position: 'relative',
-                cursor: 'pointer',
-                transition: 'background-color 0.2s ease',
-              }}
-              title={scheduleEnabled ? 'Wallpaper changes based on time schedules' : 'Click to enable wallpaper scheduling'}
-            >
-              <div
-                style={{
-                  width: '18px',
-                  height: '18px',
-                  borderRadius: '50%',
-                  backgroundColor: '#fff',
-                  position: 'absolute',
-                  top: '2px',
-                  left: scheduleEnabled ? '20px' : '2px',
-                  transition: 'left 0.2s ease',
-                  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.3)',
-                }}
-              />
-            </button>
+              checked={scheduleEnabled}
+              onCheckedChange={toggleSchedule}
+              aria-label="Toggle wallpaper scheduling"
+            />
           </div>
           {scheduleEnabled && (
-            <button
-              onClick={() => setShowScheduleModal(true)}
-              style={{
-                padding: '6px 12px',
-                borderRadius: '6px',
-                border: '1px solid var(--border)',
-                backgroundColor: 'var(--background-secondary)',
-                color: 'var(--text)',
-                fontSize: '13px',
-                cursor: 'pointer',
-              }}
-            >
+            <Button variant="outline" onClick={() => setShowScheduleModal(true)}>
               Manage Schedules {schedules.length > 0 && `(${schedules.length})`}
-            </button>
+            </Button>
           )}
           {displays.length > 1 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <label htmlFor="display-select" style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="display-select" className="text-sm text-muted-foreground">
                 Target Display:
-              </label>
-              <select
-                id="display-select"
-                value={selectedDisplay || 'all'}
-                onChange={(e) => setSelectedDisplay(e.target.value === 'all' ? null : parseInt(e.target.value))}
-                style={{
-                  padding: '6px 12px',
-                  borderRadius: '6px',
-                  border: '1px solid var(--border)',
-                  backgroundColor: 'var(--background)',
-                  color: 'var(--text)',
-                  fontSize: '13px',
-                  cursor: 'pointer',
-                }}
+              </Label>
+              <Select
+                value={selectedDisplay?.toString() || 'all'}
+                onValueChange={(value) => setSelectedDisplay(value === 'all' ? null : parseInt(value))}
               >
-                <option value="all">All Displays</option>
-                {displays.map((display) => (
-                  <option key={display.id} value={display.index}>
-                    {display.name} {display.isMain ? '(Main)' : ''}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger id="display-select" className="w-[180px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Displays</SelectItem>
+                  {displays.map((display) => (
+                    <SelectItem key={display.id} value={display.index.toString()}>
+                      {display.name} {display.isMain ? '(Main)' : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
-          <button
-            className="primary-button"
+          <Button
             onClick={handleAddWallpapers}
             disabled={isAdding}
-            style={{ padding: '6px 12px', fontSize: '13px' }}
           >
             {isAdding ? 'Adding...' : '+ Add'}
-          </button>
-          <button className="refresh-button" onClick={loadWallpapers}>
+          </Button>
+          <Button variant="outline" onClick={loadWallpapers}>
             ↻ Refresh
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -741,48 +598,27 @@ export const WallpapersView: React.FC = () => {
         />
       )}
 
-      {wallpaperToDelete && (
-        <div className="modal-overlay" onClick={() => setWallpaperToDelete(null)}>
-          <div
-            className="modal-content"
-            style={{ maxWidth: '400px' }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="modal-header">
-              <h2>Remove Wallpaper</h2>
-              <button className="close-button" onClick={() => setWallpaperToDelete(null)}>
-                ✕
-              </button>
-            </div>
-
-            <div style={{ padding: '16px' }}>
-              <p style={{ marginBottom: '8px' }}>
-                Are you sure you want to remove this wallpaper?
-              </p>
-              <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-                {wallpaperToDelete.split('/').pop()}
-              </p>
-            </div>
-
-            <div className="modal-actions">
-              <button className="secondary-button" onClick={() => setWallpaperToDelete(null)}>
-                Cancel
-              </button>
-              <button
-                className="danger-button"
-                onClick={() => handleRemoveWallpaper(wallpaperToDelete)}
-                style={{
-                  backgroundColor: '#e74c3c',
-                  color: 'white',
-                  border: 'none',
-                }}
-              >
-                Remove
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <AlertDialog open={!!wallpaperToDelete} onOpenChange={(open) => !open && setWallpaperToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Wallpaper</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove this wallpaper?
+              <br />
+              <span className="font-medium">{wallpaperToDelete?.split('/').pop()}</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => wallpaperToDelete && handleRemoveWallpaper(wallpaperToDelete)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

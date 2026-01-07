@@ -1,14 +1,45 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
+import { Star } from 'lucide-react';
 import { Theme, Preferences, State } from '../../shared/types';
+import {
+  Command,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+} from '@/renderer/components/ui/command';
+
+// Color swatches component for theme preview
+function ThemeColorSwatches({ colors }: { colors: Theme['metadata']['colors'] }) {
+  const previewColors = [
+    colors.background,
+    colors.red,
+    colors.green,
+    colors.yellow,
+    colors.blue,
+    colors.magenta,
+  ];
+
+  return (
+    <div className="flex gap-1 mt-1">
+      {previewColors.map((color, i) => (
+        <div
+          key={i}
+          className="w-4 h-4 rounded-[3px] border border-border/50"
+          style={{ backgroundColor: color }}
+        />
+      ))}
+    </div>
+  );
+}
 
 export function QuickSwitcher() {
   const [themes, setThemes] = useState<Theme[]>([]);
   const [preferences, setPreferences] = useState<Preferences | null>(null);
   const [state, setState] = useState<State | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedIndex, setSelectedIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Load themes, preferences, and state
   useEffect(() => {
@@ -31,24 +62,21 @@ export function QuickSwitcher() {
     loadData();
   }, []);
 
-  // Focus search input when window opens
+  // Handle escape key to close
   useEffect(() => {
-    if (searchInputRef.current) {
-      searchInputRef.current.focus();
-    }
-
-    // Listen for quick-switcher-opened event
-    const handleOpened = () => {
-      if (searchInputRef.current) {
-        searchInputRef.current.focus();
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        window.electronAPI.closeQuickSwitcher();
       }
-    };
-    window.electronAPI.onQuickSwitcherOpened(handleOpened);
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   // Filter and sort themes
-  const filteredThemes = (() => {
-    if (!preferences) return themes;
+  const getFilteredThemes = () => {
+    if (!preferences) return { favorites: [], others: [] };
 
     let filtered = themes;
 
@@ -76,21 +104,18 @@ export function QuickSwitcher() {
     }
 
     // Sort: favorites first, then recent, then alphabetically
-    const favorites = new Set(preferences.favorites);
+    const favoritesSet = new Set(preferences.favorites);
     const recentThemes = new Set(preferences.recentThemes);
 
     filtered.sort((a, b) => {
-      // Favorites use display names (metadata.name), recentThemes use folder names (name)
-      const aIsFavorite = favorites.has(a.metadata.name) || favorites.has(a.name);
-      const bIsFavorite = favorites.has(b.metadata.name) || favorites.has(b.name);
+      const aIsFavorite = favoritesSet.has(a.metadata.name) || favoritesSet.has(a.name);
+      const bIsFavorite = favoritesSet.has(b.metadata.name) || favoritesSet.has(b.name);
       const aIsRecent = recentThemes.has(a.name);
       const bIsRecent = recentThemes.has(b.name);
 
-      // Favorites first
       if (aIsFavorite && !bIsFavorite) return -1;
       if (!aIsFavorite && bIsFavorite) return 1;
 
-      // Then recent themes (in order of recency)
       if (aIsRecent && !bIsRecent) return -1;
       if (!aIsRecent && bIsRecent) return 1;
       if (aIsRecent && bIsRecent) {
@@ -99,209 +124,146 @@ export function QuickSwitcher() {
         return aIndex - bIndex;
       }
 
-      // Then alphabetically by display name
       return a.metadata.name.localeCompare(b.metadata.name);
     });
 
-    return filtered;
-  })();
+    // Split into favorites and others
+    const favorites = filtered.filter(theme =>
+      favoritesSet.has(theme.metadata.name) || favoritesSet.has(theme.name)
+    );
+    const others = filtered.filter(theme =>
+      !favoritesSet.has(theme.metadata.name) && !favoritesSet.has(theme.name)
+    );
 
-  // Reset selected index when search changes
-  useEffect(() => {
-    setSelectedIndex(0);
-  }, [searchQuery]);
-
-  // Keyboard navigation
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        window.electronAPI.closeQuickSwitcher();
-      } else if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        setSelectedIndex(prev => Math.min(prev + 1, filteredThemes.length - 1));
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        setSelectedIndex(prev => Math.max(prev - 1, 0));
-      } else if (e.key === 'Enter') {
-        e.preventDefault();
-        if (filteredThemes[selectedIndex]) {
-          handleApplyTheme(filteredThemes[selectedIndex]);
-        }
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [filteredThemes, selectedIndex]);
+    return { favorites, others };
+  };
 
   // Apply theme
-  async function handleApplyTheme(theme: Theme) {
+  async function handleApplyTheme(themeName: string) {
     try {
-      await window.electronAPI.applyTheme(theme.name);
+      await window.electronAPI.applyTheme(themeName);
       window.electronAPI.closeQuickSwitcher();
     } catch (error) {
       console.error('Failed to apply theme:', error);
     }
   }
 
-  // Scroll selected item into view
-  useEffect(() => {
-    const selectedElement = document.querySelector('.quick-switcher-item.selected');
-    if (selectedElement) {
-      selectedElement.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-    }
-  }, [selectedIndex]);
+  const { favorites, others } = getFilteredThemes();
+  const hasResults = favorites.length > 0 || others.length > 0;
 
   if (isLoading) {
     return (
-      <div className="quick-switcher">
-        <div className="quick-switcher-container">
-          <div className="quick-switcher-loading">Loading themes...</div>
-        </div>
+      <div className="h-screen w-screen bg-popover flex items-center justify-center">
+        <div className="text-muted-foreground">Loading themes...</div>
       </div>
     );
   }
 
   return (
-    <div className="quick-switcher">
-      <div className="quick-switcher-container">
-        <input
-          ref={searchInputRef}
-          type="text"
-          className="quick-switcher-search"
+    <div className="h-screen w-screen bg-popover">
+      <Command
+        className="rounded-none border-none h-full"
+        filter={() => 1} // Disable built-in filter, we use custom fuzzy search
+      >
+        <CommandInput
           placeholder="Search themes..."
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onValueChange={setSearchQuery}
+          className="h-12"
         />
-        <div className="quick-switcher-list">
-          {filteredThemes.length === 0 ? (
-            <div className="quick-switcher-empty">
-              No themes found matching "{searchQuery}"
-            </div>
-          ) : (
-            <>
-              {/* Favorites Section */}
-              {(() => {
-                const favoriteThemes = filteredThemes.filter(theme =>
-                  preferences?.favorites.includes(theme.metadata.name) || preferences?.favorites.includes(theme.name)
-                );
-                const otherThemes = filteredThemes.filter(theme =>
-                  !preferences?.favorites.includes(theme.metadata.name) && !preferences?.favorites.includes(theme.name)
-                );
+        <CommandList className="max-h-[calc(100vh-96px)]">
+          <CommandEmpty>No themes found matching "{searchQuery}"</CommandEmpty>
+
+          {/* Favorites Section */}
+          {favorites.length > 0 && (
+            <CommandGroup heading="Favorites">
+              {favorites.map((theme) => {
+                const isCurrent = state?.currentTheme === theme.name;
 
                 return (
-                  <>
-                    {favoriteThemes.length > 0 && (
-                      <>
-                        <div className="quick-switcher-section-header">Favorites</div>
-                        {favoriteThemes.map((theme, _localIndex) => {
-                          const index = filteredThemes.indexOf(theme);
-                          const isCurrent = state?.currentTheme === theme.name;
-                          const isSelected = index === selectedIndex;
-
-                          return (
-                            <div
-                              key={theme.metadata.name}
-                              className={`quick-switcher-item ${isSelected ? 'selected' : ''} ${isCurrent ? 'current' : ''}`}
-                              onClick={() => handleApplyTheme(theme)}
-                              onMouseEnter={() => setSelectedIndex(index)}
-                            >
-                              <div className="quick-switcher-item-header">
-                                <span className="quick-switcher-item-name">
-                                  ★ {theme.metadata.name}
-                                  {isCurrent && ' (current)'}
-                                </span>
-                              </div>
-                              <div className="quick-switcher-item-description">
-                                {theme.metadata.description}
-                              </div>
-                              <div className="quick-switcher-item-colors">
-                                {[
-                                  theme.metadata.colors.background,
-                                  theme.metadata.colors.red,
-                                  theme.metadata.colors.green,
-                                  theme.metadata.colors.yellow,
-                                  theme.metadata.colors.blue,
-                                  theme.metadata.colors.magenta,
-                                ].map((color, i) => (
-                                  <div
-                                    key={i}
-                                    className="quick-switcher-color-swatch"
-                                    style={{ backgroundColor: color }}
-                                  />
-                                ))}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </>
-                    )}
-
-                    {/* Other Themes Section */}
-                    {otherThemes.length > 0 && (
-                      <>
-                        {favoriteThemes.length > 0 && (
-                          <div className="quick-switcher-section-header">All Themes</div>
-                        )}
-                        {otherThemes.map((theme, _localIndex) => {
-                          const index = filteredThemes.indexOf(theme);
-                          const isRecent = preferences?.recentThemes.includes(theme.name);
-                          const isCurrent = state?.currentTheme === theme.name;
-                          const isSelected = index === selectedIndex;
-
-                          return (
-                            <div
-                              key={theme.metadata.name}
-                              className={`quick-switcher-item ${isSelected ? 'selected' : ''} ${isCurrent ? 'current' : ''}`}
-                              onClick={() => handleApplyTheme(theme)}
-                              onMouseEnter={() => setSelectedIndex(index)}
-                            >
-                              <div className="quick-switcher-item-header">
-                                <span className="quick-switcher-item-name">
-                                  {theme.metadata.name}
-                                  {isCurrent && ' (current)'}
-                                </span>
-                                {isRecent && (
-                                  <span className="quick-switcher-item-badge">Recent</span>
-                                )}
-                              </div>
-                              <div className="quick-switcher-item-description">
-                                {theme.metadata.description}
-                              </div>
-                              <div className="quick-switcher-item-colors">
-                                {[
-                                  theme.metadata.colors.background,
-                                  theme.metadata.colors.red,
-                                  theme.metadata.colors.green,
-                                  theme.metadata.colors.yellow,
-                                  theme.metadata.colors.blue,
-                                  theme.metadata.colors.magenta,
-                                ].map((color, i) => (
-                                  <div
-                                    key={i}
-                                    className="quick-switcher-color-swatch"
-                                    style={{ backgroundColor: color }}
-                                  />
-                                ))}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </>
-                    )}
-                  </>
+                  <CommandItem
+                    key={theme.name}
+                    value={theme.name}
+                    onSelect={() => handleApplyTheme(theme.name)}
+                    className="flex flex-col items-start py-3 px-3 cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2 w-full">
+                      <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                      <span className="font-medium">{theme.metadata.name}</span>
+                      {isCurrent && (
+                        <span className="ml-auto text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                          Current
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5 pl-6">
+                      {theme.metadata.description}
+                    </p>
+                    <div className="pl-6">
+                      <ThemeColorSwatches colors={theme.metadata.colors} />
+                    </div>
+                  </CommandItem>
                 );
-              })()}
-            </>
+              })}
+            </CommandGroup>
           )}
-        </div>
-        <div className="quick-switcher-footer">
-          <span className="quick-switcher-hint">↑↓ Navigate</span>
-          <span className="quick-switcher-hint">Enter Apply</span>
-          <span className="quick-switcher-hint">Esc Close</span>
-        </div>
-      </div>
+
+          {/* All Themes Section */}
+          {others.length > 0 && (
+            <CommandGroup heading={favorites.length > 0 ? "All Themes" : undefined}>
+              {others.map((theme) => {
+                const isCurrent = state?.currentTheme === theme.name;
+                const isRecent = preferences?.recentThemes.includes(theme.name);
+
+                return (
+                  <CommandItem
+                    key={theme.name}
+                    value={theme.name}
+                    onSelect={() => handleApplyTheme(theme.name)}
+                    className="flex flex-col items-start py-3 px-3 cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2 w-full">
+                      <span className="font-medium">{theme.metadata.name}</span>
+                      {isRecent && (
+                        <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                          Recent
+                        </span>
+                      )}
+                      {isCurrent && (
+                        <span className="ml-auto text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                          Current
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {theme.metadata.description}
+                    </p>
+                    <ThemeColorSwatches colors={theme.metadata.colors} />
+                  </CommandItem>
+                );
+              })}
+            </CommandGroup>
+          )}
+        </CommandList>
+
+        {/* Footer with keyboard hints */}
+        {hasResults && (
+          <div className="flex items-center justify-center gap-4 px-4 py-2 border-t border-border text-xs text-muted-foreground">
+            <span>
+              <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px] font-mono">↑↓</kbd>
+              {' '}Navigate
+            </span>
+            <span>
+              <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px] font-mono">↵</kbd>
+              {' '}Apply
+            </span>
+            <span>
+              <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px] font-mono">esc</kbd>
+              {' '}Close
+            </span>
+          </div>
+        )}
+      </Command>
     </div>
   );
 }

@@ -2,6 +2,25 @@ import { useState, useEffect } from 'react';
 import type { Preferences, Theme } from '../../shared/types';
 import { ShortcutRecorder } from './ShortcutRecorder';
 import { AboutDialog } from './AboutDialog';
+import { Switch } from '@/renderer/components/ui/switch';
+import { Button } from '@/renderer/components/ui/button';
+import { Checkbox } from '@/renderer/components/ui/checkbox';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/renderer/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/renderer/components/ui/dialog';
+import { Label } from '@/renderer/components/ui/label';
 
 export function SettingsView() {
   const [preferences, setPreferences] = useState<Preferences | null>(null);
@@ -233,7 +252,9 @@ export function SettingsView() {
   if (loading) {
     return (
       <div className="settings-view">
-        <div className="loading-spinner">Loading settings...</div>
+        <div className="flex items-center justify-center py-12 text-muted-foreground">
+          Loading settings...
+        </div>
       </div>
     );
   }
@@ -241,11 +262,11 @@ export function SettingsView() {
   if (error) {
     return (
       <div className="settings-view">
-        <div className="error-state">
-          <p>{error}</p>
-          <button className="retry-button" onClick={loadPreferences}>
+        <div className="flex flex-col items-center justify-center py-12 gap-4">
+          <p className="text-destructive">{error}</p>
+          <Button variant="outline" onClick={loadPreferences}>
             Retry
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -256,281 +277,254 @@ export function SettingsView() {
   return (
     <div className="settings-view">
       <div className="settings-header">
-        <h2>Settings</h2>
-        <p className="settings-description">
+        <h2 className="text-2xl font-bold">Settings</h2>
+        <p className="text-muted-foreground mt-1">
           Configure MacTheme preferences and behavior
         </p>
       </div>
 
-      <div className="settings-content">
+      <div className="settings-content space-y-8 mt-6">
         {/* General Section */}
-        <section className="settings-section">
-          <h3 className="section-title">General</h3>
-          <div className="setting-item">
-            <div className="setting-info">
-              <label className="setting-label">Start at Login</label>
-              <p className="setting-description">
-                Launch MacTheme automatically when you log in
-              </p>
-            </div>
-            <label className="toggle-switch">
-              <input
-                type="checkbox"
-                checked={preferences.startAtLogin}
-                onChange={(e) => updatePreference('startAtLogin', e.target.checked)}
-              />
-              <span className="toggle-slider"></span>
-            </label>
-          </div>
+        <section className="space-y-4">
+          <h3 className="text-lg font-semibold">General</h3>
 
-          <div className="setting-item">
-            <div className="setting-info">
-              <label className="setting-label">Show in Menu Bar</label>
-              <p className="setting-description">
-                Display MacTheme icon in the menu bar for quick access
-              </p>
-            </div>
-            <label className="toggle-switch">
-              <input
-                type="checkbox"
-                checked={preferences.showInMenuBar}
-                onChange={(e) => updatePreference('showInMenuBar', e.target.checked)}
-              />
-              <span className="toggle-slider"></span>
-            </label>
-          </div>
+          <SettingItem
+            label="Start at Login"
+            description="Launch MacTheme automatically when you log in"
+          >
+            <Switch
+              checked={preferences.startAtLogin}
+              onCheckedChange={(checked) => updatePreference('startAtLogin', checked)}
+            />
+          </SettingItem>
+
+          <SettingItem
+            label="Show in Menu Bar"
+            description="Display MacTheme icon in the menu bar for quick access"
+          >
+            <Switch
+              checked={preferences.showInMenuBar}
+              onCheckedChange={(checked) => updatePreference('showInMenuBar', checked)}
+            />
+          </SettingItem>
         </section>
 
         {/* Auto-Switching Section */}
-        <section className="settings-section">
-          <h3 className="section-title">Auto-Switching</h3>
+        <section className="space-y-4">
+          <h3 className="text-lg font-semibold">Auto-Switching</h3>
 
-          <div className="setting-item">
-            <div className="setting-info">
-              <label className="setting-label">Enable Auto-Switching</label>
-              <p className="setting-description">
-                Automatically change themes based on system appearance or schedule
-              </p>
-            </div>
-            <label className="toggle-switch">
-              <input
-                type="checkbox"
-                checked={preferences.autoSwitch.enabled}
-                onChange={(e) => updateAutoSwitch({ enabled: e.target.checked })}
-              />
-              <span className="toggle-slider"></span>
-            </label>
-          </div>
+          <SettingItem
+            label="Enable Auto-Switching"
+            description="Automatically change themes based on system appearance or schedule"
+          >
+            <Switch
+              checked={preferences.autoSwitch.enabled}
+              onCheckedChange={(checked) => updateAutoSwitch({ enabled: checked })}
+            />
+          </SettingItem>
 
           {preferences.autoSwitch.enabled && (
             <>
-              <div className="setting-item">
-                <div className="setting-info">
-                  <label className="setting-label">Mode</label>
-                  <p className="setting-description">
-                    Choose how themes switch automatically
-                  </p>
-                </div>
-                <select
-                  className="setting-select"
+              <SettingItem
+                label="Mode"
+                description="Choose how themes switch automatically"
+              >
+                <Select
                   value={preferences.autoSwitch.mode}
-                  onChange={(e) => updateAutoSwitch({ mode: e.target.value as 'system' | 'schedule' | 'sunset' })}
+                  onValueChange={(value) => updateAutoSwitch({ mode: value as 'system' | 'schedule' | 'sunset' })}
                 >
-                  <option value="system">Match System Appearance</option>
-                  <option value="schedule">Schedule</option>
-                  <option value="sunset">Sunrise/Sunset</option>
-                </select>
-              </div>
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="system">Match System Appearance</SelectItem>
+                    <SelectItem value="schedule">Schedule</SelectItem>
+                    <SelectItem value="sunset">Sunrise/Sunset</SelectItem>
+                  </SelectContent>
+                </Select>
+              </SettingItem>
 
               {preferences.autoSwitch.mode === 'system' && (
-                <div className="auto-switch-themes">
-                  <div className="setting-item">
-                    <div className="setting-info">
-                      <label className="setting-label">Light Theme</label>
-                      <p className="setting-description">
-                        Theme to use in light mode (Current: {systemAppearance === 'light' ? 'Active' : 'Inactive'})
-                      </p>
-                    </div>
-                    <select
-                      className="setting-select"
-                      value={preferences.defaultLightTheme}
-                      onChange={(e) => updatePreference('defaultLightTheme', e.target.value)}
+                <div className="space-y-4 pl-4 border-l-2 border-border">
+                  <SettingItem
+                    label="Light Theme"
+                    description={`Theme to use in light mode (Current: ${systemAppearance === 'light' ? 'Active' : 'Inactive'})`}
+                  >
+                    <Select
+                      value={preferences.defaultLightTheme || ''}
+                      onValueChange={(value) => updatePreference('defaultLightTheme', value)}
                     >
-                      <option value="">Select a theme...</option>
-                      {themes
-                        .filter(t => t.isLight)
-                        .map(theme => (
-                          <option key={theme.name} value={theme.name}>
+                      <SelectTrigger className="w-[200px]">
+                        <SelectValue placeholder="Select a theme..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {themes.filter(t => t.isLight).map(theme => (
+                          <SelectItem key={theme.name} value={theme.name}>
                             {theme.metadata.name}
-                          </option>
+                          </SelectItem>
                         ))}
-                    </select>
-                  </div>
+                      </SelectContent>
+                    </Select>
+                  </SettingItem>
 
-                  <div className="setting-item">
-                    <div className="setting-info">
-                      <label className="setting-label">Dark Theme</label>
-                      <p className="setting-description">
-                        Theme to use in dark mode (Current: {systemAppearance === 'dark' ? 'Active' : 'Inactive'})
-                      </p>
-                    </div>
-                    <select
-                      className="setting-select"
-                      value={preferences.defaultDarkTheme}
-                      onChange={(e) => updatePreference('defaultDarkTheme', e.target.value)}
+                  <SettingItem
+                    label="Dark Theme"
+                    description={`Theme to use in dark mode (Current: ${systemAppearance === 'dark' ? 'Active' : 'Inactive'})`}
+                  >
+                    <Select
+                      value={preferences.defaultDarkTheme || ''}
+                      onValueChange={(value) => updatePreference('defaultDarkTheme', value)}
                     >
-                      <option value="">Select a theme...</option>
-                      {themes
-                        .filter(t => !t.isLight)
-                        .map(theme => (
-                          <option key={theme.name} value={theme.name}>
+                      <SelectTrigger className="w-[200px]">
+                        <SelectValue placeholder="Select a theme..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {themes.filter(t => !t.isLight).map(theme => (
+                          <SelectItem key={theme.name} value={theme.name}>
                             {theme.metadata.name}
-                          </option>
+                          </SelectItem>
                         ))}
-                    </select>
-                  </div>
+                      </SelectContent>
+                    </Select>
+                  </SettingItem>
                 </div>
               )}
 
               {preferences.autoSwitch.mode === 'schedule' && (
-                <div className="auto-switch-schedule">
-                  <div className="setting-item">
-                    <div className="setting-info">
-                      <label className="setting-label">Light Theme Time</label>
-                      <p className="setting-description">
-                        Time to switch to light theme
-                      </p>
-                    </div>
+                <div className="space-y-4 pl-4 border-l-2 border-border">
+                  <SettingItem
+                    label="Light Theme Time"
+                    description="Time to switch to light theme"
+                  >
                     <input
                       type="time"
-                      className="setting-input"
+                      className="flex h-9 w-[140px] rounded-[8px] border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                       value={preferences.schedule?.light || '06:00'}
                       onChange={(e) => updateSchedule({ light: e.target.value })}
                     />
-                  </div>
+                  </SettingItem>
 
-                  <div className="setting-item">
-                    <div className="setting-info">
-                      <label className="setting-label">Dark Theme Time</label>
-                      <p className="setting-description">
-                        Time to switch to dark theme
-                      </p>
-                    </div>
+                  <SettingItem
+                    label="Dark Theme Time"
+                    description="Time to switch to dark theme"
+                  >
                     <input
                       type="time"
-                      className="setting-input"
+                      className="flex h-9 w-[140px] rounded-[8px] border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                       value={preferences.schedule?.dark || '18:00'}
                       onChange={(e) => updateSchedule({ dark: e.target.value })}
                     />
-                  </div>
+                  </SettingItem>
 
-                  <div className="setting-item">
-                    <div className="setting-info">
-                      <label className="setting-label">Light Theme</label>
-                    </div>
-                    <select
-                      className="setting-select"
-                      value={preferences.defaultLightTheme}
-                      onChange={(e) => updatePreference('defaultLightTheme', e.target.value)}
+                  <SettingItem label="Light Theme">
+                    <Select
+                      value={preferences.defaultLightTheme || ''}
+                      onValueChange={(value) => updatePreference('defaultLightTheme', value)}
                     >
-                      <option value="">Select a theme...</option>
-                      {themes.map(theme => (
-                        <option key={theme.name} value={theme.name}>
-                          {theme.metadata.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                      <SelectTrigger className="w-[200px]">
+                        <SelectValue placeholder="Select a theme..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {themes.map(theme => (
+                          <SelectItem key={theme.name} value={theme.name}>
+                            {theme.metadata.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </SettingItem>
 
-                  <div className="setting-item">
-                    <div className="setting-info">
-                      <label className="setting-label">Dark Theme</label>
-                    </div>
-                    <select
-                      className="setting-select"
-                      value={preferences.defaultDarkTheme}
-                      onChange={(e) => updatePreference('defaultDarkTheme', e.target.value)}
+                  <SettingItem label="Dark Theme">
+                    <Select
+                      value={preferences.defaultDarkTheme || ''}
+                      onValueChange={(value) => updatePreference('defaultDarkTheme', value)}
                     >
-                      <option value="">Select a theme...</option>
-                      {themes.map(theme => (
-                        <option key={theme.name} value={theme.name}>
-                          {theme.metadata.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                      <SelectTrigger className="w-[200px]">
+                        <SelectValue placeholder="Select a theme..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {themes.map(theme => (
+                          <SelectItem key={theme.name} value={theme.name}>
+                            {theme.metadata.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </SettingItem>
                 </div>
               )}
 
               {preferences.autoSwitch.mode === 'sunset' && (
-                <div className="auto-switch-sunset">
-                  <div className="info-box">
-                    <p>
+                <div className="space-y-4 pl-4 border-l-2 border-border">
+                  <div className="rounded-[10px] bg-muted p-4 text-sm">
+                    <p className="text-muted-foreground">
                       Themes will switch automatically based on sunrise and sunset times
                       for your location.
                     </p>
                   </div>
 
-                  {/* Display sunrise/sunset times */}
-                  <div className="sunset-times">
+                  {/* Sunrise/Sunset times display */}
+                  <div className="rounded-[10px] border border-border p-4">
                     {loadingSunTimes && (
-                      <p className="loading-text">Loading sunrise and sunset times...</p>
+                      <p className="text-sm text-muted-foreground">Loading sunrise and sunset times...</p>
                     )}
                     {!loadingSunTimes && sunriseSunset && (
-                      <div className="sun-times-display">
-                        <div className="sun-time-item">
-                          <span className="sun-time-label">🌅 Sunrise:</span>
-                          <span className="sun-time-value">{sunriseSunset.sunrise}</span>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">🌅</span>
+                          <span className="text-sm font-medium">Sunrise:</span>
+                          <span className="text-sm text-muted-foreground">{sunriseSunset.sunrise}</span>
                         </div>
-                        <div className="sun-time-item">
-                          <span className="sun-time-label">🌇 Sunset:</span>
-                          <span className="sun-time-value">{sunriseSunset.sunset}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">🌇</span>
+                          <span className="text-sm font-medium">Sunset:</span>
+                          <span className="text-sm text-muted-foreground">{sunriseSunset.sunset}</span>
                         </div>
-                        <div className="sun-time-location">
-                          <span className="location-text">Location: {sunriseSunset.location}</span>
+                        <div className="text-xs text-muted-foreground mt-2">
+                          Location: {sunriseSunset.location}
                         </div>
                       </div>
                     )}
                     {!loadingSunTimes && !sunriseSunset && (
-                      <p className="error-text">Unable to calculate sunrise/sunset times</p>
+                      <p className="text-sm text-destructive">Unable to calculate sunrise/sunset times</p>
                     )}
                   </div>
 
-                  <div className="setting-item">
-                    <div className="setting-info">
-                      <label className="setting-label">Day Theme</label>
-                    </div>
-                    <select
-                      className="setting-select"
-                      value={preferences.defaultLightTheme}
-                      onChange={(e) => updatePreference('defaultLightTheme', e.target.value)}
+                  <SettingItem label="Day Theme">
+                    <Select
+                      value={preferences.defaultLightTheme || ''}
+                      onValueChange={(value) => updatePreference('defaultLightTheme', value)}
                     >
-                      <option value="">Select a theme...</option>
-                      {themes.map(theme => (
-                        <option key={theme.name} value={theme.name}>
-                          {theme.metadata.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                      <SelectTrigger className="w-[200px]">
+                        <SelectValue placeholder="Select a theme..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {themes.map(theme => (
+                          <SelectItem key={theme.name} value={theme.name}>
+                            {theme.metadata.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </SettingItem>
 
-                  <div className="setting-item">
-                    <div className="setting-info">
-                      <label className="setting-label">Night Theme</label>
-                    </div>
-                    <select
-                      className="setting-select"
-                      value={preferences.defaultDarkTheme}
-                      onChange={(e) => updatePreference('defaultDarkTheme', e.target.value)}
+                  <SettingItem label="Night Theme">
+                    <Select
+                      value={preferences.defaultDarkTheme || ''}
+                      onValueChange={(value) => updatePreference('defaultDarkTheme', value)}
                     >
-                      <option value="">Select a theme...</option>
-                      {themes.map(theme => (
-                        <option key={theme.name} value={theme.name}>
-                          {theme.metadata.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                      <SelectTrigger className="w-[200px]">
+                        <SelectValue placeholder="Select a theme..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {themes.map(theme => (
+                          <SelectItem key={theme.name} value={theme.name}>
+                            {theme.metadata.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </SettingItem>
                 </div>
               )}
             </>
@@ -538,63 +532,46 @@ export function SettingsView() {
         </section>
 
         {/* Notifications Section */}
-        <section className="settings-section">
-          <h3 className="section-title">Notifications</h3>
+        <section className="space-y-4">
+          <h3 className="text-lg font-semibold">Notifications</h3>
 
-          <div className="setting-item">
-            <div className="setting-info">
-              <label className="setting-label">Show Notifications on Theme Change</label>
-              <p className="setting-description">
-                Display a notification when you manually apply a theme
-              </p>
-            </div>
-            <label className="toggle-switch">
-              <input
-                type="checkbox"
-                checked={preferences.notifications?.onThemeChange ?? preferences.showNotifications ?? true}
-                onChange={(e) => updatePreference('notifications', {
-                  ...preferences.notifications,
-                  onThemeChange: e.target.checked,
-                  onScheduledSwitch: preferences.notifications?.onScheduledSwitch ?? preferences.showNotifications ?? true
-                })}
-              />
-              <span className="toggle-slider"></span>
-            </label>
-          </div>
+          <SettingItem
+            label="Show Notifications on Theme Change"
+            description="Display a notification when you manually apply a theme"
+          >
+            <Switch
+              checked={preferences.notifications?.onThemeChange ?? preferences.showNotifications ?? true}
+              onCheckedChange={(checked) => updatePreference('notifications', {
+                ...preferences.notifications,
+                onThemeChange: checked,
+                onScheduledSwitch: preferences.notifications?.onScheduledSwitch ?? preferences.showNotifications ?? true
+              })}
+            />
+          </SettingItem>
 
-          <div className="setting-item">
-            <div className="setting-info">
-              <label className="setting-label">Show Notifications on Scheduled Switch</label>
-              <p className="setting-description">
-                Display a notification when themes auto-switch based on schedule or system appearance
-              </p>
-            </div>
-            <label className="toggle-switch">
-              <input
-                type="checkbox"
-                checked={preferences.notifications?.onScheduledSwitch ?? preferences.showNotifications ?? true}
-                onChange={(e) => updatePreference('notifications', {
-                  ...preferences.notifications,
-                  onThemeChange: preferences.notifications?.onThemeChange ?? preferences.showNotifications ?? true,
-                  onScheduledSwitch: e.target.checked
-                })}
-              />
-              <span className="toggle-slider"></span>
-            </label>
-          </div>
+          <SettingItem
+            label="Show Notifications on Scheduled Switch"
+            description="Display a notification when themes auto-switch based on schedule or system appearance"
+          >
+            <Switch
+              checked={preferences.notifications?.onScheduledSwitch ?? preferences.showNotifications ?? true}
+              onCheckedChange={(checked) => updatePreference('notifications', {
+                ...preferences.notifications,
+                onThemeChange: preferences.notifications?.onThemeChange ?? preferences.showNotifications ?? true,
+                onScheduledSwitch: checked
+              })}
+            />
+          </SettingItem>
         </section>
 
         {/* Keyboard Shortcuts Section */}
-        <section className="settings-section">
-          <h3 className="section-title">Keyboard Shortcuts</h3>
+        <section className="space-y-4">
+          <h3 className="text-lg font-semibold">Keyboard Shortcuts</h3>
 
-          <div className="setting-item">
-            <div className="setting-info">
-              <label className="setting-label">Quick Switcher</label>
-              <p className="setting-description">
-                Global shortcut to open quick theme switcher
-              </p>
-            </div>
+          <SettingItem
+            label="Quick Switcher"
+            description="Global shortcut to open quick theme switcher"
+          >
             <ShortcutRecorder
               value={preferences.keyboardShortcuts.quickSwitcher}
               onChange={(shortcut) => updatePreference('keyboardShortcuts', {
@@ -602,22 +579,19 @@ export function SettingsView() {
               })}
               placeholder="⌘⇧T"
             />
-          </div>
+          </SettingItem>
         </section>
 
         {/* Backup & Restore Section */}
-        <section className="settings-section">
-          <h3 className="section-title">Backup & Restore</h3>
+        <section className="space-y-4">
+          <h3 className="text-lg font-semibold">Backup & Restore</h3>
 
-          <div className="setting-item">
-            <div className="setting-info">
-              <label className="setting-label">Backup Preferences</label>
-              <p className="setting-description">
-                Export your settings to a JSON file for safekeeping or migration
-              </p>
-            </div>
-            <button
-              className="secondary-button"
+          <SettingItem
+            label="Backup Preferences"
+            description="Export your settings to a JSON file for safekeeping or migration"
+          >
+            <Button
+              variant="secondary"
               onClick={async () => {
                 try {
                   setSaving(true);
@@ -635,18 +609,15 @@ export function SettingsView() {
               disabled={saving}
             >
               {saving ? 'Backing up...' : 'Backup...'}
-            </button>
-          </div>
+            </Button>
+          </SettingItem>
 
-          <div className="setting-item">
-            <div className="setting-info">
-              <label className="setting-label">Restore Preferences</label>
-              <p className="setting-description">
-                Import settings from a backup file
-              </p>
-            </div>
-            <button
-              className="secondary-button"
+          <SettingItem
+            label="Restore Preferences"
+            description="Import settings from a backup file"
+          >
+            <Button
+              variant="secondary"
               onClick={async () => {
                 try {
                   if (!confirm('Restoring preferences will overwrite your current settings. Continue?')) {
@@ -668,49 +639,37 @@ export function SettingsView() {
               disabled={saving}
             >
               {saving ? 'Restoring...' : 'Restore...'}
-            </button>
-          </div>
+            </Button>
+          </SettingItem>
 
-          <div className="setting-item">
-            <div className="setting-info">
-              <label className="setting-label">Export Themes</label>
-              <p className="setting-description">
-                Create a backup of your themes to share or restore later
-              </p>
-            </div>
-            <button
-              className="secondary-button"
-              onClick={() => setShowExportDialog(true)}
-            >
+          <SettingItem
+            label="Export Themes"
+            description="Create a backup of your themes to share or restore later"
+          >
+            <Button variant="secondary" onClick={() => setShowExportDialog(true)}>
               Export...
-            </button>
-          </div>
+            </Button>
+          </SettingItem>
 
-          <div className="setting-item">
-            <div className="setting-info">
-              <label className="setting-label">Import Themes</label>
-              <p className="setting-description">
-                Restore themes from a backup file
-              </p>
-            </div>
-            <button
-              className="secondary-button"
+          <SettingItem
+            label="Import Themes"
+            description="Restore themes from a backup file"
+          >
+            <Button
+              variant="secondary"
               onClick={handleImportThemes}
               disabled={importing}
             >
               {importing ? 'Importing...' : 'Import...'}
-            </button>
-          </div>
+            </Button>
+          </SettingItem>
 
-          <div className="setting-item">
-            <div className="setting-info">
-              <label className="setting-label">Reset Preferences</label>
-              <p className="setting-description">
-                Reset all settings to defaults (themes are preserved)
-              </p>
-            </div>
-            <button
-              className="secondary-button danger"
+          <SettingItem
+            label="Reset Preferences"
+            description="Reset all settings to defaults (themes are preserved)"
+          >
+            <Button
+              variant="destructive"
               onClick={() => {
                 if (confirm('Are you sure you want to reset all preferences to defaults?')) {
                   alert('Reset functionality coming soon');
@@ -718,49 +677,38 @@ export function SettingsView() {
               }}
             >
               Reset
-            </button>
-          </div>
+            </Button>
+          </SettingItem>
         </section>
 
         {/* Developer & Logging Section */}
-        <section className="settings-section">
-          <h3 className="section-title">Developer & Logging</h3>
+        <section className="space-y-4">
+          <h3 className="text-lg font-semibold">Developer & Logging</h3>
 
-          <div className="setting-item">
-            <div className="setting-info">
-              <label className="setting-label">Debug Logging</label>
-              <p className="setting-description">
-                Enable detailed debug logging for troubleshooting
-              </p>
-            </div>
-            <label className="toggle-switch">
-              <input
-                type="checkbox"
-                checked={debugLogging}
-                onChange={async (e) => {
-                  const enabled = e.target.checked;
-                  setDebugLogging(enabled);
-                  try {
-                    await window.electronAPI.setDebugLogging(enabled);
-                  } catch (err) {
-                    console.error('Failed to toggle debug logging:', err);
-                    setDebugLogging(!enabled); // Revert on error
-                  }
-                }}
-              />
-              <span className="toggle-slider"></span>
-            </label>
-          </div>
+          <SettingItem
+            label="Debug Logging"
+            description="Enable detailed debug logging for troubleshooting"
+          >
+            <Switch
+              checked={debugLogging}
+              onCheckedChange={async (checked) => {
+                setDebugLogging(checked);
+                try {
+                  await window.electronAPI.setDebugLogging(checked);
+                } catch (err) {
+                  console.error('Failed to toggle debug logging:', err);
+                  setDebugLogging(!checked); // Revert on error
+                }
+              }}
+            />
+          </SettingItem>
 
-          <div className="setting-item">
-            <div className="setting-info">
-              <label className="setting-label">View Log Files</label>
-              <p className="setting-description">
-                {logFile ? `Located at: ${logFile}` : 'View application logs for debugging'}
-              </p>
-            </div>
-            <button
-              className="secondary-button"
+          <SettingItem
+            label="View Log Files"
+            description={logFile ? `Located at: ${logFile}` : 'View application logs for debugging'}
+          >
+            <Button
+              variant="secondary"
               onClick={async () => {
                 try {
                   const logDir = await window.electronAPI.getLogDirectory();
@@ -772,18 +720,15 @@ export function SettingsView() {
               }}
             >
               Open Log Folder
-            </button>
-          </div>
+            </Button>
+          </SettingItem>
 
-          <div className="setting-item">
-            <div className="setting-info">
-              <label className="setting-label">Clear Log Files</label>
-              <p className="setting-description">
-                Delete all log files to free up space
-              </p>
-            </div>
-            <button
-              className="secondary-button danger"
+          <SettingItem
+            label="Clear Log Files"
+            description="Delete all log files to free up space"
+          >
+            <Button
+              variant="destructive"
               onClick={async () => {
                 if (confirm('Are you sure you want to delete all log files?')) {
                   try {
@@ -797,155 +742,151 @@ export function SettingsView() {
               }}
             >
               Clear Logs
-            </button>
-          </div>
+            </Button>
+          </SettingItem>
         </section>
 
         {/* Help & About Section */}
-        <section className="settings-section">
-          <h3 className="section-title">Help & About</h3>
+        <section className="space-y-4">
+          <h3 className="text-lg font-semibold">Help & About</h3>
 
-          <div className="setting-item">
-            <div className="setting-info">
-              <label className="setting-label">Check for Updates</label>
-              <p className="setting-description">
-                {updateInfo ? (
-                  updateInfo.error ? (
-                    <span className="error-text">{updateInfo.error}</span>
-                  ) : updateInfo.hasUpdate ? (
-                    <span className="success-text">
-                      Update available: v{updateInfo.latestVersion}
-                    </span>
-                  ) : (
-                    <span>You're up to date (v{updateInfo.currentVersion})</span>
-                  )
+          <SettingItem
+            label="Check for Updates"
+            description={
+              updateInfo ? (
+                updateInfo.error ? (
+                  <span className="text-destructive">{updateInfo.error}</span>
+                ) : updateInfo.hasUpdate ? (
+                  <span className="text-primary">Update available: v{updateInfo.latestVersion}</span>
                 ) : (
-                  'Check if a newer version of MacTheme is available'
-                )}
-              </p>
-            </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button
-                className="secondary-button"
+                  <span>You're up to date (v{updateInfo.currentVersion})</span>
+                )
+              ) : (
+                'Check if a newer version of MacTheme is available'
+              )
+            }
+          >
+            <div className="flex gap-2">
+              <Button
+                variant="secondary"
                 onClick={handleCheckForUpdates}
                 disabled={checkingUpdates}
               >
                 {checkingUpdates ? 'Checking...' : 'Check for Updates'}
-              </button>
+              </Button>
               {updateInfo?.hasUpdate && updateInfo.updateUrl && (
-                <button
-                  className="primary-button"
-                  onClick={() => window.electronAPI.openExternal(updateInfo.updateUrl!)}
-                >
+                <Button onClick={() => window.electronAPI.openExternal(updateInfo.updateUrl!)}>
                   Download Update
-                </button>
+                </Button>
               )}
             </div>
-          </div>
+          </SettingItem>
 
-          <div className="setting-item">
-            <div className="setting-info">
-              <label className="setting-label">Help & Documentation</label>
-              <p className="setting-description">
-                View user guide, troubleshooting tips, and feature documentation
-              </p>
-            </div>
-            <button
-              className="secondary-button"
-              onClick={() => handleOpenHelp()}
-            >
+          <SettingItem
+            label="Help & Documentation"
+            description="View user guide, troubleshooting tips, and feature documentation"
+          >
+            <Button variant="secondary" onClick={() => handleOpenHelp()}>
               Open Help
-            </button>
-          </div>
+            </Button>
+          </SettingItem>
 
-          <div className="setting-item">
-            <div className="setting-info">
-              <label className="setting-label">About MacTheme</label>
-              <p className="setting-description">
-                View application information, version, and credits
-              </p>
-            </div>
-            <button
-              className="secondary-button"
-              onClick={() => setShowAboutDialog(true)}
-            >
+          <SettingItem
+            label="About MacTheme"
+            description="View application information, version, and credits"
+          >
+            <Button variant="secondary" onClick={() => setShowAboutDialog(true)}>
               About...
-            </button>
-          </div>
+            </Button>
+          </SettingItem>
         </section>
       </div>
 
       {saving && (
-        <div className="save-indicator">
+        <div className="fixed bottom-4 right-4 bg-primary text-primary-foreground px-4 py-2 rounded-[10px] shadow-lg text-sm">
           Saving...
         </div>
       )}
 
       {/* Export Themes Dialog */}
-      {showExportDialog && (
-        <div className="modal-overlay" onClick={() => !exporting && setShowExportDialog(false)}>
-          <div className="modal-content export-dialog" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Export Themes</h3>
-              <button
-                className="close-button"
-                onClick={() => setShowExportDialog(false)}
-                disabled={exporting}
+      <Dialog open={showExportDialog} onOpenChange={(open) => !exporting && setShowExportDialog(open)}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Export Themes</DialogTitle>
+            <DialogDescription>
+              Select themes to export. Each theme will be saved as a .mactheme file.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="max-h-[300px] overflow-y-auto space-y-2 py-4">
+            {themes.map(theme => (
+              <label
+                key={theme.name}
+                className="flex items-center gap-3 p-3 rounded-[8px] hover:bg-accent cursor-pointer transition-colors"
               >
-                ×
-              </button>
-            </div>
-
-            <div className="modal-body">
-              <p className="dialog-description">
-                Select themes to export. Each theme will be saved as a .mactheme file.
-              </p>
-
-              <div className="theme-selection-list">
-                {themes.map(theme => (
-                  <label key={theme.name} className="theme-checkbox-item">
-                    <input
-                      type="checkbox"
-                      checked={selectedThemesForExport.includes(theme.name)}
-                      onChange={() => toggleThemeSelection(theme.name)}
-                      disabled={exporting}
-                    />
-                    <span className="theme-checkbox-label">
-                      <span className="theme-name">{theme.metadata.name}</span>
-                      {theme.isCustom && (
-                        <span className="theme-badge custom">Custom</span>
-                      )}
-                    </span>
-                  </label>
-                ))}
-              </div>
-
-              <div className="dialog-actions">
-                <button
-                  className="secondary-button"
-                  onClick={() => setShowExportDialog(false)}
+                <Checkbox
+                  checked={selectedThemesForExport.includes(theme.name)}
+                  onCheckedChange={() => toggleThemeSelection(theme.name)}
                   disabled={exporting}
-                >
-                  Cancel
-                </button>
-                <button
-                  className="primary-button"
-                  onClick={handleExportThemes}
-                  disabled={exporting || selectedThemesForExport.length === 0}
-                >
-                  {exporting ? 'Exporting...' : `Export ${selectedThemesForExport.length || ''} Theme${selectedThemesForExport.length !== 1 ? 's' : ''}`}
-                </button>
-              </div>
-            </div>
+                />
+                <span className="flex-1">
+                  <span className="font-medium">{theme.metadata.name}</span>
+                  {theme.isCustom && (
+                    <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
+                      Custom
+                    </span>
+                  )}
+                </span>
+              </label>
+            ))}
           </div>
-        </div>
-      )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowExportDialog(false)}
+              disabled={exporting}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleExportThemes}
+              disabled={exporting || selectedThemesForExport.length === 0}
+            >
+              {exporting ? 'Exporting...' : `Export ${selectedThemesForExport.length || ''} Theme${selectedThemesForExport.length !== 1 ? 's' : ''}`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* About Dialog */}
       <AboutDialog
         isOpen={showAboutDialog}
         onClose={() => setShowAboutDialog(false)}
       />
+    </div>
+  );
+}
+
+// Helper component for consistent setting item layout
+function SettingItem({
+  label,
+  description,
+  children,
+}: {
+  label: string;
+  description?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4 py-3">
+      <div className="flex-1 min-w-0">
+        <Label className="text-sm font-medium">{label}</Label>
+        {description && (
+          <p className="text-sm text-muted-foreground mt-0.5">{description}</p>
+        )}
+      </div>
+      <div className="shrink-0">{children}</div>
     </div>
   );
 }
