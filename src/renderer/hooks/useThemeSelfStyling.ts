@@ -53,7 +53,7 @@ export function useThemeSelfStyling(): {
     }
   }, [loadAndApplyTheme]);
 
-  // Listen for theme-applied events
+  // Listen for theme-applied events (from same window, e.g., ThemeGrid)
   useEffect(() => {
     const handleThemeApplied = () => {
       loadAndApplyTheme();
@@ -63,6 +63,20 @@ export function useThemeSelfStyling(): {
     return () => {
       window.removeEventListener(THEME_APPLIED_EVENT, handleThemeApplied);
     };
+  }, [loadAndApplyTheme]);
+
+  // Listen for IPC theme:changed events (from main process, e.g., scheduler, quick switcher)
+  useEffect(() => {
+    // This handles theme changes triggered from outside this window:
+    // - Scheduler applies a theme
+    // - Quick switcher applies a theme (separate window)
+    // - Tray menu applies a theme
+    window.electronAPI.onThemeChanged(() => {
+      console.log('Received theme:changed IPC event');
+      loadAndApplyTheme();
+    });
+    // Note: Electron IPC listeners don't return unsubscribe functions in this setup,
+    // but that's okay since this component lives for the app's lifetime
   }, [loadAndApplyTheme]);
 
   return {

@@ -41,6 +41,8 @@ import {
   createSymlink,
 } from '../utils/asyncFs';
 import { handleListWallpapers, handleApplyWallpaper } from './wallpaperHandlers';
+import type { ApplyOptions } from './systemHandlers';
+import { handleGetPreferences, handleSetPreferences } from './preferencesHandlers';
 
 /**
  * Theme name mapping for VS Code and Cursor
@@ -384,7 +386,7 @@ export async function updateCursorSettings(themeName: string, themePath: string)
 /**
  * Apply a theme
  */
-export async function handleApplyTheme(_event: any, name: string): Promise<void> {
+export async function handleApplyTheme(_event: any, name: string, options?: ApplyOptions): Promise<void> {
   logger.info(`Applying theme: ${name}`);
 
   try {
@@ -514,6 +516,25 @@ export async function handleApplyTheme(_event: any, name: string): Promise<void>
       logger.error('Failed to update preferences:', err);
     }
 
+    // If this is a manual apply (not from scheduler), disable scheduling
+    if (!options?.fromScheduler) {
+      try {
+        const currentPrefs = await handleGetPreferences();
+        if (currentPrefs.schedule?.enabled) {
+          logger.info('Manual theme apply detected, disabling scheduling');
+          await handleSetPreferences(null, {
+            ...currentPrefs,
+            schedule: {
+              ...currentPrefs.schedule,
+              enabled: false,
+            },
+          });
+        }
+      } catch (err) {
+        logger.error('Failed to disable scheduling after manual apply:', err);
+      }
+    }
+
     logger.info(`Theme applied successfully: ${name}`, { recentThemes: prefs.recentThemes.slice(0, 5) });
     logger.info(`Updated recent themes: ${prefs.recentThemes.slice(0, 5).join(', ')}`);
     logger.info(`Theme ${name} applied successfully`);
@@ -529,13 +550,14 @@ export async function handleApplyTheme(_event: any, name: string): Promise<void>
       notification.show();
     }
 
-    // Update tray menu with new recent themes
+    // Update tray menu with new recent themes and notify renderer of theme change
     try {
-      const { refreshTrayMenu, updateWindowTitle } = await import('../main');
+      const { refreshTrayMenu, updateWindowTitle, notifyRendererThemeChanged } = await import('../main');
       refreshTrayMenu();
       updateWindowTitle(name);
+      notifyRendererThemeChanged(name);
     } catch (err) {
-      logger.error('Failed to refresh tray menu:', err);
+      logger.error('Failed to update UI after theme change:', err);
     }
 
     // Update VS Code settings if enabled
@@ -601,11 +623,13 @@ export async function handleApplyTheme(_event: any, name: string): Promise<void>
     }
 
     // Automatically apply the first wallpaper from the theme
+    // Pass fromScheduler: true because this wallpaper is part of theme application,
+    // not a separate manual wallpaper change
     try {
       const wallpapers = await handleListWallpapers(null, name);
       if (wallpapers.length > 0) {
         logger.info(`Automatically applying first wallpaper: ${wallpapers[0]}`);
-        await handleApplyWallpaper(null, wallpapers[0]);
+        await handleApplyWallpaper(null, wallpapers[0], undefined, { fromScheduler: true });
       } else {
         logger.info('No wallpapers found in theme, skipping automatic wallpaper');
       }

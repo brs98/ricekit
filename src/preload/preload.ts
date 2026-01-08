@@ -53,6 +53,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('quick-switcher-opened', () => callback());
   },
 
+  // Theme change notification (from scheduler, quick switcher, etc.)
+  onThemeChanged: (callback: (themeName: string) => void) => {
+    ipcRenderer.on('theme:changed', (_event, themeName) => callback(themeName));
+  },
+
   // Utility operations
   openExternal: (url: string) => ipcRenderer.invoke('system:openExternal', url),
   openPath: (filePath: string) => ipcRenderer.invoke('system:openPath', filePath),

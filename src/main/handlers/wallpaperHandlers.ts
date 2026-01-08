@@ -23,6 +23,8 @@ import {
   readSymlink,
   createSymlink,
 } from '../utils/asyncFs';
+import type { ApplyOptions } from './systemHandlers';
+import { handleGetPreferences, handleSetPreferences } from './preferencesHandlers';
 
 /**
  * List wallpapers for a theme
@@ -136,7 +138,12 @@ async function handleGetThumbnailCacheStats(): Promise<{ count: number; sizeByte
 /**
  * Apply a wallpaper
  */
-export async function handleApplyWallpaper(_event: any, wallpaperPath: string, displayIndex?: number): Promise<void> {
+export async function handleApplyWallpaper(
+  _event: any,
+  wallpaperPath: string,
+  displayIndex?: number,
+  options?: ApplyOptions
+): Promise<void> {
   logger.info(
     `Applying wallpaper: ${wallpaperPath}`,
     displayIndex !== undefined ? `to display ${displayIndex}` : 'to all displays'
@@ -197,6 +204,25 @@ export async function handleApplyWallpaper(_event: any, wallpaperPath: string, d
     const state: State = await readJson<State>(statePath);
     state.currentWallpaper = wallpaperPath;
     await writeJson(statePath, state);
+
+    // If this is a manual apply (not from scheduler), disable scheduling
+    if (!options?.fromScheduler) {
+      try {
+        const prefs = await handleGetPreferences();
+        if (prefs.schedule?.enabled) {
+          logger.info('Manual wallpaper apply detected, disabling scheduling');
+          await handleSetPreferences(null, {
+            ...prefs,
+            schedule: {
+              ...prefs.schedule,
+              enabled: false,
+            },
+          });
+        }
+      } catch (err) {
+        logger.error('Failed to disable scheduling after manual apply:', err);
+      }
+    }
 
     // Show notification
     if (Notification.isSupported()) {

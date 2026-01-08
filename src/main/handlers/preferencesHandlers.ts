@@ -16,16 +16,16 @@ import { readJson, writeJson, copyFile } from '../utils/asyncFs';
 
 // Reference to scheduler functions - will be set by system handlers
 let schedulerCallbacks: {
-  startWallpaperScheduler: () => void;
-  stopWallpaperScheduler: () => void;
+  startScheduler: () => void;
+  stopScheduler: () => void;
 } | null = null;
 
 /**
  * Set scheduler callbacks for preference changes
  */
 export function setSchedulerCallbacks(callbacks: {
-  startWallpaperScheduler: () => void;
-  stopWallpaperScheduler: () => void;
+  startScheduler: () => void;
+  stopScheduler: () => void;
 }): void {
   schedulerCallbacks = callbacks;
 }
@@ -86,18 +86,18 @@ export async function handleSetPreferences(_event: any, prefs: Preferences): Pro
     }
   }
 
-  // Check if wallpaper schedule changed - restart scheduler to pick up new schedules
-  const oldScheduleEnabled = oldPrefs.wallpaperSchedule?.enabled || false;
-  const newScheduleEnabled = prefs.wallpaperSchedule?.enabled || false;
-  const oldSchedulesJson = JSON.stringify(oldPrefs.wallpaperSchedule?.schedules || []);
-  const newSchedulesJson = JSON.stringify(prefs.wallpaperSchedule?.schedules || []);
+  // Check if schedule changed - restart scheduler to pick up new schedules
+  const oldScheduleEnabled = oldPrefs.schedule?.enabled || false;
+  const newScheduleEnabled = prefs.schedule?.enabled || false;
+  const oldSchedulesJson = JSON.stringify(oldPrefs.schedule?.schedules || []);
+  const newSchedulesJson = JSON.stringify(prefs.schedule?.schedules || []);
 
   if (oldScheduleEnabled !== newScheduleEnabled || oldSchedulesJson !== newSchedulesJson) {
-    logger.info('Wallpaper schedule preferences changed, restarting scheduler');
+    logger.info('Schedule preferences changed, restarting scheduler');
     if (schedulerCallbacks) {
-      schedulerCallbacks.stopWallpaperScheduler();
+      schedulerCallbacks.stopScheduler();
       if (newScheduleEnabled) {
-        schedulerCallbacks.startWallpaperScheduler();
+        schedulerCallbacks.startScheduler();
       }
     }
   }

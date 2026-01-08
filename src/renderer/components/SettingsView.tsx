@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { Preferences, Theme } from '../../shared/types';
+import type { Preferences, Theme, ScheduleEntry } from '../../shared/types';
 import { ShortcutRecorder } from './ShortcutRecorder';
 import { AboutDialog } from './AboutDialog';
 import { Switch } from '@/renderer/components/ui/switch';
@@ -21,6 +21,175 @@ import {
   DialogFooter,
 } from '@/renderer/components/ui/dialog';
 import { Label } from '@/renderer/components/ui/label';
+import { Input } from '@/renderer/components/ui/input';
+
+// Schedule Modal component for managing theme/wallpaper schedules
+interface ScheduleModalProps {
+  themes: Theme[];
+  currentSchedules: ScheduleEntry[];
+  onClose: () => void;
+  onSave: (schedules: ScheduleEntry[]) => void;
+}
+
+const ScheduleModal: React.FC<ScheduleModalProps> = ({ themes, currentSchedules, onClose, onSave }) => {
+  const [schedules, setSchedules] = useState<ScheduleEntry[]>(currentSchedules);
+
+  const addSchedule = () => {
+    setSchedules([
+      ...schedules,
+      {
+        timeStart: '09:00',
+        timeEnd: '17:00',
+        type: 'theme',
+        themeName: themes[0]?.name || '',
+        name: 'New Schedule',
+      },
+    ]);
+  };
+
+  const updateSchedule = (index: number, field: keyof ScheduleEntry, value: string) => {
+    const updated = [...schedules];
+    updated[index] = { ...updated[index], [field]: value };
+    // Clear the other field when type changes
+    if (field === 'type') {
+      if (value === 'theme') {
+        updated[index].wallpaperPath = undefined;
+        updated[index].themeName = themes[0]?.name || '';
+      } else {
+        updated[index].themeName = undefined;
+        updated[index].wallpaperPath = '';
+      }
+    }
+    setSchedules(updated);
+  };
+
+  const removeSchedule = (index: number) => {
+    setSchedules(schedules.filter((_, i) => i !== index));
+  };
+
+  return (
+    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-auto">
+        <DialogHeader>
+          <DialogTitle>Schedule Manager</DialogTitle>
+          <DialogDescription>
+            Set different themes or wallpapers for different times of day. Schedules are checked every minute.
+            <br />
+            <span className="text-yellow-500">Note: Manually applying a theme or wallpaper will disable scheduling.</span>
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          {schedules.length === 0 && (
+            <div className="text-center py-8 text-muted-foreground">
+              No schedules yet. Click "Add Schedule" to create one.
+            </div>
+          )}
+
+          {schedules.map((schedule, index) => (
+            <div
+              key={index}
+              className="p-4 rounded-lg border border-border bg-card text-card-foreground space-y-3"
+            >
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Schedule name (e.g., Morning)"
+                  value={schedule.name || ''}
+                  onChange={(e) => updateSchedule(index, 'name', e.target.value)}
+                  className="flex-1"
+                />
+                <Button variant="outline" onClick={() => removeSchedule(index)}>
+                  Remove
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Start Time</Label>
+                  <Input
+                    type="time"
+                    value={schedule.timeStart}
+                    onChange={(e) => updateSchedule(index, 'timeStart', e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">End Time</Label>
+                  <Input
+                    type="time"
+                    value={schedule.timeEnd}
+                    onChange={(e) => updateSchedule(index, 'timeEnd', e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Type</Label>
+                  <Select
+                    value={schedule.type}
+                    onValueChange={(value) => updateSchedule(index, 'type', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="theme">Theme</SelectItem>
+                      <SelectItem value="wallpaper">Wallpaper</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs">{schedule.type === 'theme' ? 'Theme' : 'Wallpaper Path'}</Label>
+                  {schedule.type === 'theme' ? (
+                    <Select
+                      value={schedule.themeName || ''}
+                      onValueChange={(value) => updateSchedule(index, 'themeName', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select theme..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {themes.map((theme) => (
+                          <SelectItem key={theme.name} value={theme.name}>
+                            {theme.metadata.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Input
+                      placeholder="/path/to/wallpaper.jpg"
+                      value={schedule.wallpaperPath || ''}
+                      onChange={(e) => updateSchedule(index, 'wallpaperPath', e.target.value)}
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+
+          <Button
+            variant="outline"
+            onClick={addSchedule}
+            className="w-full"
+          >
+            + Add Schedule
+          </Button>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button onClick={() => onSave(schedules)}>
+            Save Schedules
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
 
 export function SettingsView() {
   const [preferences, setPreferences] = useState<Preferences | null>(null);
@@ -28,14 +197,12 @@ export function SettingsView() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [systemAppearance, setSystemAppearance] = useState<'light' | 'dark'>('light');
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [selectedThemesForExport, setSelectedThemesForExport] = useState<string[]>([]);
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
-  const [sunriseSunset, setSunriseSunset] = useState<{ sunrise: string; sunset: string; location: string } | null>(null);
-  const [loadingSunTimes, setLoadingSunTimes] = useState(false);
   const [showAboutDialog, setShowAboutDialog] = useState(false);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [debugLogging, setDebugLogging] = useState(false);
   const [logFile, setLogFile] = useState<string>('');
   const [checkingUpdates, setCheckingUpdates] = useState(false);
@@ -50,7 +217,6 @@ export function SettingsView() {
   useEffect(() => {
     loadPreferences();
     loadThemes();
-    loadSystemAppearance();
     loadLoggingState();
   }, []);
 
@@ -88,15 +254,6 @@ export function SettingsView() {
     }
   }
 
-  async function loadSystemAppearance() {
-    try {
-      const appearance = await window.electronAPI.getSystemAppearance();
-      setSystemAppearance(appearance);
-    } catch (err) {
-      console.error('Failed to get system appearance:', err);
-    }
-  }
-
   async function savePreferences(updatedPrefs: Preferences) {
     try {
       setSaving(true);
@@ -116,43 +273,31 @@ export function SettingsView() {
     savePreferences(updated);
   }
 
-  function updateAutoSwitch(updates: Partial<Preferences['autoSwitch']>) {
+  function updateScheduleEnabled(enabled: boolean) {
     if (!preferences) return;
     const updated = {
       ...preferences,
-      autoSwitch: { ...preferences.autoSwitch, ...updates }
+      schedule: {
+        ...preferences.schedule,
+        enabled,
+        schedules: preferences.schedule?.schedules || [],
+      },
     };
     savePreferences(updated);
   }
 
-  function updateSchedule(updates: Partial<Preferences['schedule']>) {
+  function saveSchedules(schedules: ScheduleEntry[]) {
     if (!preferences) return;
     const updated = {
       ...preferences,
-      schedule: { ...preferences.schedule, ...updates } as Preferences['schedule']
+      schedule: {
+        enabled: preferences.schedule?.enabled || false,
+        schedules,
+      },
     };
     savePreferences(updated);
+    setShowScheduleModal(false);
   }
-
-  async function loadSunriseSunset() {
-    try {
-      setLoadingSunTimes(true);
-      const times = await window.electronAPI.getSunriseSunset();
-      setSunriseSunset(times);
-    } catch (err) {
-      console.error('Failed to get sunrise/sunset times:', err);
-      setSunriseSunset(null);
-    } finally {
-      setLoadingSunTimes(false);
-    }
-  }
-
-  // Load sunrise/sunset times when sunset mode is selected
-  useEffect(() => {
-    if (preferences?.autoSwitch.mode === 'sunset') {
-      loadSunriseSunset();
-    }
-  }, [preferences?.autoSwitch.mode]);
 
   async function handleExportThemes() {
     if (selectedThemesForExport.length === 0) {
@@ -309,226 +454,43 @@ export function SettingsView() {
           </SettingItem>
         </section>
 
-        {/* Auto-Switching Section */}
+        {/* Scheduling Section */}
         <section className="space-y-4">
-          <h3 className="text-lg font-semibold">Auto-Switching</h3>
+          <h3 className="text-lg font-semibold">Scheduling</h3>
 
           <SettingItem
-            label="Enable Auto-Switching"
-            description="Automatically change themes based on system appearance or schedule"
+            label="Enable Scheduling"
+            description="Automatically apply themes or wallpapers at scheduled times"
           >
             <Switch
-              checked={preferences.autoSwitch.enabled}
-              onCheckedChange={(checked) => updateAutoSwitch({ enabled: checked })}
+              checked={preferences.schedule?.enabled || false}
+              onCheckedChange={(checked) => updateScheduleEnabled(checked)}
             />
           </SettingItem>
 
-          {preferences.autoSwitch.enabled && (
-            <>
-              <SettingItem
-                label="Mode"
-                description="Choose how themes switch automatically"
-              >
-                <Select
-                  value={preferences.autoSwitch.mode}
-                  onValueChange={(value) => updateAutoSwitch({ mode: value as 'system' | 'schedule' | 'sunset' })}
-                >
-                  <SelectTrigger className="w-[200px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="system">Match System Appearance</SelectItem>
-                    <SelectItem value="schedule">Schedule</SelectItem>
-                    <SelectItem value="sunset">Sunrise/Sunset</SelectItem>
-                  </SelectContent>
-                </Select>
-              </SettingItem>
+          <SettingItem
+            label="Manage Schedules"
+            description={`${preferences.schedule?.schedules?.length || 0} schedule(s) configured`}
+          >
+            <Button variant="secondary" onClick={() => setShowScheduleModal(true)}>
+              Manage Schedules
+            </Button>
+          </SettingItem>
 
-              {preferences.autoSwitch.mode === 'system' && (
-                <div className="space-y-4 pl-4 border-l-2 border-border">
-                  <SettingItem
-                    label="Light Theme"
-                    description={`Theme to use in light mode (Current: ${systemAppearance === 'light' ? 'Active' : 'Inactive'})`}
-                  >
-                    <Select
-                      value={preferences.defaultLightTheme || ''}
-                      onValueChange={(value) => updatePreference('defaultLightTheme', value)}
-                    >
-                      <SelectTrigger className="w-[200px]">
-                        <SelectValue placeholder="Select a theme..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {themes.filter(t => t.isLight).map(theme => (
-                          <SelectItem key={theme.name} value={theme.name}>
-                            {theme.metadata.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </SettingItem>
-
-                  <SettingItem
-                    label="Dark Theme"
-                    description={`Theme to use in dark mode (Current: ${systemAppearance === 'dark' ? 'Active' : 'Inactive'})`}
-                  >
-                    <Select
-                      value={preferences.defaultDarkTheme || ''}
-                      onValueChange={(value) => updatePreference('defaultDarkTheme', value)}
-                    >
-                      <SelectTrigger className="w-[200px]">
-                        <SelectValue placeholder="Select a theme..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {themes.filter(t => !t.isLight).map(theme => (
-                          <SelectItem key={theme.name} value={theme.name}>
-                            {theme.metadata.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </SettingItem>
-                </div>
-              )}
-
-              {preferences.autoSwitch.mode === 'schedule' && (
-                <div className="space-y-4 pl-4 border-l-2 border-border">
-                  <SettingItem
-                    label="Light Theme Time"
-                    description="Time to switch to light theme"
-                  >
-                    <input
-                      type="time"
-                      className="flex h-9 w-[140px] rounded-[8px] border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                      value={preferences.schedule?.light || '06:00'}
-                      onChange={(e) => updateSchedule({ light: e.target.value })}
-                    />
-                  </SettingItem>
-
-                  <SettingItem
-                    label="Dark Theme Time"
-                    description="Time to switch to dark theme"
-                  >
-                    <input
-                      type="time"
-                      className="flex h-9 w-[140px] rounded-[8px] border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                      value={preferences.schedule?.dark || '18:00'}
-                      onChange={(e) => updateSchedule({ dark: e.target.value })}
-                    />
-                  </SettingItem>
-
-                  <SettingItem label="Light Theme">
-                    <Select
-                      value={preferences.defaultLightTheme || ''}
-                      onValueChange={(value) => updatePreference('defaultLightTheme', value)}
-                    >
-                      <SelectTrigger className="w-[200px]">
-                        <SelectValue placeholder="Select a theme..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {themes.map(theme => (
-                          <SelectItem key={theme.name} value={theme.name}>
-                            {theme.metadata.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </SettingItem>
-
-                  <SettingItem label="Dark Theme">
-                    <Select
-                      value={preferences.defaultDarkTheme || ''}
-                      onValueChange={(value) => updatePreference('defaultDarkTheme', value)}
-                    >
-                      <SelectTrigger className="w-[200px]">
-                        <SelectValue placeholder="Select a theme..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {themes.map(theme => (
-                          <SelectItem key={theme.name} value={theme.name}>
-                            {theme.metadata.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </SettingItem>
-                </div>
-              )}
-
-              {preferences.autoSwitch.mode === 'sunset' && (
-                <div className="space-y-4 pl-4 border-l-2 border-border">
-                  <div className="rounded-[10px] bg-muted p-4 text-sm">
-                    <p className="text-muted-foreground">
-                      Themes will switch automatically based on sunrise and sunset times
-                      for your location.
-                    </p>
-                  </div>
-
-                  {/* Sunrise/Sunset times display */}
-                  <div className="rounded-[10px] border border-border p-4">
-                    {loadingSunTimes && (
-                      <p className="text-sm text-muted-foreground">Loading sunrise and sunset times...</p>
-                    )}
-                    {!loadingSunTimes && sunriseSunset && (
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-lg">🌅</span>
-                          <span className="text-sm font-medium">Sunrise:</span>
-                          <span className="text-sm text-muted-foreground">{sunriseSunset.sunrise}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-lg">🌇</span>
-                          <span className="text-sm font-medium">Sunset:</span>
-                          <span className="text-sm text-muted-foreground">{sunriseSunset.sunset}</span>
-                        </div>
-                        <div className="text-xs text-muted-foreground mt-2">
-                          Location: {sunriseSunset.location}
-                        </div>
-                      </div>
-                    )}
-                    {!loadingSunTimes && !sunriseSunset && (
-                      <p className="text-sm text-destructive">Unable to calculate sunrise/sunset times</p>
-                    )}
-                  </div>
-
-                  <SettingItem label="Day Theme">
-                    <Select
-                      value={preferences.defaultLightTheme || ''}
-                      onValueChange={(value) => updatePreference('defaultLightTheme', value)}
-                    >
-                      <SelectTrigger className="w-[200px]">
-                        <SelectValue placeholder="Select a theme..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {themes.map(theme => (
-                          <SelectItem key={theme.name} value={theme.name}>
-                            {theme.metadata.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </SettingItem>
-
-                  <SettingItem label="Night Theme">
-                    <Select
-                      value={preferences.defaultDarkTheme || ''}
-                      onValueChange={(value) => updatePreference('defaultDarkTheme', value)}
-                    >
-                      <SelectTrigger className="w-[200px]">
-                        <SelectValue placeholder="Select a theme..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {themes.map(theme => (
-                          <SelectItem key={theme.name} value={theme.name}>
-                            {theme.metadata.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </SettingItem>
-                </div>
-              )}
-            </>
+          {preferences.schedule?.enabled && preferences.schedule?.schedules?.length === 0 && (
+            <div className="rounded-[10px] bg-muted p-4 text-sm">
+              <p className="text-muted-foreground">
+                Scheduling is enabled but no schedules are configured. Click "Manage Schedules" to add one.
+              </p>
+            </div>
           )}
+
+          <div className="rounded-[10px] bg-muted p-4 text-sm">
+            <p className="text-muted-foreground">
+              Note: Manually applying a theme or wallpaper will automatically disable scheduling.
+              Re-enable it here when you want to resume scheduled switching.
+            </p>
+          </div>
         </section>
 
         {/* Notifications Section */}
@@ -864,6 +826,16 @@ export function SettingsView() {
         isOpen={showAboutDialog}
         onClose={() => setShowAboutDialog(false)}
       />
+
+      {/* Schedule Modal */}
+      {showScheduleModal && (
+        <ScheduleModal
+          themes={themes}
+          currentSchedules={preferences?.schedule?.schedules || []}
+          onClose={() => setShowScheduleModal(false)}
+          onSave={saveSchedules}
+        />
+      )}
     </div>
   );
 }

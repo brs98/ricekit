@@ -76,17 +76,11 @@ export function ensureDirectories(): void {
  */
 export function getDefaultPreferences() {
   return {
-    defaultLightTheme: 'catppuccin-latte',
-    defaultDarkTheme: 'tokyo-night',
     enabledApps: [] as string[],
     favorites: [] as string[],
     recentThemes: [] as string[],
     keyboardShortcuts: {
       quickSwitcher: 'Cmd+Shift+T',
-    },
-    autoSwitch: {
-      enabled: false,
-      mode: 'system' as 'system' | 'schedule' | 'sunset',
     },
     startAtLogin: false,
     showInMenuBar: true,
@@ -99,11 +93,80 @@ export function getDefaultPreferences() {
     dynamicWallpaper: {
       enabled: false,
     },
-    wallpaperSchedule: {
+    schedule: {
       enabled: false,
-      schedules: [],
+      schedules: [] as Array<{
+        timeStart: string;
+        timeEnd: string;
+        name?: string;
+        type: 'theme' | 'wallpaper';
+        themeName?: string;
+        wallpaperPath?: string;
+      }>,
     },
   };
+}
+
+/**
+ * Migrate old preferences format to new unified schedule format
+ */
+function migratePreferences(prefs: Record<string, unknown>): { migrated: Record<string, unknown>; didMigrate: boolean } {
+  let didMigrate = false;
+  const migrated = { ...prefs };
+
+  // Migrate wallpaperSchedule to new schedule format
+  if ('wallpaperSchedule' in migrated && migrated.wallpaperSchedule) {
+    const oldSchedule = migrated.wallpaperSchedule as {
+      enabled: boolean;
+      schedules: Array<{
+        timeStart: string;
+        timeEnd: string;
+        wallpaperPath: string;
+        name?: string;
+      }>;
+    };
+
+    // Only migrate if new schedule doesn't exist or is empty
+    if (!migrated.schedule || !(migrated.schedule as { schedules?: unknown[] }).schedules?.length) {
+      migrated.schedule = {
+        enabled: oldSchedule.enabled,
+        schedules: oldSchedule.schedules.map(s => ({
+          timeStart: s.timeStart,
+          timeEnd: s.timeEnd,
+          name: s.name,
+          type: 'wallpaper' as const,
+          wallpaperPath: s.wallpaperPath,
+        })),
+      };
+      logger.info('Migrated wallpaperSchedule to new schedule format');
+    }
+
+    delete migrated.wallpaperSchedule;
+    didMigrate = true;
+  }
+
+  // Remove deprecated fields
+  const deprecatedFields = ['autoSwitch', 'defaultLightTheme', 'defaultDarkTheme'];
+  for (const field of deprecatedFields) {
+    if (field in migrated) {
+      delete migrated[field];
+      didMigrate = true;
+      logger.info(`Removed deprecated preference field: ${field}`);
+    }
+  }
+
+  // Remove old schedule format (light/dark times)
+  if (migrated.schedule && 'light' in (migrated.schedule as Record<string, unknown>)) {
+    // This is the old schedule format, replace with default
+    migrated.schedule = {
+      enabled: false,
+      schedules: [],
+    };
+    didMigrate = true;
+    logger.info('Replaced old schedule format with new unified format');
+  }
+
+  return { migrated, didMigrate };
 }
 
 /**
@@ -126,18 +189,21 @@ export function ensurePreferences(): void {
     const content = fs.readFileSync(prefsPath, 'utf-8');
     const existingPrefs = JSON.parse(content); // This will throw if JSON is invalid
 
+    // Run migrations first
+    const { migrated: migratedPrefs, didMigrate } = migratePreferences(existingPrefs);
+
     // Merge existing preferences with defaults to add any missing fields
-    const mergedPrefs = { ...defaultPreferences, ...existingPrefs };
+    const mergedPrefs = { ...defaultPreferences, ...migratedPrefs };
 
     // Check if any new fields were added
     const hasNewFields = Object.keys(defaultPreferences).some(
-      key => !(key in existingPrefs)
+      key => !(key in migratedPrefs)
     );
 
-    // If new fields were added, update the file
-    if (hasNewFields) {
+    // If new fields were added or migration occurred, update the file
+    if (hasNewFields || didMigrate) {
       fs.writeFileSync(prefsPath, JSON.stringify(mergedPrefs, null, 2));
-      logger.info(`Updated preferences with new fields: ${prefsPath}`);
+      logger.info(`Updated preferences file: ${prefsPath}`);
     }
   } catch (error) {
     // File exists but contains invalid JSON - log error and recreate with defaults

@@ -92,147 +92,6 @@ const WallpaperPreviewModal: React.FC<WallpaperPreviewModalProps> = ({
   );
 };
 
-interface WallpaperSchedule {
-  timeStart: string;
-  timeEnd: string;
-  wallpaperPath: string;
-  name?: string;
-}
-
-interface ScheduleModalProps {
-  wallpapers: WallpaperItem[];
-  currentSchedules: WallpaperSchedule[];
-  onClose: () => void;
-  onSave: (schedules: WallpaperSchedule[]) => void;
-}
-
-const ScheduleModal: React.FC<ScheduleModalProps> = ({ wallpapers, currentSchedules, onClose, onSave }) => {
-  const [schedules, setSchedules] = useState<WallpaperSchedule[]>(currentSchedules);
-
-  const addSchedule = () => {
-    setSchedules([
-      ...schedules,
-      {
-        timeStart: '06:00',
-        timeEnd: '12:00',
-        wallpaperPath: wallpapers[0]?.original || '',
-        name: 'Morning',
-      },
-    ]);
-  };
-
-  const updateSchedule = (index: number, field: keyof WallpaperSchedule, value: string) => {
-    const updated = [...schedules];
-    updated[index] = { ...updated[index], [field]: value };
-    setSchedules(updated);
-  };
-
-  const removeSchedule = (index: number) => {
-    setSchedules(schedules.filter((_, i) => i !== index));
-  };
-
-  const getWallpaperName = (path: string) => {
-    const fileName = path.split('/').pop() || 'Unknown';
-    return fileName.replace(/\.[^.]+$/, '').replace(/-/g, ' ');
-  };
-
-  return (
-    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-auto">
-        <DialogHeader>
-          <DialogTitle>Wallpaper Schedule</DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Set different wallpapers for different times of day. Schedules are checked every minute.
-          </p>
-
-          {schedules.length === 0 && (
-            <div className="text-center py-8 text-muted-foreground">
-              No schedules yet. Click "Add Schedule" to create one.
-            </div>
-          )}
-
-          {schedules.map((schedule, index) => (
-            <div
-              key={index}
-              className="p-4 rounded-lg border border-border bg-card text-card-foreground space-y-3"
-            >
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Schedule name (e.g., Morning)"
-                  value={schedule.name || ''}
-                  onChange={(e) => updateSchedule(index, 'name', e.target.value)}
-                  className="flex-1"
-                />
-                <Button variant="outline" onClick={() => removeSchedule(index)}>
-                  Remove
-                </Button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Start Time</Label>
-                  <Input
-                    type="time"
-                    value={schedule.timeStart}
-                    onChange={(e) => updateSchedule(index, 'timeStart', e.target.value)}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs">End Time</Label>
-                  <Input
-                    type="time"
-                    value={schedule.timeEnd}
-                    onChange={(e) => updateSchedule(index, 'timeEnd', e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-xs">Wallpaper</Label>
-                <Select
-                  value={schedule.wallpaperPath}
-                  onValueChange={(value) => updateSchedule(index, 'wallpaperPath', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {wallpapers.map((wallpaper) => (
-                      <SelectItem key={wallpaper.original} value={wallpaper.original}>
-                        {getWallpaperName(wallpaper.original)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          ))}
-
-          <Button
-            variant="outline"
-            onClick={addSchedule}
-            className="w-full"
-          >
-            + Add Schedule
-          </Button>
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button onClick={() => onSave(schedules)}>
-            Save Schedules
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-};
-
 interface WallpaperItem {
   original: string;
   thumbnail: string;
@@ -247,9 +106,6 @@ export const WallpapersView: React.FC = () => {
   const [displays, setDisplays] = useState<Display[]>([]);
   const [selectedDisplay, setSelectedDisplay] = useState<number | null>(null);
   const [dynamicWallpaperEnabled, setDynamicWallpaperEnabled] = useState(false);
-  const [scheduleEnabled, setScheduleEnabled] = useState(false);
-  const [schedules, setSchedules] = useState<WallpaperSchedule[]>([]);
-  const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [wallpaperToDelete, setWallpaperToDelete] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
 
@@ -263,8 +119,6 @@ export const WallpapersView: React.FC = () => {
     try {
       const prefs = await window.electronAPI.getPreferences();
       setDynamicWallpaperEnabled(prefs.dynamicWallpaper?.enabled || false);
-      setScheduleEnabled(prefs.wallpaperSchedule?.enabled || false);
-      setSchedules(prefs.wallpaperSchedule?.schedules || []);
     } catch (err) {
       console.error('Error loading preferences:', err);
     }
@@ -286,46 +140,6 @@ export const WallpapersView: React.FC = () => {
     } catch (err) {
       console.error('Error toggling dynamic wallpaper:', err);
       setError('Failed to update dynamic wallpaper setting.');
-    }
-  };
-
-  const toggleSchedule = async () => {
-    try {
-      const prefs = await window.electronAPI.getPreferences();
-      const newValue = !scheduleEnabled;
-
-      await window.electronAPI.setPreferences({
-        ...prefs,
-        wallpaperSchedule: {
-          enabled: newValue,
-          schedules: schedules,
-        },
-      });
-
-      setScheduleEnabled(newValue);
-    } catch (err) {
-      console.error('Error toggling wallpaper schedule:', err);
-      setError('Failed to update wallpaper schedule setting.');
-    }
-  };
-
-  const saveSchedules = async (newSchedules: WallpaperSchedule[]) => {
-    try {
-      const prefs = await window.electronAPI.getPreferences();
-
-      await window.electronAPI.setPreferences({
-        ...prefs,
-        wallpaperSchedule: {
-          enabled: scheduleEnabled,
-          schedules: newSchedules,
-        },
-      });
-
-      setSchedules(newSchedules);
-      setShowScheduleModal(false);
-    } catch (err) {
-      console.error('Error saving wallpaper schedules:', err);
-      setError('Failed to save wallpaper schedules.');
     }
   };
 
@@ -485,25 +299,6 @@ export const WallpapersView: React.FC = () => {
               aria-label="Toggle dynamic wallpaper"
             />
           </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-secondary border border-border">
-            <Label
-              htmlFor="schedule-wallpaper-toggle"
-              className="text-sm font-medium cursor-pointer select-none"
-            >
-              Scheduling
-            </Label>
-            <Switch
-              id="schedule-wallpaper-toggle"
-              checked={scheduleEnabled}
-              onCheckedChange={toggleSchedule}
-              aria-label="Toggle wallpaper scheduling"
-            />
-          </div>
-          {scheduleEnabled && (
-            <Button variant="outline" onClick={() => setShowScheduleModal(true)}>
-              Manage Schedules {schedules.length > 0 && `(${schedules.length})`}
-            </Button>
-          )}
           {displays.length > 1 && (
             <div className="flex items-center gap-2">
               <Label htmlFor="display-select" className="text-sm text-muted-foreground">
@@ -586,15 +381,6 @@ export const WallpapersView: React.FC = () => {
           onApply={handleApplyWallpaper}
           displays={displays}
           selectedDisplay={selectedDisplay}
-        />
-      )}
-
-      {showScheduleModal && (
-        <ScheduleModal
-          wallpapers={wallpapers}
-          currentSchedules={schedules}
-          onClose={() => setShowScheduleModal(false)}
-          onSave={saveSchedules}
         />
       )}
 

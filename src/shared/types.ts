@@ -76,23 +76,23 @@ export interface AppInfo {
   configPath?: string;
 }
 
+// Schedule entry for unified theme/wallpaper scheduling
+export interface ScheduleEntry {
+  timeStart: string;           // Time in HH:MM format (24-hour)
+  timeEnd: string;             // Time in HH:MM format (24-hour)
+  name?: string;               // Optional display name for the schedule
+  type: 'theme' | 'wallpaper'; // What to apply
+  themeName?: string;          // Theme name (when type === 'theme')
+  wallpaperPath?: string;      // Full path to wallpaper (when type === 'wallpaper')
+}
+
 // Preferences structure
 export interface Preferences {
-  defaultLightTheme: string;
-  defaultDarkTheme: string;
   enabledApps: string[];
   favorites: string[];
   recentThemes: string[];
   keyboardShortcuts: {
     quickSwitcher: string;
-  };
-  autoSwitch: {
-    enabled: boolean;
-    mode: 'system' | 'schedule' | 'sunset';
-  };
-  schedule?: {
-    light: string;
-    dark: string;
   };
   startAtLogin: boolean;
   showInMenuBar: boolean;
@@ -107,14 +107,9 @@ export interface Preferences {
   dynamicWallpaper?: {
     enabled: boolean; // Enable automatic wallpaper switching based on system appearance
   };
-  wallpaperSchedule?: {
-    enabled: boolean; // Enable wallpaper scheduling by time of day
-    schedules: Array<{
-      timeStart: string; // Time in HH:MM format (24-hour)
-      timeEnd: string;   // Time in HH:MM format (24-hour)
-      wallpaperPath: string; // Full path to wallpaper
-      name?: string; // Optional display name for the schedule
-    }>;
+  schedule?: {
+    enabled: boolean; // Enable time-based scheduling
+    schedules: ScheduleEntry[];
   };
 }
 
@@ -158,6 +153,7 @@ export interface ElectronAPI {
   getUIState: () => Promise<any | null>;
   closeQuickSwitcher: () => Promise<void>;
   onQuickSwitcherOpened: (callback: () => void) => void;
+  onThemeChanged: (callback: (themeName: string) => void) => void;
   openExternal: (url: string) => Promise<void>;
   openHelp: () => Promise<void>;
   getLogDirectory: () => Promise<string>;

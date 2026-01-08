@@ -3,14 +3,13 @@ import path from 'path';
 import fs from 'fs';
 import { initializeApp, initializeAppAfterThemes, getPreferencesPath, getStatePath } from './directories';
 import { installBundledThemes } from './themeInstaller';
-import { setupIpcHandlers, handleAppearanceChange, checkScheduleAndApplyTheme, startWallpaperScheduler, stopWallpaperScheduler } from './ipcHandlers';
+import { setupIpcHandlers, handleAppearanceChange, startScheduler, stopScheduler } from './ipcHandlers';
 import { logger } from './logger';
 
 let mainWindow: BrowserWindow | null = null;
 let quickSwitcherWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
 let isQuitting = false;
-let scheduleCheckInterval: NodeJS.Timeout | null = null;
 
 /**
  * Create or update the menu bar tray icon and menu
@@ -147,6 +146,17 @@ export function updateWindowTitle(themeName: string) {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.setTitle(`MacTheme - ${themeName}`);
     logger.info(`Window title updated to: MacTheme - ${themeName}`);
+  }
+}
+
+/**
+ * Notify the renderer (main window) that the theme has changed
+ * This triggers the app's self-theming to update its UI colors
+ */
+export function notifyRendererThemeChanged(themeName: string) {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('theme:changed', themeName);
+    logger.info(`Notified renderer of theme change: ${themeName}`);
   }
 }
 
@@ -439,16 +449,8 @@ if (!gotTheLock) {
   // Create main window
   createWindow();
 
-  // Setup schedule-based auto-switching check (runs every minute)
-  scheduleCheckInterval = setInterval(() => {
-    checkScheduleAndApplyTheme();
-  }, 60 * 1000); // Check every 60 seconds
-
-  // Also check immediately on startup
-  checkScheduleAndApplyTheme();
-
-  // Start wallpaper scheduler (checks and applies wallpapers based on time schedules)
-  startWallpaperScheduler();
+  // Start unified scheduler (checks and applies themes/wallpapers based on time schedules)
+  startScheduler();
 
   // Register global keyboard shortcut for quick switcher from preferences
   try {
@@ -497,10 +499,6 @@ if (!gotTheLock) {
   // Unregister shortcuts and cleanup when app is about to quit
   app.on('will-quit', () => {
     globalShortcut.unregisterAll();
-    stopWallpaperScheduler();
-    if (scheduleCheckInterval) {
-      clearInterval(scheduleCheckInterval);
-      scheduleCheckInterval = null;
-    }
+    stopScheduler();
   });
 }

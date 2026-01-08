@@ -13,9 +13,8 @@ import { registerPreferencesHandlers, setSchedulerCallbacks } from './preference
 import {
   registerSystemHandlers,
   handleAppearanceChange,
-  checkScheduleAndApplyTheme,
-  startWallpaperScheduler,
-  stopWallpaperScheduler,
+  startScheduler,
+  stopScheduler,
   setThemeApplyHandler,
   setWallpaperApplyHandler,
 } from './systemHandlers';
@@ -40,8 +39,8 @@ export function setupIpcHandlers(): void {
 
   // Preferences handlers need scheduler functions
   setSchedulerCallbacks({
-    startWallpaperScheduler,
-    stopWallpaperScheduler,
+    startScheduler,
+    stopScheduler,
   });
 
   // Register all handler groups
@@ -69,8 +68,7 @@ export function setupIpcHandlers(): void {
 export {
   handleApplyTheme,
   handleAppearanceChange,
-  checkScheduleAndApplyTheme,
-  startWallpaperScheduler,
-  stopWallpaperScheduler,
+  startScheduler,
+  stopScheduler,
   handleGetState,
 };

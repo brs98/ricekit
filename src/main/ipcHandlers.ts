@@ -20,8 +20,7 @@ export {
   setupIpcHandlers,
   handleApplyTheme,
   handleAppearanceChange,
-  checkScheduleAndApplyTheme,
-  startWallpaperScheduler,
-  stopWallpaperScheduler,
+  startScheduler,
+  stopScheduler,
   handleGetState,
 } from './handlers';

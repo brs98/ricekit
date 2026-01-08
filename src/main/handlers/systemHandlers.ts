@@ -13,21 +13,26 @@ import { readDir, existsSync, readJson } from '../utils/asyncFs';
 import { handleGetPreferences } from './preferencesHandlers';
 import { handleGetState } from './stateHandlers';
 
+// Options for apply handlers when called from scheduler
+export interface ApplyOptions {
+  fromScheduler?: boolean;
+}
+
 // Forward declaration - will be set by theme handlers
-let applyThemeHandler: ((event: any, name: string) => Promise<void>) | null = null;
-let applyWallpaperHandler: ((event: any, path: string) => Promise<void>) | null = null;
+let applyThemeHandler: ((event: any, name: string, options?: ApplyOptions) => Promise<void>) | null = null;
+let applyWallpaperHandler: ((event: any, path: string, displayIndex?: number, options?: ApplyOptions) => Promise<void>) | null = null;
 
 /**
  * Set the theme apply handler (called by themeHandlers to avoid circular deps)
  */
-export function setThemeApplyHandler(handler: (event: any, name: string) => Promise<void>): void {
+export function setThemeApplyHandler(handler: (event: any, name: string, options?: ApplyOptions) => Promise<void>): void {
   applyThemeHandler = handler;
 }
 
 /**
  * Set the wallpaper apply handler (called by wallpaperHandlers to avoid circular deps)
  */
-export function setWallpaperApplyHandler(handler: (event: any, path: string) => Promise<void>): void {
+export function setWallpaperApplyHandler(handler: (event: any, path: string, displayIndex?: number, options?: ApplyOptions) => Promise<void>): void {
   applyWallpaperHandler = handler;
 }
 
@@ -300,8 +305,8 @@ async function applyDynamicWallpaper(appearance: 'light' | 'dark', themeName: st
 }
 
 /**
- * Apply theme automatically based on system appearance
- * Called when system appearance changes
+ * Handle system appearance changes
+ * Called when system appearance changes (light/dark mode)
  */
 export async function handleAppearanceChange(): Promise<void> {
   try {
@@ -316,142 +321,17 @@ export async function handleAppearanceChange(): Promise<void> {
       window.webContents.send('system:appearance-changed', appearance);
     });
 
-    // Get preferences to check if auto-switching is enabled
+    // Get preferences to check if dynamic wallpaper is enabled
     const prefs = await handleGetPreferences();
 
-    // Check if dynamic wallpaper is enabled (even if auto-switch is off)
+    // Check if dynamic wallpaper is enabled
     if (prefs.dynamicWallpaper?.enabled) {
       const state = await handleGetState();
       logger.info(`Dynamic wallpaper enabled, applying ${appearance} wallpaper for current theme: ${state.currentTheme}`);
       await applyDynamicWallpaper(appearance, state.currentTheme);
     }
-
-    // Check if auto-switching based on system appearance is enabled
-    if (!prefs.autoSwitch?.enabled || prefs.autoSwitch?.mode !== 'system') {
-      return;
-    }
-
-    // Get the appropriate theme based on appearance
-    const themeToApply = appearance === 'dark' ? prefs.defaultDarkTheme : prefs.defaultLightTheme;
-
-    if (!themeToApply) {
-      logger.warn(`No default ${appearance} theme configured`);
-      return;
-    }
-
-    // Get current state to avoid unnecessary theme switches
-    const state = await handleGetState();
-    if (state.currentTheme === themeToApply) {
-      logger.info(`Already using theme: ${themeToApply}`);
-      return;
-    }
-
-    // Apply the theme
-    logger.info(`Auto-switching to ${appearance} theme: ${themeToApply}`);
-    if (applyThemeHandler) {
-      await applyThemeHandler(null, themeToApply);
-    }
-
-    // Apply dynamic wallpaper if enabled
-    if (prefs.dynamicWallpaper?.enabled) {
-      logger.info(`Dynamic wallpaper enabled, applying ${appearance} wallpaper for theme: ${themeToApply}`);
-      await applyDynamicWallpaper(appearance, themeToApply);
-    }
-
-    // Show notification if enabled (use onScheduledSwitch for system appearance changes)
-    const shouldShowNotification = prefs.notifications?.onScheduledSwitch ?? prefs.showNotifications ?? true;
-    if (Notification.isSupported() && shouldShowNotification) {
-      const notification = new Notification({
-        title: 'Theme Auto-Switched',
-        body: `Switched to ${appearance} theme: ${themeToApply}`,
-        silent: false,
-      });
-      notification.show();
-    }
   } catch (error) {
     logger.error('Error handling appearance change:', error);
-  }
-}
-
-/**
- * Check schedule and apply theme if needed
- * Called periodically to check if theme should switch based on schedule
- */
-export async function checkScheduleAndApplyTheme(): Promise<void> {
-  try {
-    // Get preferences to check if schedule-based auto-switching is enabled
-    const prefs = await handleGetPreferences();
-
-    // Check if auto-switching based on schedule is enabled
-    if (!prefs.autoSwitch?.enabled || prefs.autoSwitch?.mode !== 'schedule') {
-      return;
-    }
-
-    // Check if schedule is configured
-    if (!prefs.schedule?.light || !prefs.schedule?.dark) {
-      logger.warn('Schedule times not configured');
-      return;
-    }
-
-    // Get current time
-    const now = new Date();
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
-    const currentTimeMinutes = currentHour * 60 + currentMinute;
-
-    // Parse schedule times (format: "HH:MM")
-    const lightTimeParts = prefs.schedule.light.split(':');
-    const lightTimeMinutes = parseInt(lightTimeParts[0]) * 60 + parseInt(lightTimeParts[1]);
-
-    const darkTimeParts = prefs.schedule.dark.split(':');
-    const darkTimeMinutes = parseInt(darkTimeParts[0]) * 60 + parseInt(darkTimeParts[1]);
-
-    // Determine which theme should be active based on current time
-    let shouldUseDarkTheme: boolean;
-
-    if (lightTimeMinutes < darkTimeMinutes) {
-      // Normal case: light time is in the morning, dark time is in the evening
-      // Example: light at 06:00, dark at 18:00
-      shouldUseDarkTheme = currentTimeMinutes >= darkTimeMinutes || currentTimeMinutes < lightTimeMinutes;
-    } else {
-      // Inverted case: light time is after dark time (crossing midnight)
-      // Example: light at 18:00, dark at 06:00
-      shouldUseDarkTheme = currentTimeMinutes >= darkTimeMinutes && currentTimeMinutes < lightTimeMinutes;
-    }
-
-    // Get the appropriate theme
-    const themeToApply = shouldUseDarkTheme ? prefs.defaultDarkTheme : prefs.defaultLightTheme;
-
-    if (!themeToApply) {
-      logger.warn(`No default ${shouldUseDarkTheme ? 'dark' : 'light'} theme configured`);
-      return;
-    }
-
-    // Get current state to avoid unnecessary theme switches
-    const state = await handleGetState();
-    if (state.currentTheme === themeToApply) {
-      // Already using the correct theme
-      return;
-    }
-
-    // Apply the theme
-    logger.info(`Schedule-based auto-switching to ${shouldUseDarkTheme ? 'dark' : 'light'} theme: ${themeToApply}`);
-    if (applyThemeHandler) {
-      await applyThemeHandler(null, themeToApply);
-    }
-
-    // Show notification if enabled
-    const shouldShowNotification = prefs.notifications?.onScheduledSwitch ?? prefs.showNotifications ?? true;
-    if (Notification.isSupported() && shouldShowNotification) {
-      const notification = new Notification({
-        title: 'Theme Auto-Switched',
-        body: `Scheduled switch to ${themeToApply}`,
-        silent: false,
-      });
-      notification.show();
-    }
-  } catch (error) {
-    logger.error('Error checking schedule:', error);
   }
 }
 
@@ -504,58 +384,58 @@ async function handleCheckForUpdates(): Promise<{
 }
 
 /**
- * Wallpaper Scheduler Service
- * Automatically applies wallpapers based on time of day schedules
+ * Unified Scheduler Service
+ * Automatically applies themes or wallpapers based on time of day schedules
  */
-let wallpaperSchedulerInterval: NodeJS.Timeout | null = null;
+let schedulerInterval: NodeJS.Timeout | null = null;
 
 /**
- * Start the wallpaper scheduler
+ * Start the scheduler
  */
-export function startWallpaperScheduler(): void {
+export function startScheduler(): void {
   // Clear existing interval if any
-  if (wallpaperSchedulerInterval) {
-    clearInterval(wallpaperSchedulerInterval);
+  if (schedulerInterval) {
+    clearInterval(schedulerInterval);
   }
 
   // Check every minute
-  wallpaperSchedulerInterval = setInterval(async () => {
+  schedulerInterval = setInterval(async () => {
     try {
-      await checkAndApplyScheduledWallpaper();
+      await checkAndApplySchedule();
     } catch (error) {
-      logger.error('Error in wallpaper scheduler', error);
+      logger.error('Error in scheduler', error);
     }
   }, 60000); // 60000ms = 1 minute
 
   // Run immediately on start
-  checkAndApplyScheduledWallpaper().catch((error) => {
-    logger.error('Error in initial wallpaper scheduler check', error);
+  checkAndApplySchedule().catch((error) => {
+    logger.error('Error in initial scheduler check', error);
   });
 
-  logger.info('Wallpaper scheduler started');
+  logger.info('Scheduler started');
 }
 
 /**
- * Stop the wallpaper scheduler
+ * Stop the scheduler
  */
-export function stopWallpaperScheduler(): void {
-  if (wallpaperSchedulerInterval) {
-    clearInterval(wallpaperSchedulerInterval);
-    wallpaperSchedulerInterval = null;
-    logger.info('Wallpaper scheduler stopped');
+export function stopScheduler(): void {
+  if (schedulerInterval) {
+    clearInterval(schedulerInterval);
+    schedulerInterval = null;
+    logger.info('Scheduler stopped');
   }
 }
 
 /**
- * Check if a wallpaper should be applied based on current time and schedules
+ * Check if a theme or wallpaper should be applied based on current time and schedules
  */
-async function checkAndApplyScheduledWallpaper(): Promise<void> {
+async function checkAndApplySchedule(): Promise<void> {
   try {
     // Get preferences
     const prefs = await handleGetPreferences();
 
-    // Check if wallpaper scheduling is enabled
-    if (!prefs.wallpaperSchedule?.enabled || !prefs.wallpaperSchedule.schedules.length) {
+    // Check if scheduling is enabled
+    if (!prefs.schedule?.enabled || !prefs.schedule.schedules.length) {
       return;
     }
 
@@ -563,40 +443,65 @@ async function checkAndApplyScheduledWallpaper(): Promise<void> {
     const now = new Date();
     const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-    logger.debug(`Checking wallpaper schedule at ${currentTime}`);
+    logger.debug(`Checking schedule at ${currentTime}`);
+
+    // Get current state for comparison
+    const state = await handleGetState();
 
     // Find the active schedule for current time
-    for (const schedule of prefs.wallpaperSchedule.schedules) {
+    for (const schedule of prefs.schedule.schedules) {
       if (isTimeInRange(currentTime, schedule.timeStart, schedule.timeEnd)) {
-        // Check if this wallpaper is already applied
-        const state = await handleGetState();
-        if (state.currentWallpaper === schedule.wallpaperPath) {
-          logger.debug(`Scheduled wallpaper already applied: ${schedule.wallpaperPath}`);
-          return;
-        }
+        if (schedule.type === 'theme' && schedule.themeName) {
+          // Check if this theme is already applied
+          if (state.currentTheme === schedule.themeName) {
+            logger.debug(`Scheduled theme already applied: ${schedule.themeName}`);
+            return;
+          }
 
-        // Apply the scheduled wallpaper
-        logger.info(`Applying scheduled wallpaper: ${schedule.wallpaperPath} (${schedule.name || 'Unnamed'})`);
-        if (applyWallpaperHandler) {
-          await applyWallpaperHandler(null, schedule.wallpaperPath);
-        }
+          // Apply the scheduled theme
+          logger.info(`Applying scheduled theme: ${schedule.themeName} (${schedule.name || 'Unnamed'})`);
+          if (applyThemeHandler) {
+            await applyThemeHandler(null, schedule.themeName, { fromScheduler: true });
+          }
 
-        // Show notification if enabled
-        if (prefs.notifications?.onScheduledSwitch) {
-          const notification = new Notification({
-            title: 'Scheduled Wallpaper Applied',
-            body: `Applied ${schedule.name || 'wallpaper'} for ${schedule.timeStart} - ${schedule.timeEnd}`,
-          });
-          notification.show();
+          // Show notification if enabled
+          if (prefs.notifications?.onScheduledSwitch) {
+            const notification = new Notification({
+              title: 'Scheduled Theme Applied',
+              body: `Applied ${schedule.name || schedule.themeName} for ${schedule.timeStart} - ${schedule.timeEnd}`,
+            });
+            notification.show();
+          }
+        } else if (schedule.type === 'wallpaper' && schedule.wallpaperPath) {
+          // Check if this wallpaper is already applied
+          if (state.currentWallpaper === schedule.wallpaperPath) {
+            logger.debug(`Scheduled wallpaper already applied: ${schedule.wallpaperPath}`);
+            return;
+          }
+
+          // Apply the scheduled wallpaper
+          logger.info(`Applying scheduled wallpaper: ${schedule.wallpaperPath} (${schedule.name || 'Unnamed'})`);
+          if (applyWallpaperHandler) {
+            await applyWallpaperHandler(null, schedule.wallpaperPath, undefined, { fromScheduler: true });
+          }
+
+          // Show notification if enabled
+          if (prefs.notifications?.onScheduledSwitch) {
+            const notification = new Notification({
+              title: 'Scheduled Wallpaper Applied',
+              body: `Applied ${schedule.name || 'wallpaper'} for ${schedule.timeStart} - ${schedule.timeEnd}`,
+            });
+            notification.show();
+          }
         }
 
         return; // Exit after applying the first matching schedule
       }
     }
 
-    logger.debug('No matching wallpaper schedule found for current time');
+    logger.debug('No matching schedule found for current time');
   } catch (error) {
-    logger.error('Error checking scheduled wallpaper', error);
+    logger.error('Error checking schedule', error);
   }
 }
 
