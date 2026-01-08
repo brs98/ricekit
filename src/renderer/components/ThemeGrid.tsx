@@ -3,6 +3,7 @@ import { Theme } from '../../shared/types';
 import { ThemeCard } from './ThemeCard';
 import { ThemeDetailModal } from './ThemeDetailModal';
 import { showErrorAlert } from '../utils/errorDisplay';
+import { emitThemeApplied } from '../hooks/useThemeSelfStyling';
 
 interface ThemeGridProps {
   searchQuery?: string;
@@ -75,6 +76,9 @@ export function ThemeGrid({ searchQuery = '', filterMode = 'all', sortMode = 'de
       const prefs = await window.electronAPI.getPreferences();
       const recentThemes = [themeName, ...prefs.recentThemes.filter(t => t !== themeName)].slice(0, 10);
       await window.electronAPI.setPreferences({ ...prefs, recentThemes });
+
+      // Update the app's own UI with the new theme colors
+      emitThemeApplied();
     } catch (err) {
       console.error('Failed to apply theme:', err);
       showErrorAlert(err);

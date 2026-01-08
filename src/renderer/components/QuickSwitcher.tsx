@@ -9,6 +9,7 @@ import {
   CommandGroup,
   CommandItem,
 } from '@/renderer/components/ui/command';
+import { emitThemeApplied, useThemeSelfStyling } from '../hooks/useThemeSelfStyling';
 
 // Color swatches component for theme preview
 function ThemeColorSwatches({ colors }: { colors: Theme['metadata']['colors'] }) {
@@ -40,6 +41,9 @@ export function QuickSwitcher() {
   const [state, setState] = useState<State | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+
+  // Apply the current theme's colors to the QuickSwitcher UI
+  useThemeSelfStyling();
 
   // Load themes, preferences, and state
   useEffect(() => {
@@ -142,6 +146,8 @@ export function QuickSwitcher() {
   async function handleApplyTheme(themeName: string) {
     try {
       await window.electronAPI.applyTheme(themeName);
+      // Update the app's own UI with the new theme colors
+      emitThemeApplied();
       window.electronAPI.closeQuickSwitcher();
     } catch (error) {
       console.error('Failed to apply theme:', error);

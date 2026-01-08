@@ -7,6 +7,7 @@ import {
 } from '@/renderer/components/ui/dialog';
 import { Button } from '@/renderer/components/ui/button';
 import { Checkbox } from '@/renderer/components/ui/checkbox';
+import { emitThemeApplied } from '../hooks/useThemeSelfStyling';
 
 interface OnboardingModalProps {
   onComplete: () => void;
@@ -188,6 +189,8 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
       // Apply the selected theme
       if (selectedTheme) {
         await window.electronAPI.applyTheme(selectedTheme);
+        // Update the app's own UI with the new theme colors
+        emitThemeApplied();
       }
 
       // Setup selected applications

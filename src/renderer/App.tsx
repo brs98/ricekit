@@ -8,6 +8,7 @@ import { SettingsView } from './components/SettingsView';
 import { QuickSwitcher } from './components/QuickSwitcher';
 import { OnboardingModal } from './components/OnboardingModal';
 import { Theme } from '../shared/types';
+import { useThemeSelfStyling } from './hooks/useThemeSelfStyling';
 import {
   Dialog,
   DialogContent,
@@ -34,6 +35,9 @@ function App() {
   const [importUrl, setImportUrl] = useState('');
   const [importing, setImporting] = useState(false);
   const [stateRestored, setStateRestored] = useState(false);
+
+  // Apply the current theme's colors to the app's own UI
+  useThemeSelfStyling();
 
   // Detect if this is the quick switcher window and check onboarding status
   useEffect(() => {
