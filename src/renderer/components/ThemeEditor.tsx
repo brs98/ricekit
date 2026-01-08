@@ -1,10 +1,19 @@
-import { useState, useEffect, useRef } from 'react';
-import { Theme, ThemeMetadata, ThemeColors } from '../../shared/types';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { Theme, ThemeMetadata, ThemeColors, ColorLockState, DerivedColorKey } from '../../shared/types';
 import {
   isValidHexColor,
   toHex,
   detectColorFormat
 } from '../../shared/colorUtils';
+import {
+  BaseColorKey,
+  deriveAllColors,
+  getDefaultLockState,
+  getDerivationDescription,
+  isBaseColor,
+  isDerivedColor,
+} from '../../shared/colorDerivation';
+import { validateColorJson, ValidationResult } from '../../shared/themeColorValidator';
 import { Vibrant } from 'node-vibrant/browser';
 import { Button } from '@/renderer/components/ui/button';
 import { Input } from '@/renderer/components/ui/input';
@@ -267,6 +276,83 @@ function ColorInput({ colorKey, colorValue, isSelected, error, onColorChange, on
   );
 }
 
+// Component for derived colors with lock/unlock toggle
+interface DerivedColorInputProps {
+  colorKey: DerivedColorKey;
+  colorValue: string;
+  isLocked: boolean;
+  isSelected: boolean;
+  error?: string;
+  onColorChange: (colorKey: DerivedColorKey, value: string) => void;
+  onToggleLock: (colorKey: DerivedColorKey) => void;
+  onFocus: (colorKey: keyof ThemeColors) => void;
+}
+
+function DerivedColorInput({
+  colorKey,
+  colorValue,
+  isLocked,
+  isSelected,
+  error,
+  onColorChange,
+  onToggleLock,
+  onFocus,
+}: DerivedColorInputProps) {
+  const hasError = Boolean(error);
+  const derivationHint = getDerivationDescription(colorKey);
+
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center gap-2">
+        <Label className="w-24 text-xs shrink-0">{formatColorName(colorKey)}</Label>
+        <div className="flex items-center gap-2 flex-1">
+          <button
+            type="button"
+            onClick={() => onToggleLock(colorKey)}
+            className={`w-8 h-8 rounded-[4px] border flex items-center justify-center text-sm transition-colors ${
+              isLocked
+                ? 'border-primary bg-primary/10 text-primary'
+                : 'border-border text-muted-foreground hover:border-primary/50'
+            }`}
+            title={isLocked ? 'Locked (manual override) - click to auto-calculate' : 'Auto-calculated - click to lock'}
+          >
+            {isLocked ? '🔒' : '🔓'}
+          </button>
+          <input
+            type="color"
+            value={isValidHexColor(colorValue) ? colorValue : '#000000'}
+            onChange={(e) => {
+              if (!isLocked) onToggleLock(colorKey); // Auto-lock when manually changing
+              onColorChange(colorKey, e.target.value);
+            }}
+            className="w-8 h-8 rounded-[4px] border border-border cursor-pointer"
+            onClick={() => onFocus(colorKey)}
+            disabled={!isValidHexColor(colorValue)}
+          />
+          <Input
+            type="text"
+            value={colorValue}
+            onChange={(e) => {
+              if (!isLocked) onToggleLock(colorKey); // Auto-lock when manually changing
+              onColorChange(colorKey, e.target.value);
+            }}
+            className={`flex-1 font-mono text-xs h-8 ${isSelected ? 'ring-2 ring-primary' : ''} ${hasError ? 'border-destructive' : ''} ${!isLocked ? 'text-muted-foreground' : ''}`}
+            onFocus={() => onFocus(colorKey)}
+            placeholder="#FF5733"
+            readOnly={!isLocked}
+          />
+        </div>
+      </div>
+      {!isLocked && (
+        <p className="text-[10px] text-muted-foreground pl-24">{derivationHint}</p>
+      )}
+      {error && (
+        <p className="text-xs text-destructive pl-24">{error}</p>
+      )}
+    </div>
+  );
+}
+
 export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: ThemeEditorProps) {
   const [metadata, setMetadata] = useState<ThemeMetadata>(initialTheme || defaultMetadata);
   const [selectedColor, setSelectedColor] = useState<keyof ThemeColors | null>(null);
@@ -278,14 +364,81 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
   const [selectedPreset, setSelectedPreset] = useState<string>('');
   const [colorErrors, setColorErrors] = useState<{ [key in keyof ThemeColors]?: string }>({});
   const [extractingColors, setExtractingColors] = useState(false);
+  const [colorLocks, setColorLocks] = useState<ColorLockState>(
+    initialTheme?.colorLocks || getDefaultLockState()
+  );
+  const [pasteInput, setPasteInput] = useState('');
+  const [pasteValidation, setPasteValidation] = useState<ValidationResult>({
+    isValid: false,
+    validColors: {},
+    invalidColors: [],
+    message: '',
+    status: 'empty',
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Update when initialTheme changes
   useEffect(() => {
     if (initialTheme) {
       setMetadata(initialTheme);
+      // If theme has lock state, use it; otherwise for existing themes, lock all (preserve existing colors)
+      if (initialTheme.colorLocks) {
+        setColorLocks(initialTheme.colorLocks);
+      } else if (sourceTheme) {
+        // Existing theme without lock state - treat all derived colors as locked
+        const allLocked: ColorLockState = {
+          brightBlack: true,
+          brightRed: true,
+          brightGreen: true,
+          brightYellow: true,
+          brightBlue: true,
+          brightMagenta: true,
+          brightCyan: true,
+          brightWhite: true,
+          cursor: true,
+          selection: true,
+          border: true,
+          accent: true,
+        };
+        setColorLocks(allLocked);
+      } else {
+        setColorLocks(getDefaultLockState());
+      }
     }
-  }, [initialTheme]);
+  }, [initialTheme, sourceTheme]);
+
+  // Validate paste input as it changes
+  useEffect(() => {
+    setPasteValidation(validateColorJson(pasteInput));
+  }, [pasteInput]);
+
+  // Apply pasted colors to the theme
+  const handleApplyPastedColors = useCallback(() => {
+    if (!pasteValidation.isValid) return;
+
+    // Determine which colors were explicitly provided vs which need derivation
+    const newLocks: ColorLockState = { ...colorLocks };
+    const providedColorKeys = Object.keys(pasteValidation.validColors) as (keyof ThemeColors)[];
+
+    // Lock colors that were explicitly provided, unlock ones that weren't
+    for (const key of providedColorKeys) {
+      if (key in newLocks) {
+        (newLocks as Record<string, boolean>)[key] = true;
+      }
+    }
+
+    // Apply valid colors and derive the rest
+    const newColors = deriveAllColors(
+      { ...metadata.colors, ...pasteValidation.validColors },
+      newLocks,
+      metadata.colors
+    );
+
+    setMetadata({ ...metadata, colors: newColors, colorLocks: newLocks });
+    setColorLocks(newLocks);
+    setHasChanges(true);
+    setPasteInput('');
+  }, [pasteValidation, metadata, colorLocks]);
 
   const applyPreset = (presetKey: string) => {
     if (presetKey && presetSchemes[presetKey]) {
@@ -378,7 +531,31 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
     }
   };
 
-  const updateColor = (colorKey: keyof ThemeColors, value: string) => {
+  // Toggle lock state for a derived color
+  const toggleLock = useCallback((colorKey: DerivedColorKey) => {
+    const newLocked = !colorLocks[colorKey];
+    const newLocks = { ...colorLocks, [colorKey]: newLocked };
+    setColorLocks(newLocks);
+
+    // If unlocking, recalculate this color from base colors
+    if (!newLocked) {
+      const recalculated = deriveAllColors(metadata.colors, newLocks, metadata.colors);
+      setMetadata({
+        ...metadata,
+        colors: recalculated,
+        colorLocks: newLocks,
+      });
+    } else {
+      setMetadata({
+        ...metadata,
+        colorLocks: newLocks,
+      });
+    }
+    setHasChanges(true);
+  }, [colorLocks, metadata]);
+
+  // Update a derived color (only when locked)
+  const updateDerivedColor = useCallback((colorKey: DerivedColorKey, value: string) => {
     const format = detectColorFormat(value);
     let hexValue = value;
     let errorMessage = '';
@@ -406,6 +583,58 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
     setHasChanges(true);
 
     if (errorMessage) {
+      setColorErrors(prev => ({ ...prev, [colorKey]: errorMessage }));
+    } else {
+      setColorErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[colorKey];
+        return newErrors;
+      });
+    }
+  }, [metadata]);
+
+  // Update a base color and recalculate derived colors
+  const updateColor = useCallback((colorKey: keyof ThemeColors, value: string) => {
+    const format = detectColorFormat(value);
+    let hexValue = value;
+    let errorMessage = '';
+
+    if (value.trim() === '') {
+      errorMessage = 'Color cannot be empty';
+    } else if (format === 'invalid') {
+      errorMessage = 'Invalid color format. Use hex (#FF5733), RGB (255, 87, 51), or HSL (360, 100%, 50%)';
+    } else {
+      const convertedHex = toHex(value);
+      if (convertedHex) {
+        hexValue = convertedHex;
+      } else {
+        errorMessage = 'Failed to convert color to hex format';
+      }
+    }
+
+    // Update the color
+    const newBaseColors = {
+      ...metadata.colors,
+      [colorKey]: hexValue,
+    };
+
+    // If this is a base color, recalculate derived colors
+    if (isBaseColor(colorKey)) {
+      const recalculated = deriveAllColors(newBaseColors, colorLocks, metadata.colors);
+      setMetadata({
+        ...metadata,
+        colors: recalculated,
+        colorLocks,
+      });
+    } else {
+      setMetadata({
+        ...metadata,
+        colors: newBaseColors,
+      });
+    }
+    setHasChanges(true);
+
+    if (errorMessage) {
       setColorErrors(prev => ({
         ...prev,
         [colorKey]: errorMessage
@@ -417,7 +646,7 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
         return newErrors;
       });
     }
-  };
+  }, [metadata, colorLocks]);
 
   const updateMetadataField = (field: keyof Omit<ThemeMetadata, 'colors'>, value: string) => {
     setMetadata({
@@ -504,6 +733,20 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
     }
   };
 
+  // Base colors - the 10 colors users need to define
+  const baseColorKeys: BaseColorKey[] = [
+    'background', 'foreground',
+    'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white',
+  ];
+
+  // Derived colors - auto-calculated from base colors
+  const derivedColorKeys: DerivedColorKey[] = [
+    'accent', 'cursor', 'selection', 'border',
+    'brightBlack', 'brightRed', 'brightGreen', 'brightYellow',
+    'brightBlue', 'brightMagenta', 'brightCyan', 'brightWhite',
+  ];
+
+  // For preview palette display
   const mainColorKeys: (keyof ThemeColors)[] = [
     'background', 'foreground', 'cursor', 'selection', 'accent', 'border',
   ];
@@ -564,6 +807,97 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
             </p>
           </div>
 
+          {/* Paste Colors Section */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold">Paste Colors</h3>
+            <textarea
+              placeholder='{"background": "#1a1b26", "foreground": "#c0caf5", ...}'
+              className="w-full h-20 font-mono text-xs rounded-[8px] border border-input bg-transparent px-3 py-2 placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none"
+              value={pasteInput}
+              onChange={(e) => setPasteInput(e.target.value)}
+            />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 min-h-[20px]">
+                {pasteValidation.status === 'valid' && (
+                  <span className="text-green-500 text-xs">✓ {pasteValidation.message}</span>
+                )}
+                {pasteValidation.status === 'warning' && (
+                  <span className="text-yellow-500 text-xs">⚠ {pasteValidation.message}</span>
+                )}
+                {pasteValidation.status === 'error' && (
+                  <span className="text-red-500 text-xs">✗ {pasteValidation.message}</span>
+                )}
+              </div>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleApplyPastedColors}
+                disabled={!pasteValidation.isValid}
+              >
+                Apply Colors
+              </Button>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">Copy example:</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 px-2 text-xs"
+                onClick={() => {
+                  const baseExample = JSON.stringify({
+                    background: "#1a1b26",
+                    foreground: "#c0caf5",
+                    black: "#15161e",
+                    red: "#f7768e",
+                    green: "#9ece6a",
+                    yellow: "#e0af68",
+                    blue: "#7aa2f7",
+                    magenta: "#bb9af7",
+                    cyan: "#7dcfff",
+                    white: "#a9b1d6"
+                  }, null, 2);
+                  navigator.clipboard.writeText(baseExample);
+                }}
+              >
+                Base (10)
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 px-2 text-xs"
+                onClick={() => {
+                  const fullExample = JSON.stringify({
+                    background: "#1a1b26",
+                    foreground: "#c0caf5",
+                    cursor: "#c0caf5",
+                    selection: "#33467c",
+                    black: "#15161e",
+                    red: "#f7768e",
+                    green: "#9ece6a",
+                    yellow: "#e0af68",
+                    blue: "#7aa2f7",
+                    magenta: "#bb9af7",
+                    cyan: "#7dcfff",
+                    white: "#a9b1d6",
+                    brightBlack: "#414868",
+                    brightRed: "#f7768e",
+                    brightGreen: "#9ece6a",
+                    brightYellow: "#e0af68",
+                    brightBlue: "#7aa2f7",
+                    brightMagenta: "#bb9af7",
+                    brightCyan: "#7dcfff",
+                    brightWhite: "#c0caf5",
+                    accent: "#7aa2f7",
+                    border: "#414868"
+                  }, null, 2);
+                  navigator.clipboard.writeText(fullExample);
+                }}
+              >
+                Full (22)
+              </Button>
+            </div>
+          </div>
+
           {/* Theme Information Section */}
           <div className="space-y-3">
             <h3 className="text-sm font-semibold">Theme Information</h3>
@@ -609,11 +943,17 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
             </div>
           </div>
 
-          {/* Main Colors Section */}
+          {/* Base Colors Section - the 10 colors users define */}
           <div className="space-y-3">
-            <h3 className="text-sm font-semibold">Main Colors</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold">Base Colors</h3>
+              <span className="text-xs text-muted-foreground">10 colors</span>
+            </div>
+            <p className="text-xs text-muted-foreground -mt-1">
+              Define these colors - the rest will be auto-calculated
+            </p>
             <div className="space-y-2">
-              {mainColorKeys.map((key) => (
+              {baseColorKeys.map((key) => (
                 <ColorInput
                   key={key}
                   colorKey={key}
@@ -627,36 +967,26 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
             </div>
           </div>
 
-          {/* ANSI Colors Section */}
+          {/* Derived Colors Section - auto-calculated with optional override */}
           <div className="space-y-3">
-            <h3 className="text-sm font-semibold">ANSI Colors</h3>
-            <div className="space-y-2">
-              {ansiColorKeys.map((key) => (
-                <ColorInput
-                  key={key}
-                  colorKey={key}
-                  colorValue={metadata.colors[key]}
-                  isSelected={selectedColor === key}
-                  error={colorErrors[key]}
-                  onColorChange={updateColor}
-                  onFocus={setSelectedColor}
-                />
-              ))}
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold">Derived Colors</h3>
+              <span className="text-xs text-muted-foreground">12 colors</span>
             </div>
-          </div>
-
-          {/* Bright Colors Section */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold">Bright Colors</h3>
+            <p className="text-xs text-muted-foreground -mt-1">
+              Auto-calculated from base colors. Click lock to override.
+            </p>
             <div className="space-y-2">
-              {brightColorKeys.map((key) => (
-                <ColorInput
+              {derivedColorKeys.map((key) => (
+                <DerivedColorInput
                   key={key}
                   colorKey={key}
                   colorValue={metadata.colors[key]}
+                  isLocked={colorLocks[key] || false}
                   isSelected={selectedColor === key}
                   error={colorErrors[key]}
-                  onColorChange={updateColor}
+                  onColorChange={updateDerivedColor}
+                  onToggleLock={toggleLock}
                   onFocus={setSelectedColor}
                 />
               ))}

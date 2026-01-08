@@ -24,12 +24,33 @@ export interface ThemeColors {
   border: string;
 }
 
+// Lock state for derived colors in simplified theme editor
+// true = locked (manual override), false/undefined = auto-calculated
+export type DerivedColorKey =
+  | 'brightBlack'
+  | 'brightRed'
+  | 'brightGreen'
+  | 'brightYellow'
+  | 'brightBlue'
+  | 'brightMagenta'
+  | 'brightCyan'
+  | 'brightWhite'
+  | 'cursor'
+  | 'selection'
+  | 'border'
+  | 'accent';
+
+export type ColorLockState = {
+  [key in DerivedColorKey]?: boolean;
+};
+
 export interface ThemeMetadata {
   name: string;
   author: string;
   description: string;
   version: string;
   colors: ThemeColors;
+  colorLocks?: ColorLockState; // Optional: tracks which derived colors are manually overridden
   variants?: {
     light?: string;
     dark?: string;

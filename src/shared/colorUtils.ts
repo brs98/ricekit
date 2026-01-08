@@ -272,3 +272,218 @@ export function detectColorFormat(color: string): 'hex' | 'rgb' | 'hsl' | 'inval
 
   return 'invalid';
 }
+
+// ============================================================================
+// OKLCH Color Space Utilities
+// OKLCH is a perceptually uniform color space ideal for color manipulation
+// ============================================================================
+
+export interface OKLab {
+  L: number;  // Lightness: 0-1
+  a: number;  // Green-Red axis: ~-0.4 to 0.4
+  b: number;  // Blue-Yellow axis: ~-0.4 to 0.4
+}
+
+export interface OKLCH {
+  l: number;  // Lightness: 0-1
+  c: number;  // Chroma: 0-0.4 (typical range)
+  h: number;  // Hue: 0-360 degrees
+}
+
+/**
+ * Convert sRGB component (0-255) to linear RGB (0-1)
+ */
+function srgbToLinear(value: number): number {
+  const v = value / 255;
+  return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+}
+
+/**
+ * Convert linear RGB (0-1) to sRGB component (0-255)
+ */
+function linearToSrgb(value: number): number {
+  const v = value <= 0.0031308 ? 12.92 * value : 1.055 * Math.pow(value, 1 / 2.4) - 0.055;
+  return Math.round(Math.max(0, Math.min(255, v * 255)));
+}
+
+/**
+ * Convert RGB to OKLab color space
+ */
+export function rgbToOklab(rgb: RGB): OKLab {
+  // Convert sRGB to linear RGB
+  const r = srgbToLinear(rgb.r);
+  const g = srgbToLinear(rgb.g);
+  const b = srgbToLinear(rgb.b);
+
+  // Linear RGB to LMS (cone responses)
+  const l = 0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b;
+  const m = 0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b;
+  const s = 0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b;
+
+  // Cube root of LMS
+  const l_ = Math.cbrt(l);
+  const m_ = Math.cbrt(m);
+  const s_ = Math.cbrt(s);
+
+  // LMS to OKLab
+  return {
+    L: 0.2104542553 * l_ + 0.7936177850 * m_ - 0.0040720468 * s_,
+    a: 1.9779984951 * l_ - 2.4285922050 * m_ + 0.4505937099 * s_,
+    b: 0.0259040371 * l_ + 0.7827717662 * m_ - 0.8086757660 * s_,
+  };
+}
+
+/**
+ * Convert OKLab to RGB color space
+ */
+export function oklabToRgb(lab: OKLab): RGB {
+  // OKLab to LMS (cube root space)
+  const l_ = lab.L + 0.3963377774 * lab.a + 0.2158037573 * lab.b;
+  const m_ = lab.L - 0.1055613458 * lab.a - 0.0638541728 * lab.b;
+  const s_ = lab.L - 0.0894841775 * lab.a - 1.2914855480 * lab.b;
+
+  // Cube to get LMS
+  const l = l_ * l_ * l_;
+  const m = m_ * m_ * m_;
+  const s = s_ * s_ * s_;
+
+  // LMS to linear RGB
+  const r = +4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s;
+  const g = -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s;
+  const b = -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s;
+
+  // Linear RGB to sRGB
+  return {
+    r: linearToSrgb(r),
+    g: linearToSrgb(g),
+    b: linearToSrgb(b),
+  };
+}
+
+/**
+ * Convert OKLab to OKLCH (polar form)
+ */
+export function oklabToOklch(lab: OKLab): OKLCH {
+  const c = Math.sqrt(lab.a * lab.a + lab.b * lab.b);
+  let h = Math.atan2(lab.b, lab.a) * 180 / Math.PI;
+  if (h < 0) h += 360;
+
+  return {
+    l: lab.L,
+    c: c,
+    h: c < 0.0001 ? 0 : h,  // Hue is meaningless for near-zero chroma
+  };
+}
+
+/**
+ * Convert OKLCH to OKLab (rectangular form)
+ */
+export function oklchToOklab(lch: OKLCH): OKLab {
+  const hRad = lch.h * Math.PI / 180;
+  return {
+    L: lch.l,
+    a: lch.c * Math.cos(hRad),
+    b: lch.c * Math.sin(hRad),
+  };
+}
+
+/**
+ * Convert hex color to OKLCH
+ */
+export function hexToOklch(hex: string): OKLCH | null {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return null;
+
+  const lab = rgbToOklab(rgb);
+  return oklabToOklch(lab);
+}
+
+/**
+ * Convert OKLCH to hex color
+ * Includes gamut mapping to ensure the result is valid sRGB
+ */
+export function oklchToHex(lch: OKLCH): string {
+  // Clamp lightness
+  const clampedLch: OKLCH = {
+    l: Math.max(0, Math.min(1, lch.l)),
+    c: Math.max(0, lch.c),
+    h: lch.h,
+  };
+
+  // Convert to RGB
+  const lab = oklchToOklab(clampedLch);
+  let rgb = oklabToRgb(lab);
+
+  // Check if we're out of gamut and reduce chroma if needed
+  if (rgb.r < 0 || rgb.r > 255 || rgb.g < 0 || rgb.g > 255 || rgb.b < 0 || rgb.b > 255) {
+    // Binary search to find max in-gamut chroma
+    let low = 0;
+    let high = clampedLch.c;
+
+    for (let i = 0; i < 12; i++) {
+      const mid = (low + high) / 2;
+      const testLch: OKLCH = { l: clampedLch.l, c: mid, h: clampedLch.h };
+      const testLab = oklchToOklab(testLch);
+      const testRgb = oklabToRgb(testLab);
+
+      if (testRgb.r >= 0 && testRgb.r <= 255 &&
+          testRgb.g >= 0 && testRgb.g <= 255 &&
+          testRgb.b >= 0 && testRgb.b <= 255) {
+        low = mid;
+      } else {
+        high = mid;
+      }
+    }
+
+    // Use the in-gamut chroma
+    const finalLch: OKLCH = { l: clampedLch.l, c: low, h: clampedLch.h };
+    const finalLab = oklchToOklab(finalLch);
+    rgb = oklabToRgb(finalLab);
+  }
+
+  return rgbToHex(rgb);
+}
+
+/**
+ * Adjust the lightness of a color in OKLCH space
+ */
+export function adjustLightness(hex: string, amount: number): string | null {
+  const lch = hexToOklch(hex);
+  if (!lch) return null;
+
+  return oklchToHex({
+    l: lch.l + amount,
+    c: lch.c,
+    h: lch.h,
+  });
+}
+
+/**
+ * Blend two colors in OKLCH space
+ */
+export function blendColors(hex1: string, hex2: string, factor: number): string | null {
+  const lch1 = hexToOklch(hex1);
+  const lch2 = hexToOklch(hex2);
+  if (!lch1 || !lch2) return null;
+
+  // Handle hue interpolation (shortest path around the circle)
+  let h1 = lch1.h;
+  let h2 = lch2.h;
+  const hueDiff = h2 - h1;
+
+  if (Math.abs(hueDiff) > 180) {
+    if (hueDiff > 0) {
+      h1 += 360;
+    } else {
+      h2 += 360;
+    }
+  }
+
+  const blendedH = h1 + (h2 - h1) * factor;
+
+  return oklchToHex({
+    l: lch1.l + (lch2.l - lch1.l) * factor,
+    c: lch1.c + (lch2.c - lch1.c) * factor,
+    h: ((blendedH % 360) + 360) % 360,
+  });
+}
