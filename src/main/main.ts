@@ -9,6 +9,8 @@ import { logger } from './logger';
 let mainWindow: BrowserWindow | null = null;
 let quickSwitcherWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
+let isQuitting = false;
+let scheduleCheckInterval: NodeJS.Timeout | null = null;
 
 /**
  * Create or update the menu bar tray icon and menu
@@ -254,9 +256,9 @@ function createWindow() {
 
   // Handle window close button - hide instead of close on macOS
   mainWindow.on('close', (event) => {
-    // On macOS, hide the window instead of closing it
-    // This allows the app to stay in the menu bar
-    if (process.platform === 'darwin') {
+    // On macOS, hide the window instead of closing it (unless actually quitting)
+    // This allows the app to stay in the menu bar when closing the window
+    if (process.platform === 'darwin' && !isQuitting) {
       event.preventDefault();
       mainWindow?.hide();
     }
@@ -438,7 +440,7 @@ if (!gotTheLock) {
   createWindow();
 
   // Setup schedule-based auto-switching check (runs every minute)
-  setInterval(() => {
+  scheduleCheckInterval = setInterval(() => {
     checkScheduleAndApplyTheme();
   }, 60 * 1000); // Check every 60 seconds
 
@@ -487,9 +489,18 @@ if (!gotTheLock) {
     }
   });
 
-  // Unregister shortcuts when app is about to quit
+  // Set quitting flag before quit starts - this allows windows to close properly
+  app.on('before-quit', () => {
+    isQuitting = true;
+  });
+
+  // Unregister shortcuts and cleanup when app is about to quit
   app.on('will-quit', () => {
     globalShortcut.unregisterAll();
     stopWallpaperScheduler();
+    if (scheduleCheckInterval) {
+      clearInterval(scheduleCheckInterval);
+      scheduleCheckInterval = null;
+    }
   });
 }
