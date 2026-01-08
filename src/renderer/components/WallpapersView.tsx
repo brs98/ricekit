@@ -157,7 +157,7 @@ const ScheduleModal: React.FC<ScheduleModalProps> = ({ wallpapers, currentSchedu
           {schedules.map((schedule, index) => (
             <div
               key={index}
-              className="p-4 rounded-lg border border-border bg-muted/50 space-y-3"
+              className="p-4 rounded-lg border border-border bg-card text-card-foreground space-y-3"
             >
               <div className="flex gap-2">
                 <Input

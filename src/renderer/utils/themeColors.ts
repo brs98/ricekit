@@ -105,7 +105,9 @@ export function applyThemeColors(colors: ThemeColors, isLight: boolean): void {
   root.style.setProperty('--popover', hexToRgb(cardColor));
   root.style.setProperty('--popover-foreground', hexToRgb(fgColor));
   root.style.setProperty('--primary', hexToRgb(accentColor));
-  root.style.setProperty('--primary-foreground', hexToRgb(isLight ? '#ffffff' : '#ffffff'));
+  // Calculate primary foreground based on accent color luminance for proper contrast
+  const primaryFg = isLightColor(accentColor) ? '#000000' : '#ffffff';
+  root.style.setProperty('--primary-foreground', hexToRgb(primaryFg));
   root.style.setProperty('--secondary', hexToRgb(secondaryColor));
   root.style.setProperty('--secondary-foreground', hexToRgb(fgColor));
   root.style.setProperty('--muted', hexToRgb(mutedColor));
@@ -113,7 +115,9 @@ export function applyThemeColors(colors: ThemeColors, isLight: boolean): void {
   root.style.setProperty('--accent', hexToRgb(secondaryColor));
   root.style.setProperty('--accent-foreground', hexToRgb(accentColor));
   root.style.setProperty('--destructive', hexToRgb(colors.red));
-  root.style.setProperty('--destructive-foreground', hexToRgb('#ffffff'));
+  // Calculate destructive foreground based on red color luminance for proper contrast
+  const destructiveFg = isLightColor(colors.red) ? '#000000' : '#ffffff';
+  root.style.setProperty('--destructive-foreground', hexToRgb(destructiveFg));
   root.style.setProperty('--ring', hexToRgb(accentColor));
 
   // Border needs special handling for alpha
