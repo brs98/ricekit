@@ -218,6 +218,55 @@ const defaultMetadata: ThemeMetadata = {
   colors: defaultColors,
 };
 
+const formatColorName = (key: string): string => {
+  return key
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/^./, (str) => str.toUpperCase())
+    .trim();
+};
+
+interface ColorInputProps {
+  colorKey: keyof ThemeColors;
+  colorValue: string;
+  isSelected: boolean;
+  error?: string;
+  onColorChange: (colorKey: keyof ThemeColors, value: string) => void;
+  onFocus: (colorKey: keyof ThemeColors) => void;
+}
+
+function ColorInput({ colorKey, colorValue, isSelected, error, onColorChange, onFocus }: ColorInputProps) {
+  const hasError = Boolean(error);
+
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center gap-2">
+        <Label className="w-24 text-xs shrink-0">{formatColorName(colorKey)}</Label>
+        <div className="flex items-center gap-2 flex-1">
+          <input
+            type="color"
+            value={isValidHexColor(colorValue) ? colorValue : '#000000'}
+            onChange={(e) => onColorChange(colorKey, e.target.value)}
+            className="w-8 h-8 rounded-[4px] border border-border cursor-pointer"
+            onClick={() => onFocus(colorKey)}
+            disabled={!isValidHexColor(colorValue)}
+          />
+          <Input
+            type="text"
+            value={colorValue}
+            onChange={(e) => onColorChange(colorKey, e.target.value)}
+            className={`flex-1 font-mono text-xs h-8 ${isSelected ? 'ring-2 ring-primary' : ''} ${hasError ? 'border-destructive' : ''}`}
+            onFocus={() => onFocus(colorKey)}
+            placeholder="#FF5733"
+          />
+        </div>
+      </div>
+      {error && (
+        <p className="text-xs text-destructive pl-24">{error}</p>
+      )}
+    </div>
+  );
+}
+
 export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: ThemeEditorProps) {
   const [metadata, setMetadata] = useState<ThemeMetadata>(initialTheme || defaultMetadata);
   const [selectedColor, setSelectedColor] = useState<keyof ThemeColors | null>(null);
@@ -468,49 +517,6 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
     'brightBlue', 'brightMagenta', 'brightCyan', 'brightWhite',
   ];
 
-  const formatColorName = (key: string): string => {
-    return key
-      .replace(/([A-Z])/g, ' $1')
-      .replace(/^./, (str) => str.toUpperCase())
-      .trim();
-  };
-
-  const ColorInput = ({ colorKey }: { colorKey: keyof ThemeColors }) => {
-    const colorValue = metadata.colors[colorKey];
-    const isSelected = selectedColor === colorKey;
-    const error = colorErrors[colorKey];
-    const hasError = Boolean(error);
-
-    return (
-      <div className="space-y-1">
-        <div className="flex items-center gap-2">
-          <Label className="w-24 text-xs shrink-0">{formatColorName(colorKey)}</Label>
-          <div className="flex items-center gap-2 flex-1">
-            <input
-              type="color"
-              value={isValidHexColor(colorValue) ? colorValue : '#000000'}
-              onChange={(e) => updateColor(colorKey, e.target.value)}
-              className="w-8 h-8 rounded-[4px] border border-border cursor-pointer"
-              onClick={() => setSelectedColor(colorKey)}
-              disabled={!isValidHexColor(colorValue)}
-            />
-            <Input
-              type="text"
-              value={colorValue}
-              onChange={(e) => updateColor(colorKey, e.target.value)}
-              className={`flex-1 font-mono text-xs h-8 ${isSelected ? 'ring-2 ring-primary' : ''} ${hasError ? 'border-destructive' : ''}`}
-              onFocus={() => setSelectedColor(colorKey)}
-              placeholder="#FF5733"
-            />
-          </div>
-        </div>
-        {error && (
-          <p className="text-xs text-destructive pl-24">{error}</p>
-        )}
-      </div>
-    );
-  };
-
   return (
     <div className="theme-editor">
       <div className="theme-editor-sidebar">
@@ -608,7 +614,15 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
             <h3 className="text-sm font-semibold">Main Colors</h3>
             <div className="space-y-2">
               {mainColorKeys.map((key) => (
-                <ColorInput key={key} colorKey={key} />
+                <ColorInput
+                  key={key}
+                  colorKey={key}
+                  colorValue={metadata.colors[key]}
+                  isSelected={selectedColor === key}
+                  error={colorErrors[key]}
+                  onColorChange={updateColor}
+                  onFocus={setSelectedColor}
+                />
               ))}
             </div>
           </div>
@@ -618,7 +632,15 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
             <h3 className="text-sm font-semibold">ANSI Colors</h3>
             <div className="space-y-2">
               {ansiColorKeys.map((key) => (
-                <ColorInput key={key} colorKey={key} />
+                <ColorInput
+                  key={key}
+                  colorKey={key}
+                  colorValue={metadata.colors[key]}
+                  isSelected={selectedColor === key}
+                  error={colorErrors[key]}
+                  onColorChange={updateColor}
+                  onFocus={setSelectedColor}
+                />
               ))}
             </div>
           </div>
@@ -628,7 +650,15 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
             <h3 className="text-sm font-semibold">Bright Colors</h3>
             <div className="space-y-2">
               {brightColorKeys.map((key) => (
-                <ColorInput key={key} colorKey={key} />
+                <ColorInput
+                  key={key}
+                  colorKey={key}
+                  colorValue={metadata.colors[key]}
+                  isSelected={selectedColor === key}
+                  error={colorErrors[key]}
+                  onColorChange={updateColor}
+                  onFocus={setSelectedColor}
+                />
               ))}
             </div>
           </div>
