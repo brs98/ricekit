@@ -299,15 +299,43 @@ async function notifyTerminalsToReload(themePath: string): Promise<void> {
   }
 
   // 4. Reload SketchyBar
+  // Add a small delay to ensure the symlink is fully visible to SketchyBar
+  await new Promise((resolve) => setTimeout(resolve, 100));
+
+  // Check if SketchyBar is running first
+  let sketchybarRunning = false;
   try {
-    execSync('sketchybar --reload', {
-      stdio: 'pipe',
-      timeout: 5000,
-    });
-    logger.info('✓ SketchyBar reloaded');
-  } catch (err) {
-    // SketchyBar may not be installed or running - that's ok
-    logger.info('SketchyBar not available or not running');
+    execSync('pgrep -x sketchybar', { stdio: 'pipe' });
+    sketchybarRunning = true;
+  } catch {
+    // Not running
+  }
+
+  if (sketchybarRunning) {
+    // Try reload with retry logic for intermittent failures
+    let reloadSuccess = false;
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        execSync('sketchybar --reload', {
+          stdio: 'pipe',
+          timeout: 5000,
+        });
+        logger.info('✓ SketchyBar reloaded');
+        reloadSuccess = true;
+        break;
+      } catch (err: any) {
+        logger.warn(`SketchyBar reload attempt ${attempt} failed: ${err.message}`);
+        if (attempt < 2) {
+          // Wait a bit before retrying
+          await new Promise((resolve) => setTimeout(resolve, 200));
+        }
+      }
+    }
+    if (!reloadSuccess) {
+      logger.error('SketchyBar reload failed after retries');
+    }
+  } else {
+    logger.info('SketchyBar not running, skipping reload');
   }
 
   logger.info('Terminal reload notifications sent');
@@ -381,6 +409,89 @@ export async function updateCursorSettings(themeName: string, themePath: string)
   const homeDir = os.homedir();
   const cursorSettingsPath = path.join(homeDir, 'Library', 'Application Support', 'Cursor', 'User', 'settings.json');
   await updateEditorSettings('Cursor', cursorSettingsPath, themeName, themePath);
+}
+
+/**
+ * Refresh all apps when the active theme is updated
+ * This applies the updated theme to all integrated apps without changing the active theme state
+ */
+async function refreshActiveThemeApps(themeName: string, themePath: string): Promise<void> {
+  logger.info(`Refreshing apps for updated active theme: ${themeName}`);
+
+  // Load preferences to check which apps are enabled
+  const prefsPath = getPreferencesPath();
+  let prefs: Preferences;
+  try {
+    prefs = await readJson<Preferences>(prefsPath);
+  } catch (err) {
+    logger.error('Failed to read preferences for theme refresh:', err);
+    prefs = {} as Preferences;
+  }
+
+  // Update UI (tray menu, window title, notify renderer)
+  try {
+    const { refreshTrayMenu, updateWindowTitle, notifyRendererThemeChanged } = await import('../main');
+    refreshTrayMenu();
+    updateWindowTitle(themeName);
+    notifyRendererThemeChanged(themeName);
+  } catch (err) {
+    logger.error('Failed to update UI after theme update:', err);
+  }
+
+  // Update VS Code settings if enabled
+  try {
+    if (prefs.enabledApps && prefs.enabledApps.includes('vscode')) {
+      await updateVSCodeSettings(themeName, themePath);
+    }
+  } catch (err) {
+    logger.error('Failed to update VS Code settings:', err);
+  }
+
+  // Update Cursor settings if enabled
+  try {
+    if (prefs.enabledApps && prefs.enabledApps.includes('cursor')) {
+      await updateCursorSettings(themeName, themePath);
+    }
+  } catch (err) {
+    logger.error('Failed to update Cursor settings:', err);
+  }
+
+  // Notify terminals to reload
+  try {
+    await notifyTerminalsToReload(themePath);
+  } catch (err) {
+    logger.error('Failed to notify terminals:', err);
+  }
+
+  // Execute hook script if configured
+  try {
+    if (prefs.hookScript && prefs.hookScript.trim() !== '') {
+      await executeHookScript(themeName, prefs.hookScript);
+    }
+  } catch (err) {
+    logger.error('Failed to execute hook script:', err);
+  }
+
+  // Update AeroSpace/JankyBorders if enabled
+  try {
+    const isAerospaceEnabled =
+      !prefs.enabledApps || prefs.enabledApps.length === 0 || prefs.enabledApps.includes('aerospace');
+    if (isAerospaceEnabled) {
+      const bordersScript = path.join(themePath, 'aerospace-borders.sh');
+      if (existsSync(bordersScript)) {
+        execSync(`bash "${bordersScript}"`, {
+          shell: '/bin/bash',
+          stdio: 'pipe',
+          timeout: 5000,
+        });
+        logger.info('AeroSpace/JankyBorders theme applied');
+      }
+    }
+  } catch (err) {
+    logger.error('Failed to apply AeroSpace/JankyBorders:', err);
+  }
+
+  logger.info(`Finished refreshing apps for theme: ${themeName}`);
 }
 
 /**
@@ -773,16 +884,12 @@ async function handleUpdateTheme(_event: any, name: string, data: ThemeMetadata)
       notification.show();
     }
 
-    // If this is the currently active theme, we may want to notify terminals to reload
+    // If this is the currently active theme, refresh all apps to apply the changes
     const statePath = getStatePath();
     const state = await readJson<State>(statePath);
     if (state.currentTheme === name) {
-      logger.info('Updated theme is currently active, notifying terminals to reload...');
-      try {
-        await notifyTerminalsToReload(themeDir);
-      } catch (err) {
-        logger.error('Failed to notify terminals:', err);
-      }
+      logger.info('Updated theme is currently active, refreshing all apps...');
+      await refreshActiveThemeApps(name, themeDir);
     }
   } catch (error) {
     logger.error('Error updating theme:', error);
