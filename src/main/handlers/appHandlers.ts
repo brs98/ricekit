@@ -621,14 +621,21 @@ async function handleRefreshApp(_event: any, appName: string): Promise<void> {
 
       case 'sketchybar':
         // SketchyBar can be reloaded via command line
-        try {
-          execSync('sketchybar --reload', {
-            stdio: 'pipe',
-            timeout: 5000,
-          });
-          logger.info('SketchyBar theme refreshed successfully');
-        } catch (err) {
-          logger.info('Could not refresh SketchyBar - it may not be running:', err);
+        // Use absolute path - in production, PATH doesn't include Homebrew
+        const sketchybarPaths = ['/opt/homebrew/bin/sketchybar', '/usr/local/bin/sketchybar'];
+        const sketchybarBin = sketchybarPaths.find((p) => existsSync(p));
+        if (sketchybarBin) {
+          try {
+            execSync(`"${sketchybarBin}" --reload`, {
+              stdio: 'pipe',
+              timeout: 5000,
+            });
+            logger.info('SketchyBar theme refreshed successfully');
+          } catch (err) {
+            logger.info('Could not refresh SketchyBar - it may not be running:', err);
+          }
+        } else {
+          logger.info('SketchyBar binary not found');
         }
         break;
 

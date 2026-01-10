@@ -302,40 +302,48 @@ async function notifyTerminalsToReload(themePath: string): Promise<void> {
   // Add a small delay to ensure the symlink is fully visible to SketchyBar
   await new Promise((resolve) => setTimeout(resolve, 100));
 
-  // Check if SketchyBar is running first
-  let sketchybarRunning = false;
-  try {
-    execSync('pgrep -x sketchybar', { stdio: 'pipe' });
-    sketchybarRunning = true;
-  } catch {
-    // Not running
-  }
+  // Find sketchybar binary - in production, PATH doesn't include Homebrew
+  const sketchybarPaths = ['/opt/homebrew/bin/sketchybar', '/usr/local/bin/sketchybar'];
+  const sketchybarBin = sketchybarPaths.find((p) => existsSync(p));
 
-  if (sketchybarRunning) {
-    // Try reload with retry logic for intermittent failures
-    let reloadSuccess = false;
-    for (let attempt = 1; attempt <= 2; attempt++) {
-      try {
-        execSync('sketchybar --reload', {
-          stdio: 'pipe',
-          timeout: 5000,
-        });
-        logger.info('✓ SketchyBar reloaded');
-        reloadSuccess = true;
-        break;
-      } catch (err: any) {
-        logger.warn(`SketchyBar reload attempt ${attempt} failed: ${err.message}`);
-        if (attempt < 2) {
-          // Wait a bit before retrying
-          await new Promise((resolve) => setTimeout(resolve, 200));
+  if (!sketchybarBin) {
+    logger.info('SketchyBar not installed, skipping reload');
+  } else {
+    // Check if SketchyBar is running first
+    let sketchybarRunning = false;
+    try {
+      execSync('pgrep -x sketchybar', { stdio: 'pipe' });
+      sketchybarRunning = true;
+    } catch {
+      // Not running
+    }
+
+    if (sketchybarRunning) {
+      // Try reload with retry logic for intermittent failures
+      let reloadSuccess = false;
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+          execSync(`"${sketchybarBin}" --reload`, {
+            stdio: 'pipe',
+            timeout: 5000,
+          });
+          logger.info('✓ SketchyBar reloaded');
+          reloadSuccess = true;
+          break;
+        } catch (err: any) {
+          logger.warn(`SketchyBar reload attempt ${attempt} failed: ${err.message}`);
+          if (attempt < 2) {
+            // Wait a bit before retrying
+            await new Promise((resolve) => setTimeout(resolve, 200));
+          }
         }
       }
+      if (!reloadSuccess) {
+        logger.error('SketchyBar reload failed after retries');
+      }
+    } else {
+      logger.info('SketchyBar not running, skipping reload');
     }
-    if (!reloadSuccess) {
-      logger.error('SketchyBar reload failed after retries');
-    }
-  } else {
-    logger.info('SketchyBar not running, skipping reload');
   }
 
   logger.info('Terminal reload notifications sent');
