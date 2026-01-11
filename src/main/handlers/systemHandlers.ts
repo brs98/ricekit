@@ -2,7 +2,7 @@
  * System IPC Handlers
  * Handles system operations, appearance detection, scheduling, and external operations
  */
-import { ipcMain, Notification, nativeTheme, shell, BrowserWindow } from 'electron';
+import { ipcMain, Notification, nativeTheme, shell, BrowserWindow, powerMonitor } from 'electron';
 import path from 'path';
 import os from 'os';
 import { promisify } from 'util';
@@ -388,6 +388,26 @@ async function handleCheckForUpdates(): Promise<{
  * Automatically applies themes or wallpapers based on time of day schedules
  */
 let schedulerInterval: NodeJS.Timeout | null = null;
+let powerMonitorListenerRegistered = false;
+
+/**
+ * Handle system resume from sleep
+ * Waits for display to initialize before checking schedule
+ */
+async function handleSystemResume(): Promise<void> {
+  logger.info('System resumed from sleep, waiting for display to initialize...');
+
+  // Wait for display to fully initialize after wake
+  // This delay allows System Events to become responsive for wallpaper changes
+  await new Promise(resolve => setTimeout(resolve, 3000));
+
+  logger.info('Checking schedule after wake from sleep');
+  try {
+    await checkAndApplySchedule();
+  } catch (error) {
+    logger.error('Error checking schedule after resume', error);
+  }
+}
 
 /**
  * Start the scheduler
@@ -412,6 +432,13 @@ export function startScheduler(): void {
     logger.error('Error in initial scheduler check', error);
   });
 
+  // Register power monitor listener for wake-from-sleep (only once)
+  if (!powerMonitorListenerRegistered) {
+    powerMonitor.on('resume', handleSystemResume);
+    powerMonitorListenerRegistered = true;
+    logger.info('Registered power monitor listener for wake-from-sleep');
+  }
+
   logger.info('Scheduler started');
 }
 
@@ -423,6 +450,13 @@ export function stopScheduler(): void {
     clearInterval(schedulerInterval);
     schedulerInterval = null;
     logger.info('Scheduler stopped');
+  }
+
+  // Remove power monitor listener
+  if (powerMonitorListenerRegistered) {
+    powerMonitor.removeListener('resume', handleSystemResume);
+    powerMonitorListenerRegistered = false;
+    logger.info('Removed power monitor listener');
   }
 }
 
