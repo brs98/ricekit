@@ -82,7 +82,11 @@ describe('presetInstaller', () => {
       const plugins = getSupportedPlugins();
       expect(plugins).toContain('sketchybar');
       expect(plugins).toContain('aerospace');
-      expect(plugins.length).toBe(2);
+      expect(plugins).toContain('starship');
+      expect(plugins).toContain('tmux');
+      expect(plugins).toContain('bat');
+      expect(plugins).toContain('delta');
+      expect(plugins.length).toBe(6);
     });
   });
 

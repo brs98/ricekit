@@ -15,7 +15,14 @@ import {
   isSymlink,
 } from './utils/asyncFs';
 
-const SUPPORTED_PLUGINS = ['sketchybar', 'aerospace'] as const;
+const SUPPORTED_PLUGINS = [
+  'sketchybar',
+  'aerospace',
+  'starship',
+  'tmux',
+  'bat',
+  'delta',
+] as const;
 export type SupportedPlugin = (typeof SUPPORTED_PLUGINS)[number];
 
 /**
