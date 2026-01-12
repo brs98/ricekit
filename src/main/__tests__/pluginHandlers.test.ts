@@ -94,9 +94,14 @@ import {
   handleListPresets,
   handleGetPluginConfig,
   handleResetPluginToCustom,
+  handleSetPreset,
 } from '../handlers/pluginHandlers';
 import { handleGetPreferences, handleSetPreferences } from '../handlers/preferencesHandlers';
-import { existsSync as mockExistsSync } from '../utils/asyncFs';
+import {
+  existsSync as mockExistsSync,
+  writeFile as mockWriteFile,
+  readFile as mockReadFile,
+} from '../utils/asyncFs';
 
 // Binary paths that should NOT exist by default in tests
 const BINARY_PATHS = [
@@ -107,6 +112,15 @@ const BINARY_PATHS = [
   '/Applications/AeroSpace.app/Contents/MacOS/AeroSpace',
   '/opt/homebrew/bin/brew',
   '/usr/local/bin/brew',
+  // CLI plugins
+  '/opt/homebrew/bin/starship',
+  '/usr/local/bin/starship',
+  '/opt/homebrew/bin/tmux',
+  '/usr/local/bin/tmux',
+  '/opt/homebrew/bin/bat',
+  '/usr/local/bin/bat',
+  '/opt/homebrew/bin/delta',
+  '/usr/local/bin/delta',
 ];
 
 // Real home directory (captured before mocks)
@@ -271,5 +285,260 @@ describe('pluginHandlers - PLUGIN_DEFINITIONS', () => {
   it('should have correct aerospace definition', async () => {
     const status = await handleGetPluginStatus(null, 'aerospace');
     expect(status.configPath).toContain('aerospace');
+  });
+
+  it('should have correct starship definition', async () => {
+    const status = await handleGetPluginStatus(null, 'starship');
+    // configPath is the configDir (~/.config), mainConfigFile is starship.toml
+    expect(status.configPath).toContain('.config');
+    expect(status.isInstalled).toBe(false);
+  });
+
+  it('should have correct tmux definition', async () => {
+    const status = await handleGetPluginStatus(null, 'tmux');
+    // configPath is home directory, mainConfigFile is .tmux.conf
+    expect(status.configPath).toBeDefined();
+    expect(status.isInstalled).toBe(false);
+  });
+
+  it('should have correct bat definition', async () => {
+    const status = await handleGetPluginStatus(null, 'bat');
+    // configPath is ~/.config/bat, mainConfigFile is config
+    expect(status.configPath).toContain('bat');
+    expect(status.isInstalled).toBe(false);
+  });
+
+  it('should have correct delta definition', async () => {
+    const status = await handleGetPluginStatus(null, 'delta');
+    // configPath is home directory, mainConfigFile is .gitconfig
+    expect(status.configPath).toBeDefined();
+    expect(status.isInstalled).toBe(false);
+  });
+});
+
+describe('pluginHandlers - generateWrapperConfig', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Reset writeFile mock to track calls
+    vi.mocked(mockWriteFile).mockResolvedValue(undefined);
+  });
+
+  it('should generate starship wrapper config with TOML format', async () => {
+    // Setup: mock preferences
+    vi.mocked(handleGetPreferences).mockResolvedValue({
+      enabledApps: [],
+      pluginConfigs: {},
+      favorites: [],
+      recentThemes: [],
+      keyboardShortcuts: { quickSwitcher: 'Cmd+Shift+T' },
+      startAtLogin: false,
+      showInMenuBar: true,
+      showNotifications: true,
+      notifications: { onThemeChange: true, onScheduledSwitch: true },
+      onboardingCompleted: false,
+    });
+
+    await handleSetPreset(null, 'starship', 'minimal');
+
+    // Check that writeFile was called with TOML content
+    const writeFileCalls = vi.mocked(mockWriteFile).mock.calls;
+    const starshipConfigCall = writeFileCalls.find(
+      (call) => String(call[0]).includes('starship.toml')
+    );
+
+    expect(starshipConfigCall).toBeDefined();
+    const content = String(starshipConfigCall![1]);
+    expect(content).toContain('# MacTheme Starship Configuration');
+    expect(content).toContain('"$include"');
+    expect(content).toContain('starship-overrides.toml');
+  });
+
+  it('should generate tmux wrapper config with source-file directives', async () => {
+    vi.mocked(handleGetPreferences).mockResolvedValue({
+      enabledApps: [],
+      pluginConfigs: {},
+      favorites: [],
+      recentThemes: [],
+      keyboardShortcuts: { quickSwitcher: 'Cmd+Shift+T' },
+      startAtLogin: false,
+      showInMenuBar: true,
+      showNotifications: true,
+      notifications: { onThemeChange: true, onScheduledSwitch: true },
+      onboardingCompleted: false,
+    });
+
+    await handleSetPreset(null, 'tmux', 'minimal');
+
+    const writeFileCalls = vi.mocked(mockWriteFile).mock.calls;
+    const tmuxConfigCall = writeFileCalls.find((call) => String(call[0]).includes('.tmux.conf'));
+
+    expect(tmuxConfigCall).toBeDefined();
+    const content = String(tmuxConfigCall![1]);
+    expect(content).toContain('# MacTheme tmux Configuration');
+    expect(content).toContain('source-file');
+    expect(content).toContain('tmux-colors.conf');
+    expect(content).toContain('.tmux-overrides.conf');
+  });
+
+  it('should generate bat wrapper config with inline options', async () => {
+    vi.mocked(handleGetPreferences).mockResolvedValue({
+      enabledApps: [],
+      pluginConfigs: {},
+      favorites: [],
+      recentThemes: [],
+      keyboardShortcuts: { quickSwitcher: 'Cmd+Shift+T' },
+      startAtLogin: false,
+      showInMenuBar: true,
+      showNotifications: true,
+      notifications: { onThemeChange: true, onScheduledSwitch: true },
+      onboardingCompleted: false,
+    });
+
+    // Mock existsSync to return true for preset config path
+    vi.mocked(mockExistsSync).mockImplementation((filePath) => {
+      const filePathStr = String(filePath);
+      // Allow preset config paths to exist
+      if (filePathStr.includes('presets') && filePathStr.includes('bat')) {
+        return true;
+      }
+      return false;
+    });
+
+    // Mock reading the preset config file
+    vi.mocked(mockReadFile).mockResolvedValue('--style=plain\n--paging=never');
+
+    await handleSetPreset(null, 'bat', 'minimal');
+
+    const writeFileCalls = vi.mocked(mockWriteFile).mock.calls;
+    const batConfigCall = writeFileCalls.find(
+      (call) => String(call[0]).includes('bat') && String(call[0]).endsWith('config')
+    );
+
+    expect(batConfigCall).toBeDefined();
+    const content = String(batConfigCall![1]);
+    expect(content).toContain('# MacTheme bat Configuration');
+    // bat copies preset content inline since it doesn't support includes
+    expect(content).toContain('--');
+  });
+
+  it('should generate delta config by merging into .gitconfig', async () => {
+    vi.mocked(handleGetPreferences).mockResolvedValue({
+      enabledApps: [],
+      pluginConfigs: {},
+      favorites: [],
+      recentThemes: [],
+      keyboardShortcuts: { quickSwitcher: 'Cmd+Shift+T' },
+      startAtLogin: false,
+      showInMenuBar: true,
+      showNotifications: true,
+      notifications: { onThemeChange: true, onScheduledSwitch: true },
+      onboardingCompleted: false,
+    });
+
+    // Mock existsSync for delta preset paths
+    vi.mocked(mockExistsSync).mockImplementation((filePath) => {
+      const filePathStr = String(filePath);
+      // Allow preset gitconfig paths to exist
+      if (filePathStr.includes('presets') && filePathStr.includes('delta')) {
+        return true;
+      }
+      // Allow .gitconfig to exist
+      if (filePathStr.endsWith('.gitconfig')) {
+        return true;
+      }
+      return false;
+    });
+
+    // Mock existing .gitconfig
+    vi.mocked(mockReadFile).mockImplementation(async (filePath: string) => {
+      if (filePath.endsWith('.gitconfig') && !filePath.includes('presets')) {
+        return `[user]
+    name = Test User
+    email = test@example.com
+
+[core]
+    editor = vim
+`;
+      }
+      // Return delta preset content
+      return `[delta]
+    syntax-theme = ansi
+    line-numbers = false
+`;
+    });
+
+    await handleSetPreset(null, 'delta', 'minimal');
+
+    const writeFileCalls = vi.mocked(mockWriteFile).mock.calls;
+    const gitconfigCall = writeFileCalls.find((call) => String(call[0]).includes('.gitconfig'));
+
+    expect(gitconfigCall).toBeDefined();
+    const content = String(gitconfigCall![1]);
+    // Should preserve existing sections
+    expect(content).toContain('[user]');
+    expect(content).toContain('name = Test User');
+    expect(content).toContain('[core]');
+    // Should add delta section
+    expect(content).toContain('[delta]');
+  });
+
+  it('should preserve existing .gitconfig content when adding delta section', async () => {
+    vi.mocked(handleGetPreferences).mockResolvedValue({
+      enabledApps: [],
+      pluginConfigs: {},
+      favorites: [],
+      recentThemes: [],
+      keyboardShortcuts: { quickSwitcher: 'Cmd+Shift+T' },
+      startAtLogin: false,
+      showInMenuBar: true,
+      showNotifications: true,
+      notifications: { onThemeChange: true, onScheduledSwitch: true },
+      onboardingCompleted: false,
+    });
+
+    // Mock existsSync for delta preset paths
+    vi.mocked(mockExistsSync).mockImplementation((filePath) => {
+      const filePathStr = String(filePath);
+      // Allow preset gitconfig paths to exist
+      if (filePathStr.includes('presets') && filePathStr.includes('delta')) {
+        return true;
+      }
+      // Allow .gitconfig to exist
+      if (filePathStr.endsWith('.gitconfig')) {
+        return true;
+      }
+      return false;
+    });
+
+    // Mock existing .gitconfig with existing delta section
+    vi.mocked(mockReadFile).mockImplementation(async (filePath: string) => {
+      if (filePath.endsWith('.gitconfig') && !filePath.includes('presets')) {
+        return `[user]
+    name = Test User
+
+[delta]
+    old-setting = true
+
+[alias]
+    co = checkout
+`;
+      }
+      return `[delta]
+    syntax-theme = ansi
+`;
+    });
+
+    await handleSetPreset(null, 'delta', 'minimal');
+
+    const writeFileCalls = vi.mocked(mockWriteFile).mock.calls;
+    const gitconfigCall = writeFileCalls.find((call) => String(call[0]).includes('.gitconfig'));
+
+    expect(gitconfigCall).toBeDefined();
+    const content = String(gitconfigCall![1]);
+    // Should preserve other sections
+    expect(content).toContain('[user]');
+    expect(content).toContain('[alias]');
+    // Old delta setting should be replaced
+    expect(content).not.toContain('old-setting');
   });
 });
