@@ -20,6 +20,7 @@ import {
 } from './systemHandlers';
 import { registerStateHandlers, handleGetState } from './stateHandlers';
 import { registerLoggingHandlers } from './loggingHandlers';
+import { registerPluginHandlers } from './pluginHandlers';
 
 /**
  * Setup all IPC handlers
@@ -51,6 +52,7 @@ export function setupIpcHandlers(): void {
   registerSystemHandlers();
   registerStateHandlers();
   registerLoggingHandlers();
+  registerPluginHandlers();
 
   // Quick switcher handler (small, kept inline)
   ipcMain.handle('quickswitcher:close', async () => {

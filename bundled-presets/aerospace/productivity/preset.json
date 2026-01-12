@@ -1,0 +1,12 @@
+{
+  "name": "productivity",
+  "displayName": "Productivity",
+  "description": "Advanced tiling with workspace assignments and app rules",
+  "features": [
+    "Named workspaces (code, web, chat, etc.)",
+    "Auto-assignment of apps to workspaces",
+    "Multiple monitors support",
+    "Quick resize and split modes",
+    "Colored window borders"
+  ]
+}

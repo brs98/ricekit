@@ -3,6 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import { initializeApp, initializeAppAfterThemes, getPreferencesPath, getStatePath } from './directories';
 import { installBundledThemes } from './themeInstaller';
+import { installBundledPresets } from './presetInstaller';
 import { setupIpcHandlers, handleAppearanceChange, startScheduler, stopScheduler } from './ipcHandlers';
 import { logger } from './logger';
 
@@ -413,6 +414,9 @@ if (!gotTheLock) {
 
     await installBundledThemes();
     logger.info('Bundled themes installed');
+
+    await installBundledPresets();
+    logger.info('Bundled presets installed');
 
     // Initialize theme symlink after themes are installed
     initializeAppAfterThemes();

@@ -1,0 +1,411 @@
+import { ipcMain, Notification, shell } from 'electron';
+import path from 'path';
+import os from 'os';
+import { execSync } from 'child_process';
+import { logger } from '../logger';
+import { getCurrentPresetsDir } from '../directories';
+import {
+  readFile,
+  writeFile,
+  existsSync,
+  ensureDir,
+  copyFile,
+} from '../utils/asyncFs';
+import { handleGetPreferences, handleSetPreferences } from './preferencesHandlers';
+import {
+  listPresets as listPresetsFromInstaller,
+  setActivePreset,
+  getActivePreset,
+} from '../presetInstaller';
+import type { PluginConfig, PluginStatus, PresetInfo, FontStatus } from '../../shared/types';
+import {
+  getFontStatus,
+  installNerdFont,
+  getAvailableNerdFont,
+  RECOMMENDED_NERD_FONT,
+} from '../utils/fontDetection';
+
+// Plugin definitions with installation info
+const PLUGIN_DEFINITIONS = {
+  sketchybar: {
+    displayName: 'SketchyBar',
+    binaryPaths: ['/opt/homebrew/bin/sketchybar', '/usr/local/bin/sketchybar'],
+    configDir: path.join(os.homedir(), '.config', 'sketchybar'),
+    mainConfigFile: 'sketchybarrc',
+    installCommand: 'brew install FelixKratz/formulae/sketchybar',
+    brewPackage: 'FelixKratz/formulae/sketchybar',
+    dependencies: [] as string[],
+    serviceCommand: 'brew services start sketchybar',
+  },
+  aerospace: {
+    displayName: 'AeroSpace',
+    binaryPaths: [
+      '/opt/homebrew/bin/aerospace',
+      '/usr/local/bin/aerospace',
+      '/Applications/AeroSpace.app/Contents/MacOS/AeroSpace',
+    ],
+    configDir: path.join(os.homedir(), '.config', 'aerospace'),
+    mainConfigFile: 'aerospace.toml',
+    installCommand: 'brew install --cask nikitabobko/tap/aerospace',
+    brewPackage: 'nikitabobko/tap/aerospace',
+    dependencies: ['FelixKratz/formulae/borders'],
+    serviceCommand: '', // AeroSpace starts via login items
+  },
+} as const;
+
+type PluginName = keyof typeof PLUGIN_DEFINITIONS;
+
+/**
+ * Check if Homebrew is installed
+ */
+function isHomebrewInstalled(): boolean {
+  const brewPaths = ['/opt/homebrew/bin/brew', '/usr/local/bin/brew'];
+  return brewPaths.some((p) => existsSync(p));
+}
+
+/**
+ * Get Homebrew binary path
+ */
+function getBrewPath(): string {
+  const paths = ['/opt/homebrew/bin/brew', '/usr/local/bin/brew'];
+  return paths.find((p) => existsSync(p)) || 'brew';
+}
+
+/**
+ * Get plugin installation status
+ */
+export async function handleGetPluginStatus(
+  _event: unknown,
+  appName: string
+): Promise<PluginStatus> {
+  const plugin = PLUGIN_DEFINITIONS[appName as PluginName];
+  if (!plugin) {
+    throw new Error(`Unknown plugin: ${appName}`);
+  }
+
+  const binaryPath = plugin.binaryPaths.find((p) => existsSync(p));
+  const configExists = existsSync(plugin.configDir);
+  const mainConfigExists = existsSync(path.join(plugin.configDir, plugin.mainConfigFile));
+
+  let version: string | undefined;
+  if (binaryPath && !binaryPath.endsWith('.app') && !binaryPath.includes('.app/')) {
+    try {
+      const output = execSync(`"${binaryPath}" --version 2>/dev/null || echo "unknown"`, {
+        encoding: 'utf-8',
+        timeout: 5000,
+      });
+      version = output.trim().split('\n')[0];
+    } catch {
+      version = undefined;
+    }
+  }
+
+  return {
+    isInstalled: !!binaryPath,
+    binaryPath,
+    version,
+    hasExistingConfig: configExists && mainConfigExists,
+    configPath: plugin.configDir,
+  };
+}
+
+/**
+ * Install a plugin via Homebrew
+ */
+export async function handleInstallPlugin(_event: unknown, appName: string): Promise<void> {
+  const plugin = PLUGIN_DEFINITIONS[appName as PluginName];
+  if (!plugin) {
+    throw new Error(`Unknown plugin: ${appName}`);
+  }
+
+  // Check if Homebrew is installed
+  if (!isHomebrewInstalled()) {
+    // Open Homebrew website and throw error
+    await shell.openExternal('https://brew.sh');
+    throw new Error(
+      'Homebrew is required but not installed. Please install Homebrew first, then try again.'
+    );
+  }
+
+  const brewPath = getBrewPath();
+  logger.info(`Installing ${appName} via Homebrew...`);
+
+  // Install dependencies first
+  for (const dep of plugin.dependencies) {
+    try {
+      logger.info(`Installing dependency: ${dep}`);
+      execSync(`"${brewPath}" install ${dep}`, {
+        encoding: 'utf-8',
+        stdio: 'pipe',
+        timeout: 300000, // 5 minutes
+      });
+      logger.info(`Installed dependency: ${dep}`);
+    } catch (err: unknown) {
+      // Dependency might already be installed, check if it failed for other reason
+      const message = err instanceof Error ? err.message : String(err);
+      if (!message.includes('already installed')) {
+        logger.warn(`Dependency install warning (may already exist): ${dep}`, message);
+      }
+    }
+  }
+
+  // Install the main package
+  try {
+    const command = plugin.installCommand.replace('brew', `"${brewPath}"`);
+    logger.info(`Running: ${command}`);
+    execSync(command, {
+      encoding: 'utf-8',
+      stdio: 'pipe',
+      timeout: 300000, // 5 minutes
+    });
+    logger.info(`Successfully installed ${appName}`);
+
+    // Start service if applicable
+    if (plugin.serviceCommand) {
+      try {
+        const serviceCmd = plugin.serviceCommand.replace('brew', `"${brewPath}"`);
+        execSync(serviceCmd, {
+          encoding: 'utf-8',
+          stdio: 'pipe',
+          timeout: 30000,
+        });
+        logger.info(`Started ${appName} service`);
+      } catch (err) {
+        logger.warn(`Could not start ${appName} service:`, err);
+      }
+    }
+
+    // Show notification
+    if (Notification.isSupported()) {
+      new Notification({
+        title: 'Installation Complete',
+        body: `${plugin.displayName} has been installed successfully.`,
+      }).show();
+    }
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    logger.error(`Failed to install ${appName}:`, message);
+    throw new Error(`Failed to install ${appName}: ${message}`);
+  }
+}
+
+/**
+ * Set up plugin with a preset (creates wrapper config)
+ */
+export async function handleSetPreset(
+  _event: unknown,
+  appName: string,
+  presetName: string
+): Promise<void> {
+  const plugin = PLUGIN_DEFINITIONS[appName as PluginName];
+  if (!plugin) {
+    throw new Error(`Unknown plugin: ${appName}`);
+  }
+
+  const configDir = plugin.configDir;
+  const mainConfigPath = path.join(configDir, plugin.mainConfigFile);
+
+  // Ensure config directory exists
+  await ensureDir(configDir);
+
+  // Backup existing config if present and not already backed up
+  if (existsSync(mainConfigPath)) {
+    const backupPath = `${mainConfigPath}.mactheme-backup`;
+    if (!existsSync(backupPath)) {
+      await copyFile(mainConfigPath, backupPath);
+      logger.info(`Backed up existing config to: ${backupPath}`);
+    }
+  }
+
+  // Create overrides file if it doesn't exist
+  const overridesPath = path.join(configDir, 'overrides.sh');
+  if (!existsSync(overridesPath)) {
+    const overridesContent = `#!/bin/bash
+# User overrides for ${plugin.displayName}
+# This file is never modified by MacTheme and survives preset switches.
+# Add your customizations here.
+
+`;
+    await writeFile(overridesPath, overridesContent);
+    logger.info(`Created overrides file: ${overridesPath}`);
+  }
+
+  // Update the preset symlink
+  await setActivePreset(appName, presetName);
+
+  // Generate the wrapper config file
+  await generateWrapperConfig(appName, plugin, configDir);
+
+  // Update preferences
+  const prefs = await handleGetPreferences();
+  if (!prefs.pluginConfigs) {
+    prefs.pluginConfigs = {};
+  }
+
+  const existingConfig = prefs.pluginConfigs[appName];
+  prefs.pluginConfigs[appName] = {
+    mode: 'preset',
+    preset: presetName,
+    installedBy: existingConfig?.installedBy || 'mactheme',
+    configBackupPath: existsSync(`${mainConfigPath}.mactheme-backup`)
+      ? `${mainConfigPath}.mactheme-backup`
+      : undefined,
+    lastUpdated: Date.now(),
+  };
+
+  // Also add to enabledApps if not already there
+  if (!prefs.enabledApps.includes(appName)) {
+    prefs.enabledApps.push(appName);
+  }
+
+  await handleSetPreferences(null, prefs);
+
+  logger.info(`Set preset ${presetName} for ${appName}`);
+}
+
+/**
+ * Generate wrapper config that sources preset, theme colors, and user overrides
+ */
+async function generateWrapperConfig(
+  appName: string,
+  plugin: (typeof PLUGIN_DEFINITIONS)[PluginName],
+  configDir: string
+): Promise<void> {
+  const homeDir = os.homedir();
+  const currentPresetPath = `${homeDir}/Library/Application Support/MacTheme/current/presets/${appName}`;
+  const themePath = `${homeDir}/Library/Application Support/MacTheme/current/theme`;
+
+  if (appName === 'sketchybar') {
+    const content = `#!/bin/bash
+# MacTheme SketchyBar Configuration
+# This file is auto-generated by MacTheme. Customize via overrides.sh instead.
+
+CONFIG_DIR="$HOME/.config/sketchybar"
+
+# Source theme colors (updated when theme changes)
+source "${themePath}/sketchybar-colors.sh"
+
+# Source the active preset configuration
+source "${currentPresetPath}/sketchybarrc"
+
+# Source user overrides (safe to customize)
+if [ -f "$CONFIG_DIR/overrides.sh" ]; then
+  source "$CONFIG_DIR/overrides.sh"
+fi
+`;
+    await writeFile(path.join(configDir, 'sketchybarrc'), content);
+    logger.info('Generated SketchyBar wrapper config');
+  } else if (appName === 'aerospace') {
+    // For AeroSpace, we need to read the preset's aerospace.toml and inject the borders script
+    const activePreset = await getActivePreset(appName);
+    if (activePreset) {
+      const presetTomlPath = path.join(
+        getCurrentPresetsDir(),
+        '..',
+        'presets',
+        appName,
+        activePreset,
+        'aerospace.toml'
+      );
+
+      if (existsSync(presetTomlPath)) {
+        let content = await readFile(presetTomlPath);
+
+        // Check if we need to inject the borders command
+        if (!content.includes('MacTheme')) {
+          // Add after-startup-command to source borders script
+          const bordersCommand = `# MacTheme: Apply themed window borders on startup
+after-startup-command = [
+  'exec-and-forget source "${themePath}/aerospace-borders.sh"'
+]
+
+`;
+          content = bordersCommand + content;
+        }
+
+        await writeFile(path.join(configDir, 'aerospace.toml'), content);
+        logger.info('Generated AeroSpace config with borders integration');
+      }
+    }
+  }
+}
+
+/**
+ * Reset plugin to custom mode
+ */
+export async function handleResetPluginToCustom(_event: unknown, appName: string): Promise<void> {
+  const plugin = PLUGIN_DEFINITIONS[appName as PluginName];
+  if (!plugin) {
+    throw new Error(`Unknown plugin: ${appName}`);
+  }
+
+  // Update preferences
+  const prefs = await handleGetPreferences();
+  if (prefs.pluginConfigs?.[appName]) {
+    prefs.pluginConfigs[appName].mode = 'custom';
+    prefs.pluginConfigs[appName].preset = undefined;
+    prefs.pluginConfigs[appName].lastUpdated = Date.now();
+    await handleSetPreferences(null, prefs);
+  }
+
+  logger.info(`Reset ${appName} to custom mode`);
+}
+
+/**
+ * Get plugin configuration
+ */
+export async function handleGetPluginConfig(
+  _event: unknown,
+  appName: string
+): Promise<PluginConfig | null> {
+  const prefs = await handleGetPreferences();
+  return prefs.pluginConfigs?.[appName] || null;
+}
+
+/**
+ * List available presets for a plugin
+ */
+export async function handleListPresets(_event: unknown, appName: string): Promise<PresetInfo[]> {
+  return listPresetsFromInstaller(appName);
+}
+
+/**
+ * Get Nerd Font status
+ */
+export function handleGetFontStatus(): FontStatus {
+  return getFontStatus();
+}
+
+/**
+ * Install a Nerd Font via Homebrew
+ */
+export async function handleInstallNerdFont(
+  _event: unknown,
+  fontName?: string
+): Promise<{ success: boolean; error?: string; installedFont?: string }> {
+  const result = await installNerdFont(fontName || RECOMMENDED_NERD_FONT);
+
+  if (result.success) {
+    // Get the newly installed font name
+    const installedFont = getAvailableNerdFont();
+    return { success: true, installedFont: installedFont || undefined };
+  }
+
+  return result;
+}
+
+/**
+ * Register plugin IPC handlers
+ */
+export function registerPluginHandlers(): void {
+  ipcMain.handle('plugins:getStatus', handleGetPluginStatus);
+  ipcMain.handle('plugins:install', handleInstallPlugin);
+  ipcMain.handle('plugins:listPresets', handleListPresets);
+  ipcMain.handle('plugins:setPreset', handleSetPreset);
+  ipcMain.handle('plugins:getConfig', handleGetPluginConfig);
+  ipcMain.handle('plugins:resetToCustom', handleResetPluginToCustom);
+  ipcMain.handle('plugins:getFontStatus', handleGetFontStatus);
+  ipcMain.handle('plugins:installNerdFont', handleInstallNerdFont);
+
+  logger.info('Plugin handlers registered');
+}

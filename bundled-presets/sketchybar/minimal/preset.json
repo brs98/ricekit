@@ -1,0 +1,11 @@
+{
+  "name": "minimal",
+  "displayName": "Minimal",
+  "description": "Clean, minimal status bar with essential items only",
+  "features": [
+    "Clock and date",
+    "Battery indicator",
+    "Volume control",
+    "Space indicators"
+  ]
+}

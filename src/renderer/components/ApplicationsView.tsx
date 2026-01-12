@@ -3,6 +3,21 @@ import type { AppInfo } from '../../shared/types';
 import { SetupWizardModal } from './SetupWizardModal';
 import { Switch } from '@/renderer/components/ui/switch';
 import { Button } from '@/renderer/components/ui/button';
+import { PluginCard } from './PluginCard';
+
+// Plugin definitions for auto-setup
+const PLUGINS = [
+  {
+    name: 'sketchybar',
+    displayName: 'SketchyBar',
+    description: 'Highly customizable macOS status bar replacement',
+  },
+  {
+    name: 'aerospace',
+    displayName: 'AeroSpace',
+    description: 'Tiling window manager with themed borders',
+  },
+];
 
 export function ApplicationsView() {
   const [apps, setApps] = useState<AppInfo[]>([]);
@@ -185,6 +200,29 @@ export function ApplicationsView() {
         <Button variant="outline" onClick={loadApps}>
           🔄 Refresh
         </Button>
+      </div>
+
+      {/* Plugins Section - Auto-setup with presets */}
+      <div className="plugins-section">
+        <div className="app-category">
+          <h3 className="category-title">
+            <span className="category-icon">🔌</span>
+            Plugins
+            <span className="category-subtitle">(Auto-setup with presets)</span>
+          </h3>
+
+          <div className="plugin-cards">
+            {PLUGINS.map((plugin) => (
+              <PluginCard
+                key={plugin.name}
+                appName={plugin.name}
+                displayName={plugin.displayName}
+                description={plugin.description}
+                onStatusChange={loadApps}
+              />
+            ))}
+          </div>
+        </div>
       </div>
 
       <div className="apps-list">

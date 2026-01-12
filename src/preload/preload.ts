@@ -72,4 +72,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Update operations
   checkForUpdates: () => ipcRenderer.invoke('system:checkForUpdates'),
+
+  // Plugin operations
+  getPluginStatus: (appName: string) => ipcRenderer.invoke('plugins:getStatus', appName),
+  installPlugin: (appName: string) => ipcRenderer.invoke('plugins:install', appName),
+  listPresets: (appName: string) => ipcRenderer.invoke('plugins:listPresets', appName),
+  setPreset: (appName: string, presetName: string) =>
+    ipcRenderer.invoke('plugins:setPreset', appName, presetName),
+  getPluginConfig: (appName: string) => ipcRenderer.invoke('plugins:getConfig', appName),
+  resetPluginToCustom: (appName: string) => ipcRenderer.invoke('plugins:resetToCustom', appName),
+
+  // Font operations
+  getFontStatus: () => ipcRenderer.invoke('plugins:getFontStatus'),
+  installNerdFont: (fontName?: string) => ipcRenderer.invoke('plugins:installNerdFont', fontName),
 });

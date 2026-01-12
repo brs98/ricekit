@@ -76,6 +76,42 @@ export interface AppInfo {
   configPath?: string;
 }
 
+// Plugin system types
+export type PluginMode = 'preset' | 'custom';
+export type InstalledBy = 'mactheme' | 'user' | 'unknown';
+
+export interface PluginConfig {
+  mode: PluginMode;
+  preset?: string;
+  installedBy: InstalledBy;
+  configBackupPath?: string;
+  lastUpdated?: number;
+}
+
+export interface PresetInfo {
+  name: string;
+  displayName: string;
+  description: string;
+  features: string[];
+  previewImage?: string;
+}
+
+export interface PluginStatus {
+  isInstalled: boolean;
+  binaryPath?: string;
+  version?: string;
+  hasExistingConfig: boolean;
+  configPath: string;
+}
+
+// Font status for Nerd Font detection
+export interface FontStatus {
+  hasNerdFont: boolean;
+  installedFont: string | null;
+  recommendedFont: string;
+  supportedFonts: readonly string[];
+}
+
 // Schedule entry for unified theme/wallpaper scheduling
 export interface ScheduleEntry {
   timeStart: string;           // Time in HH:MM format (24-hour)
@@ -110,6 +146,9 @@ export interface Preferences {
   schedule?: {
     enabled: boolean; // Enable time-based scheduling
     schedules: ScheduleEntry[];
+  };
+  pluginConfigs?: {
+    [appName: string]: PluginConfig;
   };
 }
 
@@ -168,6 +207,18 @@ export interface ElectronAPI {
     updateUrl?: string;
     error?: string;
   }>;
+
+  // Plugin operations
+  getPluginStatus: (appName: string) => Promise<PluginStatus>;
+  installPlugin: (appName: string) => Promise<void>;
+  listPresets: (appName: string) => Promise<PresetInfo[]>;
+  setPreset: (appName: string, presetName: string) => Promise<void>;
+  getPluginConfig: (appName: string) => Promise<PluginConfig | null>;
+  resetPluginToCustom: (appName: string) => Promise<void>;
+
+  // Font operations
+  getFontStatus: () => Promise<FontStatus>;
+  installNerdFont: (fontName?: string) => Promise<{ success: boolean; error?: string; installedFont?: string }>;
 }
 
 declare global {

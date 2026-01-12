@@ -32,6 +32,20 @@ export function getCurrentDir(): string {
 }
 
 /**
+ * Get path to presets directory
+ */
+export function getPresetsDir(): string {
+  return path.join(getAppDataDir(), 'presets');
+}
+
+/**
+ * Get path to current presets symlink directory
+ */
+export function getCurrentPresetsDir(): string {
+  return path.join(getCurrentDir(), 'presets');
+}
+
+/**
  * Get path to preferences file
  */
 export function getPreferencesPath(): string {
@@ -61,6 +75,8 @@ export function ensureDirectories(): void {
     getThemesDir(),
     getCustomThemesDir(),
     getCurrentDir(),
+    getPresetsDir(),
+    getCurrentPresetsDir(),
   ];
 
   for (const dir of dirs) {
@@ -104,6 +120,7 @@ export function getDefaultPreferences() {
         wallpaperPath?: string;
       }>,
     },
+    pluginConfigs: {} as Record<string, import('../shared/types').PluginConfig>,
   };
 }
 

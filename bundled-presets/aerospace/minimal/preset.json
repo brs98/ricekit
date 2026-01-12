@@ -1,0 +1,11 @@
+{
+  "name": "minimal",
+  "displayName": "Minimal",
+  "description": "Simple tiling with basic keybindings and themed borders",
+  "features": [
+    "Alt + hjkl for window focus",
+    "Alt + Shift + hjkl to move windows",
+    "Alt + 1-9 for workspaces",
+    "Colored window borders"
+  ]
+}

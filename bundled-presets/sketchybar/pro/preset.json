@@ -1,0 +1,14 @@
+{
+  "name": "pro",
+  "displayName": "Pro",
+  "description": "Full-featured status bar with system stats and media controls",
+  "features": [
+    "Space indicators with icons",
+    "Active app display",
+    "CPU and memory usage",
+    "Media now playing",
+    "Weather info",
+    "Clock and date",
+    "Battery with time remaining"
+  ]
+}
