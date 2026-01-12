@@ -499,7 +499,7 @@ async function generateDeltaGitconfig(
     return;
   }
 
-  // Read the preset's delta section
+  // Read the preset's delta config
   const presetContent = await readFile(presetGitconfigPath);
 
   // Read existing .gitconfig or create empty
@@ -508,33 +508,54 @@ async function generateDeltaGitconfig(
     existingConfig = await readFile(gitconfigPath);
   }
 
-  // Remove existing [delta] section if present
-  const deltaStartRegex = /^\[delta\]\s*$/m;
-  const nextSectionRegex = /^\[(?!delta)/m;
+  // Helper to remove a section from config
+  const removeSection = (config: string, sectionName: string): string => {
+    const sectionRegex = new RegExp(`^\\[${sectionName}\\]\\s*$`, 'm');
+    const nextSectionRegex = /^\[/m;
 
-  let newConfig = existingConfig;
-  const deltaMatch = existingConfig.match(deltaStartRegex);
+    const match = config.match(sectionRegex);
+    if (!match) return config;
 
-  if (deltaMatch) {
-    const deltaStart = deltaMatch.index!;
-    const afterDelta = existingConfig.slice(deltaStart + deltaMatch[0].length);
-    const nextSectionMatch = afterDelta.match(nextSectionRegex);
+    const sectionStart = match.index!;
+    const afterSection = config.slice(sectionStart + match[0].length);
+    const nextMatch = afterSection.match(nextSectionRegex);
 
-    if (nextSectionMatch) {
-      // There's another section after [delta]
-      const deltaEnd = deltaStart + deltaMatch[0].length + nextSectionMatch.index!;
-      newConfig = existingConfig.slice(0, deltaStart) + existingConfig.slice(deltaEnd);
-    } else {
-      // [delta] is the last section
-      newConfig = existingConfig.slice(0, deltaStart);
+    if (nextMatch) {
+      return config.slice(0, sectionStart) + config.slice(sectionStart + match[0].length + nextMatch.index!);
     }
+    return config.slice(0, sectionStart);
+  };
+
+  // Remove sections that delta preset will replace
+  let newConfig = existingConfig;
+  const sectionsToReplace = ['delta', 'interactive', 'merge', 'diff'];
+  for (const section of sectionsToReplace) {
+    newConfig = removeSection(newConfig, section);
   }
 
-  // Append the new [delta] section with MacTheme header
+  // Add pager = delta to [core] section if not present
+  if (newConfig.includes('[core]')) {
+    if (!newConfig.includes('pager = delta') && !newConfig.includes('pager=delta')) {
+      // Add pager = delta to existing [core] section
+      newConfig = newConfig.replace(/(\[core\][^\[]*)/s, (match) => {
+        return match.trimEnd() + '\n    pager = delta\n';
+      });
+    }
+  } else {
+    // No [core] section, will be added with preset content
+  }
+
+  // Remove [core] from preset content if we already have one (to avoid duplicate)
+  let presetToAdd = presetContent;
+  if (newConfig.includes('[core]')) {
+    presetToAdd = removeSection(presetContent, 'core');
+  }
+
+  // Append the delta sections with MacTheme header
   const macthemeHeader = `# MacTheme delta Configuration
 # Preset: ${activePreset}
 `;
-  newConfig = newConfig.trimEnd() + '\n\n' + macthemeHeader + presetContent.trim() + '\n';
+  newConfig = newConfig.trimEnd() + '\n\n' + macthemeHeader + presetToAdd.trim() + '\n';
 
   await writeFile(gitconfigPath, newConfig);
 }

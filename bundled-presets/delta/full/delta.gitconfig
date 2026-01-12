@@ -1,3 +1,6 @@
+[core]
+    pager = delta
+
 [delta]
     navigate = true
     line-numbers = true
