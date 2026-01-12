@@ -417,14 +417,8 @@ after-startup-command = [
     // Starship doesn't support includes, so we copy the preset content directly
     const activePreset = await getActivePreset(appName);
     if (activePreset) {
-      const presetConfigPath = path.join(
-        getCurrentPresetsDir(),
-        '..',
-        'presets',
-        appName,
-        activePreset,
-        'starship.toml'
-      );
+      // The symlink at current/presets/starship already points to the active preset folder
+      const presetConfigPath = path.join(currentPresetPath, 'starship.toml');
 
       if (existsSync(presetConfigPath)) {
         const presetContent = await readFile(presetConfigPath);
@@ -460,14 +454,8 @@ if-shell "test -f ${homeDir}/.tmux-overrides.conf" "source-file ${homeDir}/.tmux
     // bat doesn't support includes, so we read the preset and write it directly
     const activePreset = await getActivePreset(appName);
     if (activePreset) {
-      const presetConfigPath = path.join(
-        getCurrentPresetsDir(),
-        '..',
-        'presets',
-        appName,
-        activePreset,
-        'config'
-      );
+      // The symlink at current/presets/bat already points to the active preset folder
+      const presetConfigPath = path.join(currentPresetPath, 'config');
 
       if (existsSync(presetConfigPath)) {
         let content = await readFile(presetConfigPath);
@@ -503,14 +491,8 @@ async function generateDeltaGitconfig(
     return;
   }
 
-  const presetGitconfigPath = path.join(
-    getCurrentPresetsDir(),
-    '..',
-    'presets',
-    'delta',
-    activePreset,
-    'delta.gitconfig'
-  );
+  // The symlink at current/presets/delta already points to the active preset folder
+  const presetGitconfigPath = path.join(currentPresetPath, 'delta.gitconfig');
 
   if (!existsSync(presetGitconfigPath)) {
     logger.warn(`Delta preset config not found: ${presetGitconfigPath}`);

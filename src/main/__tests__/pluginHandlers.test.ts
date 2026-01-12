@@ -338,10 +338,10 @@ describe('pluginHandlers - generateWrapperConfig', () => {
       onboardingCompleted: false,
     });
 
-    // Mock existsSync to return true for preset config path
+    // Mock existsSync to return true for preset config path (via current/presets symlink)
     vi.mocked(mockExistsSync).mockImplementation((filePath) => {
       const filePathStr = String(filePath);
-      if (filePathStr.includes('presets') && filePathStr.includes('starship')) {
+      if (filePathStr.includes('current/presets/starship') && filePathStr.includes('starship.toml')) {
         return true;
       }
       return false;
@@ -408,11 +408,11 @@ describe('pluginHandlers - generateWrapperConfig', () => {
       onboardingCompleted: false,
     });
 
-    // Mock existsSync to return true for preset config path
+    // Mock existsSync to return true for preset config path (via current/presets symlink)
     vi.mocked(mockExistsSync).mockImplementation((filePath) => {
       const filePathStr = String(filePath);
-      // Allow preset config paths to exist
-      if (filePathStr.includes('presets') && filePathStr.includes('bat')) {
+      // Allow preset config paths to exist via symlink
+      if (filePathStr.includes('current/presets/bat') && filePathStr.endsWith('config')) {
         return true;
       }
       return false;
@@ -449,15 +449,15 @@ describe('pluginHandlers - generateWrapperConfig', () => {
       onboardingCompleted: false,
     });
 
-    // Mock existsSync for delta preset paths
+    // Mock existsSync for delta preset paths (via current/presets symlink)
     vi.mocked(mockExistsSync).mockImplementation((filePath) => {
       const filePathStr = String(filePath);
-      // Allow preset gitconfig paths to exist
-      if (filePathStr.includes('presets') && filePathStr.includes('delta')) {
+      // Allow preset gitconfig paths to exist via symlink
+      if (filePathStr.includes('current/presets/delta') && filePathStr.includes('delta.gitconfig')) {
         return true;
       }
       // Allow .gitconfig to exist
-      if (filePathStr.endsWith('.gitconfig')) {
+      if (filePathStr.endsWith('.gitconfig') && !filePathStr.includes('delta.gitconfig')) {
         return true;
       }
       return false;
@@ -465,7 +465,7 @@ describe('pluginHandlers - generateWrapperConfig', () => {
 
     // Mock existing .gitconfig
     vi.mocked(mockReadFile).mockImplementation(async (filePath: string) => {
-      if (filePath.endsWith('.gitconfig') && !filePath.includes('presets')) {
+      if (filePath.endsWith('.gitconfig') && !filePath.includes('delta.gitconfig')) {
         return `[user]
     name = Test User
     email = test@example.com
@@ -510,15 +510,15 @@ describe('pluginHandlers - generateWrapperConfig', () => {
       onboardingCompleted: false,
     });
 
-    // Mock existsSync for delta preset paths
+    // Mock existsSync for delta preset paths (via current/presets symlink)
     vi.mocked(mockExistsSync).mockImplementation((filePath) => {
       const filePathStr = String(filePath);
-      // Allow preset gitconfig paths to exist
-      if (filePathStr.includes('presets') && filePathStr.includes('delta')) {
+      // Allow preset gitconfig paths to exist via symlink
+      if (filePathStr.includes('current/presets/delta') && filePathStr.includes('delta.gitconfig')) {
         return true;
       }
       // Allow .gitconfig to exist
-      if (filePathStr.endsWith('.gitconfig')) {
+      if (filePathStr.endsWith('.gitconfig') && !filePathStr.includes('delta.gitconfig')) {
         return true;
       }
       return false;
@@ -526,7 +526,7 @@ describe('pluginHandlers - generateWrapperConfig', () => {
 
     // Mock existing .gitconfig with existing delta section
     vi.mocked(mockReadFile).mockImplementation(async (filePath: string) => {
-      if (filePath.endsWith('.gitconfig') && !filePath.includes('presets')) {
+      if (filePath.endsWith('.gitconfig') && !filePath.includes('delta.gitconfig')) {
         return `[user]
     name = Test User
 
