@@ -81,6 +81,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('plugins:setPreset', appName, presetName),
   getPluginConfig: (appName: string) => ipcRenderer.invoke('plugins:getConfig', appName),
   resetPluginToCustom: (appName: string) => ipcRenderer.invoke('plugins:resetToCustom', appName),
+  hasPluginBackup: (appName: string) => ipcRenderer.invoke('plugins:hasBackup', appName),
+  restorePluginBackup: (appName: string) => ipcRenderer.invoke('plugins:restoreBackup', appName),
 
   // Font operations
   getFontStatus: () => ipcRenderer.invoke('plugins:getFontStatus'),

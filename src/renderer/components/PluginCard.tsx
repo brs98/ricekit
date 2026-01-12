@@ -50,6 +50,11 @@ export function PluginCard({
   const [installingFont, setInstallingFont] = useState(false);
   const [pendingPreset, setPendingPreset] = useState<string | null>(null);
 
+  // Backup restore state
+  const [hasBackup, setHasBackup] = useState(false);
+  const [showRestoreDialog, setShowRestoreDialog] = useState(false);
+  const [restoring, setRestoring] = useState(false);
+
   useEffect(() => {
     loadPluginData();
   }, [appName]);
@@ -58,16 +63,18 @@ export function PluginCard({
     setLoading(true);
     setError(null);
     try {
-      const [statusData, configData, presetsData] = await Promise.all([
+      const [statusData, configData, presetsData, backupExists] = await Promise.all([
         window.electronAPI.getPluginStatus(appName),
         window.electronAPI.getPluginConfig(appName),
         window.electronAPI.listPresets(appName),
+        window.electronAPI.hasPluginBackup(appName),
       ]);
 
       setStatus(statusData);
       setConfig(configData);
       setPresets(presetsData);
       setSelectedPreset(configData?.preset || '');
+      setHasBackup(backupExists);
     } catch (err) {
       console.error(`Failed to load plugin data for ${appName}:`, err);
       setError('Failed to load plugin data');
@@ -166,6 +173,28 @@ export function PluginCard({
     if (pendingPreset) {
       await applyPreset(pendingPreset);
       setPendingPreset(null);
+    }
+  }
+
+  async function handleRestoreBackup() {
+    setRestoring(true);
+    setError(null);
+    try {
+      const result = await window.electronAPI.restorePluginBackup(appName);
+      if (result.success) {
+        setShowRestoreDialog(false);
+        // Refresh the plugin to apply the restored config
+        await window.electronAPI.refreshApp(appName);
+        await loadPluginData();
+        onStatusChange?.();
+      } else {
+        setError(result.error || 'Failed to restore backup');
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message);
+    } finally {
+      setRestoring(false);
     }
   }
 
@@ -286,12 +315,21 @@ export function PluginCard({
       <div className="plugin-card-actions">
         {status?.isInstalled ? (
           <>
-            <Button variant="outline" onClick={handleRefresh} disabled={applyingPreset}>
+            <Button variant="outline" onClick={handleRefresh} disabled={applyingPreset || restoring}>
               Refresh
             </Button>
             {config?.mode === 'preset' && (
-              <Button variant="outline" onClick={handleSwitchToCustom}>
+              <Button variant="outline" onClick={handleSwitchToCustom} disabled={restoring}>
                 Custom Mode
+              </Button>
+            )}
+            {hasBackup && (
+              <Button
+                variant="outline"
+                onClick={() => setShowRestoreDialog(true)}
+                disabled={restoring}
+              >
+                Restore Backup
               </Button>
             )}
           </>
@@ -320,6 +358,27 @@ export function PluginCard({
             </AlertDialogCancel>
             <AlertDialogAction onClick={handleInstallFont} disabled={installingFont}>
               {installingFont ? 'Installing...' : 'Install Font'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Restore Backup Dialog */}
+      <AlertDialog open={showRestoreDialog} onOpenChange={setShowRestoreDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Restore Original Configuration?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will restore your original {displayName} configuration from before MacTheme was applied.
+              <br /><br />
+              Your current MacTheme preset configuration will be replaced with your backed-up config.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={restoring}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRestoreBackup} disabled={restoring}>
+              {restoring ? 'Restoring...' : 'Restore Backup'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

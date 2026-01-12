@@ -352,6 +352,69 @@ export async function handleResetPluginToCustom(_event: unknown, appName: string
 }
 
 /**
+ * Check if a backup exists for a plugin
+ */
+export async function handleHasPluginBackup(_event: unknown, appName: string): Promise<boolean> {
+  const plugin = PLUGIN_DEFINITIONS[appName as PluginName];
+  if (!plugin) {
+    return false;
+  }
+
+  const backupPath = path.join(plugin.configDir, `${plugin.mainConfigFile}.mactheme-backup`);
+  return existsSync(backupPath);
+}
+
+/**
+ * Restore plugin config from backup
+ */
+export async function handleRestorePluginBackup(
+  _event: unknown,
+  appName: string
+): Promise<{ success: boolean; error?: string }> {
+  const plugin = PLUGIN_DEFINITIONS[appName as PluginName];
+  if (!plugin) {
+    return { success: false, error: `Unknown plugin: ${appName}` };
+  }
+
+  const configPath = path.join(plugin.configDir, plugin.mainConfigFile);
+  const backupPath = path.join(plugin.configDir, `${plugin.mainConfigFile}.mactheme-backup`);
+
+  // Check if backup exists
+  if (!existsSync(backupPath)) {
+    return { success: false, error: 'No backup found to restore' };
+  }
+
+  try {
+    // Copy backup back to original location
+    await copyFile(backupPath, configPath);
+    logger.info(`Restored ${appName} config from backup`);
+
+    // Update preferences to custom mode
+    const prefs = await handleGetPreferences();
+    if (prefs.pluginConfigs?.[appName]) {
+      prefs.pluginConfigs[appName].mode = 'custom';
+      prefs.pluginConfigs[appName].preset = undefined;
+      prefs.pluginConfigs[appName].lastUpdated = Date.now();
+      await handleSetPreferences(null, prefs);
+    }
+
+    // Show notification
+    if (Notification.isSupported()) {
+      new Notification({
+        title: 'Backup Restored',
+        body: `Your original ${plugin.displayName} configuration has been restored.`,
+      }).show();
+    }
+
+    return { success: true };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    logger.error(`Failed to restore ${appName} backup:`, message);
+    return { success: false, error: message };
+  }
+}
+
+/**
  * Get plugin configuration
  */
 export async function handleGetPluginConfig(
@@ -404,6 +467,8 @@ export function registerPluginHandlers(): void {
   ipcMain.handle('plugins:setPreset', handleSetPreset);
   ipcMain.handle('plugins:getConfig', handleGetPluginConfig);
   ipcMain.handle('plugins:resetToCustom', handleResetPluginToCustom);
+  ipcMain.handle('plugins:hasBackup', handleHasPluginBackup);
+  ipcMain.handle('plugins:restoreBackup', handleRestorePluginBackup);
   ipcMain.handle('plugins:getFontStatus', handleGetFontStatus);
   ipcMain.handle('plugins:installNerdFont', handleInstallNerdFont);
 

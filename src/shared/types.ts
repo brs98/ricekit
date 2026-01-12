@@ -215,6 +215,8 @@ export interface ElectronAPI {
   setPreset: (appName: string, presetName: string) => Promise<void>;
   getPluginConfig: (appName: string) => Promise<PluginConfig | null>;
   resetPluginToCustom: (appName: string) => Promise<void>;
+  hasPluginBackup: (appName: string) => Promise<boolean>;
+  restorePluginBackup: (appName: string) => Promise<{ success: boolean; error?: string }>;
 
   // Font operations
   getFontStatus: () => Promise<FontStatus>;
