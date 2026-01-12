@@ -349,7 +349,9 @@ describe('pluginHandlers - generateWrapperConfig', () => {
     expect(starshipConfigCall).toBeDefined();
     const content = String(starshipConfigCall![1]);
     expect(content).toContain('# MacTheme Starship Configuration');
-    expect(content).toContain('"$include"');
+    // Should use array format for multiple includes
+    expect(content).toContain('"$include" = [');
+    expect(content).toContain('starship.toml');
     expect(content).toContain('starship-overrides.toml');
   });
 
