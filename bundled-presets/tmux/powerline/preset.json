@@ -1,0 +1,6 @@
+{
+  "name": "powerline",
+  "displayName": "Powerline",
+  "description": "Powerline-style arrows with window list and git info",
+  "features": ["session", "windows", "git", "time", "powerline-arrows"]
+}

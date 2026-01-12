@@ -5,17 +5,52 @@ import { Switch } from '@/renderer/components/ui/switch';
 import { Button } from '@/renderer/components/ui/button';
 import { PluginCard } from './PluginCard';
 
-// Plugin definitions for auto-setup
-const PLUGINS = [
+// Plugin definitions for auto-setup, organized by category
+const PLUGIN_CATEGORIES = [
   {
-    name: 'sketchybar',
-    displayName: 'SketchyBar',
-    description: 'Highly customizable macOS status bar replacement',
+    name: 'Status Bars',
+    plugins: [
+      {
+        name: 'sketchybar',
+        displayName: 'SketchyBar',
+        description: 'Highly customizable macOS status bar replacement',
+      },
+    ],
   },
   {
-    name: 'aerospace',
-    displayName: 'AeroSpace',
-    description: 'Tiling window manager with themed borders',
+    name: 'Window Management',
+    plugins: [
+      {
+        name: 'aerospace',
+        displayName: 'AeroSpace',
+        description: 'Tiling window manager with themed borders',
+      },
+    ],
+  },
+  {
+    name: 'CLI Tools',
+    plugins: [
+      {
+        name: 'starship',
+        displayName: 'Starship',
+        description: 'Cross-shell prompt with git integration',
+      },
+      {
+        name: 'tmux',
+        displayName: 'tmux',
+        description: 'Terminal multiplexer with themed status bar',
+      },
+      {
+        name: 'bat',
+        displayName: 'bat',
+        description: 'Syntax-highlighted cat replacement',
+      },
+      {
+        name: 'delta',
+        displayName: 'delta',
+        description: 'Themed git diff viewer',
+      },
+    ],
   },
 ];
 
@@ -204,25 +239,30 @@ export function ApplicationsView() {
 
       {/* Plugins Section - Auto-setup with presets */}
       <div className="plugins-section">
-        <div className="app-category">
-          <h3 className="category-title">
+        <div className="plugins-header">
+          <h3 className="section-title">
             <span className="category-icon">🔌</span>
             Plugins
             <span className="category-subtitle">(Auto-setup with presets)</span>
           </h3>
-
-          <div className="plugin-cards">
-            {PLUGINS.map((plugin) => (
-              <PluginCard
-                key={plugin.name}
-                appName={plugin.name}
-                displayName={plugin.displayName}
-                description={plugin.description}
-                onStatusChange={loadApps}
-              />
-            ))}
-          </div>
         </div>
+
+        {PLUGIN_CATEGORIES.map((category) => (
+          <div key={category.name} className="plugin-category">
+            <h4 className="plugin-category-title">{category.name}</h4>
+            <div className="plugin-cards">
+              {category.plugins.map((plugin) => (
+                <PluginCard
+                  key={plugin.name}
+                  appName={plugin.name}
+                  displayName={plugin.displayName}
+                  description={plugin.description}
+                  onStatusChange={loadApps}
+                />
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
 
       <div className="apps-list">

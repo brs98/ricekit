@@ -1,0 +1,6 @@
+{
+  "name": "minimal",
+  "displayName": "Minimal",
+  "description": "Simple status bar with session name and time",
+  "features": ["session", "time"]
+}

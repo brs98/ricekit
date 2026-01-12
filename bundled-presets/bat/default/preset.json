@@ -1,0 +1,6 @@
+{
+  "name": "default",
+  "displayName": "Default",
+  "description": "Line numbers with syntax highlighting",
+  "features": ["syntax-highlighting", "line-numbers"]
+}

@@ -210,6 +210,7 @@ async function createTokyoNightTheme(themesDir: string): Promise<void> {
   await writeFile(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
   await writeFile(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
   await writeFile(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'tmux-colors.conf'), generateTmuxConfig(metadata.colors));
 }
 
 async function createCatppuccinMochaTheme(themesDir: string): Promise<void> {
@@ -265,6 +266,7 @@ async function createCatppuccinMochaTheme(themesDir: string): Promise<void> {
   await writeFile(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
   await writeFile(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
   await writeFile(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'tmux-colors.conf'), generateTmuxConfig(metadata.colors));
 }
 
 async function createCatppuccinLatteTheme(themesDir: string): Promise<void> {
@@ -320,6 +322,7 @@ async function createCatppuccinLatteTheme(themesDir: string): Promise<void> {
   await writeFile(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
   await writeFile(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
   await writeFile(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'tmux-colors.conf'), generateTmuxConfig(metadata.colors));
 }
 
 async function createGruvboxDarkTheme(themesDir: string): Promise<void> {
@@ -375,6 +378,7 @@ async function createGruvboxDarkTheme(themesDir: string): Promise<void> {
   await writeFile(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
   await writeFile(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
   await writeFile(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'tmux-colors.conf'), generateTmuxConfig(metadata.colors));
 }
 
 async function createGruvboxLightTheme(themesDir: string): Promise<void> {
@@ -430,6 +434,7 @@ async function createGruvboxLightTheme(themesDir: string): Promise<void> {
   await writeFile(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
   await writeFile(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
   await writeFile(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'tmux-colors.conf'), generateTmuxConfig(metadata.colors));
 }
 
 async function createNordTheme(themesDir: string): Promise<void> {
@@ -485,6 +490,7 @@ async function createNordTheme(themesDir: string): Promise<void> {
   await writeFile(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
   await writeFile(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
   await writeFile(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'tmux-colors.conf'), generateTmuxConfig(metadata.colors));
 }
 
 async function createDraculaTheme(themesDir: string): Promise<void> {
@@ -540,6 +546,7 @@ async function createDraculaTheme(themesDir: string): Promise<void> {
   await writeFile(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
   await writeFile(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
   await writeFile(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'tmux-colors.conf'), generateTmuxConfig(metadata.colors));
 }
 
 async function createOneDarkTheme(themesDir: string): Promise<void> {
@@ -595,6 +602,7 @@ async function createOneDarkTheme(themesDir: string): Promise<void> {
   await writeFile(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
   await writeFile(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
   await writeFile(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'tmux-colors.conf'), generateTmuxConfig(metadata.colors));
 }
 
 async function createSolarizedDarkTheme(themesDir: string): Promise<void> {
@@ -650,6 +658,7 @@ async function createSolarizedDarkTheme(themesDir: string): Promise<void> {
   await writeFile(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
   await writeFile(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
   await writeFile(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'tmux-colors.conf'), generateTmuxConfig(metadata.colors));
 }
 
 async function createSolarizedLightTheme(themesDir: string): Promise<void> {
@@ -705,6 +714,7 @@ async function createSolarizedLightTheme(themesDir: string): Promise<void> {
   await writeFile(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
   await writeFile(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
   await writeFile(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'tmux-colors.conf'), generateTmuxConfig(metadata.colors));
 }
 
 async function createRosePineTheme(themesDir: string): Promise<void> {
@@ -760,6 +770,7 @@ async function createRosePineTheme(themesDir: string): Promise<void> {
   await writeFile(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
   await writeFile(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
   await writeFile(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'tmux-colors.conf'), generateTmuxConfig(metadata.colors));
 }
 
 // Config generators
@@ -1360,6 +1371,46 @@ fi
 `;
 }
 
+function generateTmuxConfig(colors: any): string {
+  return `# tmux theme colors
+# Generated by MacTheme
+#
+# Source this file in your .tmux.conf:
+# source-file "~/Library/Application Support/MacTheme/current/theme/tmux-colors.conf"
+#
+# Use colors with: #{@variablename}
+# Example: set -g status-style "bg=#{@background}"
+
+# Base colors
+set -g @background "${colors.background}"
+set -g @foreground "${colors.foreground}"
+set -g @selection "${colors.selection}"
+set -g @accent "${colors.accent}"
+set -g @border "${colors.border}"
+set -g @cursor "${colors.cursor}"
+
+# ANSI colors
+set -g @black "${colors.black}"
+set -g @red "${colors.red}"
+set -g @green "${colors.green}"
+set -g @yellow "${colors.yellow}"
+set -g @blue "${colors.blue}"
+set -g @magenta "${colors.magenta}"
+set -g @cyan "${colors.cyan}"
+set -g @white "${colors.white}"
+
+# Bright ANSI colors
+set -g @brightBlack "${colors.brightBlack}"
+set -g @brightRed "${colors.brightRed}"
+set -g @brightGreen "${colors.brightGreen}"
+set -g @brightYellow "${colors.brightYellow}"
+set -g @brightBlue "${colors.brightBlue}"
+set -g @brightMagenta "${colors.brightMagenta}"
+set -g @brightCyan "${colors.brightCyan}"
+set -g @brightWhite "${colors.brightWhite}"
+`;
+}
+
 /**
  * Generate all config files for a theme in a directory
  * This is used by both theme creation and bundled theme generation
@@ -1391,4 +1442,5 @@ export async function generateThemeConfigFiles(themeDir: string, metadata: Theme
   await writeFile(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
   await writeFile(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
   await writeFile(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'tmux-colors.conf'), generateTmuxConfig(metadata.colors));
 }

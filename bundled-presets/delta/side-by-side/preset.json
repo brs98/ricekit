@@ -1,0 +1,6 @@
+{
+  "name": "side-by-side",
+  "displayName": "Side-by-Side",
+  "description": "Side-by-side diff with line numbers",
+  "features": ["syntax-highlighting", "side-by-side", "line-numbers"]
+}

@@ -1,0 +1,6 @@
+{
+  "name": "pro",
+  "displayName": "Pro",
+  "description": "Full-featured with system stats, git, and battery",
+  "features": ["session", "windows", "git", "cpu", "memory", "battery", "time"]
+}

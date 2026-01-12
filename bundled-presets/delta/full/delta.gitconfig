@@ -1,0 +1,35 @@
+[delta]
+    navigate = true
+    line-numbers = true
+    side-by-side = true
+    syntax-theme = ansi
+
+    # Decorations
+    file-style = bold yellow ul
+    file-decoration-style = none
+    hunk-header-style = file line-number syntax
+    hunk-header-decoration-style = blue box
+
+    # Line number styling
+    line-numbers-left-style = cyan
+    line-numbers-right-style = cyan
+    line-numbers-minus-style = red
+    line-numbers-plus-style = green
+
+    # Diff styling
+    minus-style = syntax "#3f2d3d"
+    minus-emph-style = syntax "#763842"
+    plus-style = syntax "#283b4d"
+    plus-emph-style = syntax "#316172"
+
+    # Word diff
+    inline-hint-style = syntax
+
+[interactive]
+    diffFilter = delta --color-only
+
+[merge]
+    conflictstyle = diff3
+
+[diff]
+    colorMoved = default

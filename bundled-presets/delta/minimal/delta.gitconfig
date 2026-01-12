@@ -1,0 +1,14 @@
+[delta]
+    navigate = true
+    line-numbers = false
+    side-by-side = false
+    syntax-theme = ansi
+
+[interactive]
+    diffFilter = delta --color-only
+
+[merge]
+    conflictstyle = diff3
+
+[diff]
+    colorMoved = default

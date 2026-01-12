@@ -1,0 +1,6 @@
+# bat Full Preset
+# Line numbers, grid, and file header
+
+--style=numbers,grid,header
+--paging=auto
+--italic-text=always

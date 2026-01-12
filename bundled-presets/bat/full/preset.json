@@ -1,0 +1,6 @@
+{
+  "name": "full",
+  "displayName": "Full",
+  "description": "Line numbers, grid, and file header",
+  "features": ["syntax-highlighting", "line-numbers", "grid", "header"]
+}
