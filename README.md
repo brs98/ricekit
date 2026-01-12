@@ -1,5 +1,3 @@
-# MacTheme - Unified macOS Theming System
-
 <div align="center">
 
 🎨 A beautiful Electron desktop application for unified theming across multiple macOS applications
@@ -27,21 +25,27 @@ MacTheme is inspired by Omarchy's Linux theming system and brings unified theme 
 ### Supported Applications
 
 #### Terminals
+
 - Alacritty • Kitty • iTerm2 • Warp • Hyper • Terminal.app
 
 #### Editors
+
 - VS Code • Cursor • Neovim • Sublime Text
 
 #### CLI Tools
+
 - bat • delta • starship • zsh-syntax-highlighting • fzf • lazygit
 
 #### Launchers
+
 - Raycast • Alfred
 
 #### System
+
 - Desktop Wallpaper • macOS Accent Color • SketchyBar
 
 #### Tiling Managers
+
 - AeroSpace (with JankyBorders)
 
 ---
@@ -162,16 +166,19 @@ MacTheme uses a symlink-based architecture for seamless theme switching:
 ### Example Configuration
 
 **Alacritty** (`~/.config/alacritty/alacritty.toml`):
+
 ```toml
 import = ["~/Library/Application Support/MacTheme/current/theme/alacritty.toml"]
 ```
 
 **Kitty** (`~/.config/kitty/kitty.conf`):
+
 ```
 include ~/Library/Application Support/MacTheme/current/theme/kitty.conf
 ```
 
 **Neovim** (`~/.config/nvim/lua/plugins/theme.lua`):
+
 ```lua
 dofile(vim.fn.expand("~/Library/Application Support/MacTheme/current/theme/neovim.lua"))
 ```

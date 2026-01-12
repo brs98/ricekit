@@ -67,13 +67,9 @@ export async function installBundledPresets(): Promise<void> {
         continue;
       }
 
-      // Only install if preset doesn't already exist
-      if (!existsSync(destPresetDir)) {
-        await copyDir(srcPresetDir, destPresetDir);
-        logger.info(`Installed preset: ${pluginName}/${presetName}`);
-      } else {
-        logger.info(`Preset already exists: ${pluginName}/${presetName}`);
-      }
+      // Always update presets to ensure users get the latest bundled versions
+      await copyDir(srcPresetDir, destPresetDir);
+      logger.info(`Installed/updated preset: ${pluginName}/${presetName}`);
     }
   }
 

@@ -508,30 +508,26 @@ async function generateDeltaGitconfig(
     existingConfig = await readFile(gitconfigPath);
   }
 
-  // Helper to remove a section from config
-  const removeSection = (config: string, sectionName: string): string => {
-    const sectionRegex = new RegExp(`^\\[${sectionName}\\]\\s*$`, 'm');
-    const nextSectionRegex = /^\[/m;
-
-    const match = config.match(sectionRegex);
-    if (!match) return config;
-
-    const sectionStart = match.index!;
-    const afterSection = config.slice(sectionStart + match[0].length);
-    const nextMatch = afterSection.match(nextSectionRegex);
-
-    if (nextMatch) {
-      return config.slice(0, sectionStart) + config.slice(sectionStart + match[0].length + nextMatch.index!);
-    }
-    return config.slice(0, sectionStart);
+  // Helper to remove ALL occurrences of a section from config
+  const removeAllSections = (config: string, sectionName: string): string => {
+    // Match section header and everything until the next section or end
+    // Also removes preceding MacTheme comment if present
+    const pattern = new RegExp(
+      `(# MacTheme[^\\[]*)?\\[${sectionName}\\][^\\[]*`,
+      'gi'
+    );
+    return config.replace(pattern, '');
   };
 
-  // Remove sections that delta preset will replace
+  // Remove all delta-related sections (including duplicates from previous runs)
   let newConfig = existingConfig;
   const sectionsToReplace = ['delta', 'interactive', 'merge', 'diff'];
   for (const section of sectionsToReplace) {
-    newConfig = removeSection(newConfig, section);
+    newConfig = removeAllSections(newConfig, section);
   }
+
+  // Clean up multiple blank lines
+  newConfig = newConfig.replace(/\n{3,}/g, '\n\n');
 
   // Add pager = delta to [core] section if not present
   if (newConfig.includes('[core]')) {
@@ -548,7 +544,7 @@ async function generateDeltaGitconfig(
   // Remove [core] from preset content if we already have one (to avoid duplicate)
   let presetToAdd = presetContent;
   if (newConfig.includes('[core]')) {
-    presetToAdd = removeSection(presetContent, 'core');
+    presetToAdd = removeAllSections(presetContent, 'core');
   }
 
   // Append the delta sections with MacTheme header
