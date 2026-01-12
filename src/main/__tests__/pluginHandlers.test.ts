@@ -323,7 +323,7 @@ describe('pluginHandlers - generateWrapperConfig', () => {
     vi.mocked(mockWriteFile).mockResolvedValue(undefined);
   });
 
-  it('should generate starship wrapper config with TOML format', async () => {
+  it('should generate starship config by copying preset content', async () => {
     // Setup: mock preferences
     vi.mocked(handleGetPreferences).mockResolvedValue({
       enabledApps: [],
@@ -338,9 +338,21 @@ describe('pluginHandlers - generateWrapperConfig', () => {
       onboardingCompleted: false,
     });
 
+    // Mock existsSync to return true for preset config path
+    vi.mocked(mockExistsSync).mockImplementation((filePath) => {
+      const filePathStr = String(filePath);
+      if (filePathStr.includes('presets') && filePathStr.includes('starship')) {
+        return true;
+      }
+      return false;
+    });
+
+    // Mock reading the preset config file
+    vi.mocked(mockReadFile).mockResolvedValue('format = "$all"\n[character]\nsuccess_symbol = "[>](green)"');
+
     await handleSetPreset(null, 'starship', 'minimal');
 
-    // Check that writeFile was called with TOML content
+    // Check that writeFile was called with preset content copied inline
     const writeFileCalls = vi.mocked(mockWriteFile).mock.calls;
     const starshipConfigCall = writeFileCalls.find(
       (call) => String(call[0]).includes('starship.toml')
@@ -349,10 +361,10 @@ describe('pluginHandlers - generateWrapperConfig', () => {
     expect(starshipConfigCall).toBeDefined();
     const content = String(starshipConfigCall![1]);
     expect(content).toContain('# MacTheme Starship Configuration');
-    // Should use array format for multiple includes
-    expect(content).toContain('"$include" = [');
-    expect(content).toContain('starship.toml');
-    expect(content).toContain('starship-overrides.toml');
+    expect(content).toContain('# Preset: minimal');
+    // Preset content should be copied inline (starship doesn't support includes)
+    expect(content).toContain('format = "$all"');
+    expect(content).toContain('[character]');
   });
 
   it('should generate tmux wrapper config with source-file directives', async () => {
