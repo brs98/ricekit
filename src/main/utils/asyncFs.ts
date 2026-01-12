@@ -116,9 +116,30 @@ export async function copyFile(src: string, dest: string): Promise<void> {
 
 /**
  * Copy a directory recursively
+ * Note: We implement this manually instead of using fs.cp() because
+ * fs.cp() is NOT patched by Electron to work with ASAR archives.
+ * This implementation uses only ASAR-compatible fs methods.
  */
 export async function copyDir(src: string, dest: string): Promise<void> {
-  await fs.cp(src, dest, { recursive: true });
+  // Create destination directory
+  await fs.mkdir(dest, { recursive: true });
+
+  // Read source directory contents
+  const entries = await fs.readdir(src, { withFileTypes: true });
+
+  for (const entry of entries) {
+    const srcPath = path.join(src, entry.name);
+    const destPath = path.join(dest, entry.name);
+
+    if (entry.isDirectory()) {
+      // Recursively copy subdirectories
+      await copyDir(srcPath, destPath);
+    } else {
+      // Copy file by reading and writing (ASAR-compatible)
+      const content = await fs.readFile(srcPath);
+      await fs.writeFile(destPath, content);
+    }
+  }
 }
 
 /**
