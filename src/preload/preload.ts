@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
+import type { ThemeMetadata, Preferences, UIState } from '../shared/types';
 
 // Expose protected methods that allow the renderer process to use IPC
 contextBridge.exposeInMainWorld('electronAPI', {
@@ -6,8 +7,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   listThemes: () => ipcRenderer.invoke('theme:list'),
   getTheme: (name: string) => ipcRenderer.invoke('theme:get', name),
   applyTheme: (name: string) => ipcRenderer.invoke('theme:apply', name),
-  createTheme: (data: any) => ipcRenderer.invoke('theme:create', data),
-  updateTheme: (name: string, data: any) => ipcRenderer.invoke('theme:update', name, data),
+  createTheme: (data: ThemeMetadata) => ipcRenderer.invoke('theme:create', data),
+  updateTheme: (name: string, data: ThemeMetadata) => ipcRenderer.invoke('theme:update', name, data),
   deleteTheme: (name: string) => ipcRenderer.invoke('theme:delete', name),
   duplicateTheme: (name: string) => ipcRenderer.invoke('theme:duplicate', name),
   exportTheme: (name: string, path?: string) => ipcRenderer.invoke('theme:export', name, path),
@@ -31,7 +32,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Preferences operations
   getPreferences: () => ipcRenderer.invoke('preferences:get'),
-  setPreferences: (prefs: any) => ipcRenderer.invoke('preferences:set', prefs),
+  setPreferences: (prefs: Preferences) => ipcRenderer.invoke('preferences:set', prefs),
   backupPreferences: () => ipcRenderer.invoke('preferences:backup'),
   restorePreferences: () => ipcRenderer.invoke('preferences:restore'),
 
@@ -44,7 +45,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // State operations
   getState: () => ipcRenderer.invoke('state:get'),
-  saveUIState: (uiState: any) => ipcRenderer.invoke('uistate:save', uiState),
+  saveUIState: (uiState: UIState) => ipcRenderer.invoke('uistate:save', uiState),
   getUIState: () => ipcRenderer.invoke('uistate:get'),
 
   // Quick switcher operations

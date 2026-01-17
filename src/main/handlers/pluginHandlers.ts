@@ -533,7 +533,7 @@ async function generateDeltaGitconfig(
   if (newConfig.includes('[core]')) {
     if (!newConfig.includes('pager = delta') && !newConfig.includes('pager=delta')) {
       // Add pager = delta to existing [core] section
-      newConfig = newConfig.replace(/(\[core\][^\[]*)/s, (match) => {
+      newConfig = newConfig.replace(/(\[core\][^[]*)/s, (match) => {
         return match.trimEnd() + '\n    pager = delta\n';
       });
     }

@@ -11,10 +11,9 @@ import {
   getDefaultLockState,
   getDerivationDescription,
   isBaseColor,
-  isDerivedColor,
 } from '../../shared/colorDerivation';
 import { validateColorJson, ValidationResult } from '../../shared/themeColorValidator';
-import { Vibrant } from 'node-vibrant/browser';
+// node-vibrant is dynamically imported when needed (in handleImageSelected)
 import { Button } from '@/renderer/components/ui/button';
 import { Input } from '@/renderer/components/ui/input';
 import { Label } from '@/renderer/components/ui/label';
@@ -364,7 +363,8 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
   const [selectedPreset, setSelectedPreset] = useState<string>('');
   const [colorErrors, setColorErrors] = useState<{ [key in keyof ThemeColors]?: string }>({});
   const [extractingColors, setExtractingColors] = useState(false);
-  const [colorLocks, setColorLocks] = useState<ColorLockState>(
+  // Use lazy initializer to avoid calling getDefaultLockState() on every render
+  const [colorLocks, setColorLocks] = useState<ColorLockState>(() =>
     initialTheme?.colorLocks || getDefaultLockState()
   );
   const [pasteInput, setPasteInput] = useState('');
@@ -376,6 +376,19 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
     status: 'empty',
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Refs to track latest values for stable callbacks (avoids recreating callbacks on every state change)
+  const metadataRef = useRef(metadata);
+  const colorLocksRef = useRef(colorLocks);
+
+  // Keep refs in sync with state
+  useEffect(() => {
+    metadataRef.current = metadata;
+  }, [metadata]);
+
+  useEffect(() => {
+    colorLocksRef.current = colorLocks;
+  }, [colorLocks]);
 
   // Update when initialTheme changes
   useEffect(() => {
@@ -413,11 +426,15 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
   }, [pasteInput]);
 
   // Apply pasted colors to the theme
+  // Uses refs for stable callback - only depends on pasteValidation which triggers UI updates
   const handleApplyPastedColors = useCallback(() => {
     if (!pasteValidation.isValid) return;
 
+    const currentMetadata = metadataRef.current;
+    const currentLocks = colorLocksRef.current;
+
     // Determine which colors were explicitly provided vs which need derivation
-    const newLocks: ColorLockState = { ...colorLocks };
+    const newLocks: ColorLockState = { ...currentLocks };
     const providedColorKeys = Object.keys(pasteValidation.validColors) as (keyof ThemeColors)[];
 
     // Lock colors that were explicitly provided, unlock ones that weren't
@@ -429,16 +446,16 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
 
     // Apply valid colors and derive the rest
     const newColors = deriveAllColors(
-      { ...metadata.colors, ...pasteValidation.validColors },
+      { ...currentMetadata.colors, ...pasteValidation.validColors },
       newLocks,
-      metadata.colors
+      currentMetadata.colors
     );
 
-    setMetadata({ ...metadata, colors: newColors, colorLocks: newLocks });
+    setMetadata({ ...currentMetadata, colors: newColors, colorLocks: newLocks });
     setColorLocks(newLocks);
     setHasChanges(true);
     setPasteInput('');
-  }, [pasteValidation, metadata, colorLocks]);
+  }, [pasteValidation]);
 
   const applyPreset = (presetKey: string) => {
     if (presetKey && presetSchemes[presetKey]) {
@@ -462,6 +479,8 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
 
     setExtractingColors(true);
     try {
+      // Dynamically import node-vibrant only when color extraction is triggered
+      const { Vibrant } = await import('node-vibrant/browser');
       const imageUrl = URL.createObjectURL(file);
       const palette = await Vibrant.from(imageUrl).getPalette();
       URL.revokeObjectURL(imageUrl);
@@ -532,29 +551,34 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
   };
 
   // Toggle lock state for a derived color
+  // Uses refs for stable callback - no dependencies needed
   const toggleLock = useCallback((colorKey: DerivedColorKey) => {
-    const newLocked = !colorLocks[colorKey];
-    const newLocks = { ...colorLocks, [colorKey]: newLocked };
+    const currentLocks = colorLocksRef.current;
+    const currentMetadata = metadataRef.current;
+
+    const newLocked = !currentLocks[colorKey];
+    const newLocks = { ...currentLocks, [colorKey]: newLocked };
     setColorLocks(newLocks);
 
     // If unlocking, recalculate this color from base colors
     if (!newLocked) {
-      const recalculated = deriveAllColors(metadata.colors, newLocks, metadata.colors);
+      const recalculated = deriveAllColors(currentMetadata.colors, newLocks, currentMetadata.colors);
       setMetadata({
-        ...metadata,
+        ...currentMetadata,
         colors: recalculated,
         colorLocks: newLocks,
       });
     } else {
       setMetadata({
-        ...metadata,
+        ...currentMetadata,
         colorLocks: newLocks,
       });
     }
     setHasChanges(true);
-  }, [colorLocks, metadata]);
+  }, []);
 
   // Update a derived color (only when locked)
+  // Uses refs for stable callback - no dependencies needed
   const updateDerivedColor = useCallback((colorKey: DerivedColorKey, value: string) => {
     const format = detectColorFormat(value);
     let hexValue = value;
@@ -573,10 +597,11 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
       }
     }
 
+    const currentMetadata = metadataRef.current;
     setMetadata({
-      ...metadata,
+      ...currentMetadata,
       colors: {
-        ...metadata.colors,
+        ...currentMetadata.colors,
         [colorKey]: hexValue,
       },
     });
@@ -591,9 +616,10 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
         return newErrors;
       });
     }
-  }, [metadata]);
+  }, []);
 
   // Update a base color and recalculate derived colors
+  // Uses refs for stable callback - no dependencies needed
   const updateColor = useCallback((colorKey: keyof ThemeColors, value: string) => {
     const format = detectColorFormat(value);
     let hexValue = value;
@@ -612,23 +638,26 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
       }
     }
 
+    const currentMetadata = metadataRef.current;
+    const currentLocks = colorLocksRef.current;
+
     // Update the color
     const newBaseColors = {
-      ...metadata.colors,
+      ...currentMetadata.colors,
       [colorKey]: hexValue,
     };
 
     // If this is a base color, recalculate derived colors
     if (isBaseColor(colorKey)) {
-      const recalculated = deriveAllColors(newBaseColors, colorLocks, metadata.colors);
+      const recalculated = deriveAllColors(newBaseColors, currentLocks, currentMetadata.colors);
       setMetadata({
-        ...metadata,
+        ...currentMetadata,
         colors: recalculated,
-        colorLocks,
+        colorLocks: currentLocks,
       });
     } else {
       setMetadata({
-        ...metadata,
+        ...currentMetadata,
         colors: newBaseColors,
       });
     }
@@ -646,7 +675,7 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
         return newErrors;
       });
     }
-  }, [metadata, colorLocks]);
+  }, []);
 
   const updateMetadataField = (field: keyof Omit<ThemeMetadata, 'colors'>, value: string) => {
     setMetadata({
@@ -1065,7 +1094,7 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
                 {' { useState } '}
                 <span style={{ color: metadata.colors.magenta }}>from</span>
                 {' '}
-                <span style={{ color: metadata.colors.green }}>'react'</span>;
+                <span style={{ color: metadata.colors.green }}>&apos;react&apos;</span>;
                 {'\n\n'}
                 <span style={{ color: metadata.colors.magenta }}>function</span>
                 {' '}
@@ -1155,7 +1184,7 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
           <DialogHeader>
             <DialogTitle>Save as Custom Theme</DialogTitle>
             <DialogDescription>
-              You're editing a built-in theme. To preserve the original, your changes will be saved as a new custom theme.
+              You&apos;re editing a built-in theme. To preserve the original, your changes will be saved as a new custom theme.
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">

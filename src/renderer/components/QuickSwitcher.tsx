@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Star } from 'lucide-react';
 import { Theme, Preferences, State } from '../../shared/types';
 import {
@@ -78,16 +78,20 @@ export function QuickSwitcher() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Filter and sort themes
-  const getFilteredThemes = () => {
-    if (!preferences) return { favorites: [], others: [] };
+  // Extract primitives from preferences to avoid object reference comparison issues
+  // This ensures useMemo only recalculates when the actual data changes
+  const favoritesList = preferences?.favorites;
+  const recentThemesList = preferences?.recentThemes;
 
-    let filtered = themes;
+  // Filter and sort themes (memoized to avoid recomputation on every render)
+  const filteredThemes = useMemo(() => {
+    if (!favoritesList || !recentThemesList) return { favorites: [], others: [] };
 
     // Apply search filter (fuzzy search)
+    let filtered = themes;
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(theme => {
+      filtered = themes.filter(theme => {
         const name = theme.metadata.name.toLowerCase();
         const description = theme.metadata.description.toLowerCase();
         const author = theme.metadata.author.toLowerCase();
@@ -108,14 +112,15 @@ export function QuickSwitcher() {
     }
 
     // Sort: favorites first, then recent, then alphabetically
-    const favoritesSet = new Set(preferences.favorites);
-    const recentThemes = new Set(preferences.recentThemes);
+    // Use toSorted() to avoid mutating the original array (React state immutability)
+    const favoritesSet = new Set(favoritesList);
+    const recentThemesSet = new Set(recentThemesList);
 
-    filtered.sort((a, b) => {
+    const sorted = filtered.toSorted((a, b) => {
       const aIsFavorite = favoritesSet.has(a.metadata.name) || favoritesSet.has(a.name);
       const bIsFavorite = favoritesSet.has(b.metadata.name) || favoritesSet.has(b.name);
-      const aIsRecent = recentThemes.has(a.name);
-      const bIsRecent = recentThemes.has(b.name);
+      const aIsRecent = recentThemesSet.has(a.name);
+      const bIsRecent = recentThemesSet.has(b.name);
 
       if (aIsFavorite && !bIsFavorite) return -1;
       if (!aIsFavorite && bIsFavorite) return 1;
@@ -123,8 +128,8 @@ export function QuickSwitcher() {
       if (aIsRecent && !bIsRecent) return -1;
       if (!aIsRecent && bIsRecent) return 1;
       if (aIsRecent && bIsRecent) {
-        const aIndex = preferences.recentThemes.indexOf(a.name);
-        const bIndex = preferences.recentThemes.indexOf(b.name);
+        const aIndex = recentThemesList.indexOf(a.name);
+        const bIndex = recentThemesList.indexOf(b.name);
         return aIndex - bIndex;
       }
 
@@ -132,15 +137,15 @@ export function QuickSwitcher() {
     });
 
     // Split into favorites and others
-    const favorites = filtered.filter(theme =>
+    const favorites = sorted.filter(theme =>
       favoritesSet.has(theme.metadata.name) || favoritesSet.has(theme.name)
     );
-    const others = filtered.filter(theme =>
+    const others = sorted.filter(theme =>
       !favoritesSet.has(theme.metadata.name) && !favoritesSet.has(theme.name)
     );
 
     return { favorites, others };
-  };
+  }, [themes, favoritesList, recentThemesList, searchQuery]);
 
   // Apply theme
   async function handleApplyTheme(themeName: string) {
@@ -154,7 +159,7 @@ export function QuickSwitcher() {
     }
   }
 
-  const { favorites, others } = getFilteredThemes();
+  const { favorites, others } = filteredThemes;
   const hasResults = favorites.length > 0 || others.length > 0;
 
   if (isLoading) {
@@ -178,7 +183,7 @@ export function QuickSwitcher() {
           className="h-12"
         />
         <CommandList className="max-h-[calc(100vh-96px)]">
-          <CommandEmpty>No themes found matching "{searchQuery}"</CommandEmpty>
+          <CommandEmpty>No themes found matching &quot;{searchQuery}&quot;</CommandEmpty>
 
           {/* Favorites Section */}
           {favorites.length > 0 && (

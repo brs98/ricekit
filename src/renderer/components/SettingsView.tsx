@@ -82,7 +82,7 @@ const ScheduleModal: React.FC<ScheduleModalProps> = ({ themes, currentSchedules,
         <div className="space-y-4">
           {schedules.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
-              No schedules yet. Click "Add Schedule" to create one.
+              No schedules yet. Click &quot;Add Schedule&quot; to create one.
             </div>
           )}
 
@@ -214,43 +214,33 @@ export function SettingsView() {
     error?: string;
   } | null>(null);
 
+  // Load all settings data in parallel on mount
   useEffect(() => {
-    loadPreferences();
-    loadThemes();
-    loadLoggingState();
+    loadAllData();
   }, []);
 
-  async function loadLoggingState() {
-    try {
-      const isEnabled = await window.electronAPI.isDebugLoggingEnabled();
-      setDebugLogging(isEnabled);
-      const logFilePath = await window.electronAPI.getLogFile();
-      setLogFile(logFilePath);
-    } catch (err) {
-      console.error('Failed to load logging state:', err);
-    }
-  }
-
-  async function loadPreferences() {
+  async function loadAllData() {
     try {
       setLoading(true);
       setError(null);
-      const prefs = await window.electronAPI.getPreferences();
+
+      // Parallelize all independent data fetches
+      const [prefs, allThemes, isLoggingEnabled, logFilePath] = await Promise.all([
+        window.electronAPI.getPreferences(),
+        window.electronAPI.listThemes(),
+        window.electronAPI.isDebugLoggingEnabled(),
+        window.electronAPI.getLogFile(),
+      ]);
+
       setPreferences(prefs);
+      setThemes(allThemes);
+      setDebugLogging(isLoggingEnabled);
+      setLogFile(logFilePath);
     } catch (err) {
-      console.error('Failed to load preferences:', err);
+      console.error('Failed to load settings data:', err);
       setError('Failed to load preferences');
     } finally {
       setLoading(false);
-    }
-  }
-
-  async function loadThemes() {
-    try {
-      const allThemes = await window.electronAPI.listThemes();
-      setThemes(allThemes);
-    } catch (err) {
-      console.error('Failed to load themes:', err);
     }
   }
 
@@ -319,10 +309,11 @@ export function SettingsView() {
       alert(`Successfully exported ${selectedThemesForExport.length} theme(s)`);
       setShowExportDialog(false);
       setSelectedThemesForExport([]);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to export themes:', error);
-      if (error.message !== 'Export canceled') {
-        alert(`Failed to export themes: ${error.message}`);
+      const message = error instanceof Error ? error.message : String(error);
+      if (message !== 'Export canceled') {
+        alert(`Failed to export themes: ${message}`);
       }
     } finally {
       setExporting(false);
@@ -347,13 +338,14 @@ export function SettingsView() {
       await window.electronAPI.importTheme('');
 
       // Reload themes to show the newly imported theme(s)
-      await loadThemes();
+      await loadAllData();
 
       alert('Theme imported successfully!');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to import theme:', error);
-      if (error.message !== 'Import canceled') {
-        alert(`Failed to import theme: ${error.message}`);
+      const message = error instanceof Error ? error.message : String(error);
+      if (message !== 'Import canceled') {
+        alert(`Failed to import theme: ${message}`);
       }
     } finally {
       setImporting(false);
@@ -364,7 +356,7 @@ export function SettingsView() {
     try {
       // Try to open the local HELP.md file
       await window.electronAPI.openHelp?.();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to open help:', err);
       // Fallback to GitHub README if local help file doesn't work
       const fallbackUrl = 'https://github.com/yourusername/mactheme#readme';
@@ -381,7 +373,7 @@ export function SettingsView() {
       setUpdateInfo(null);
       const result = await window.electronAPI.checkForUpdates();
       setUpdateInfo(result);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to check for updates:', err);
       setUpdateInfo({
         currentVersion: '0.1.0',
@@ -409,7 +401,7 @@ export function SettingsView() {
       <div className="settings-view">
         <div className="flex flex-col items-center justify-center py-12 gap-4">
           <p className="text-destructive">{error}</p>
-          <Button variant="outline" onClick={loadPreferences}>
+          <Button variant="outline" onClick={loadAllData}>
             Retry
           </Button>
         </div>
@@ -480,7 +472,7 @@ export function SettingsView() {
           {preferences.schedule?.enabled && preferences.schedule?.schedules?.length === 0 && (
             <div className="rounded-[10px] bg-muted p-4 text-sm">
               <p className="text-muted-foreground">
-                Scheduling is enabled but no schedules are configured. Click "Manage Schedules" to add one.
+                Scheduling is enabled but no schedules are configured. Click &quot;Manage Schedules&quot; to add one.
               </p>
             </div>
           )}
@@ -561,9 +553,10 @@ export function SettingsView() {
                   if (backupPath) {
                     alert(`Preferences backed up successfully to:\n${backupPath}`);
                   }
-                } catch (error: any) {
+                } catch (error: unknown) {
                   console.error('Failed to backup preferences:', error);
-                  alert(`Failed to backup preferences: ${error.message}`);
+                  const message = error instanceof Error ? error.message : String(error);
+                  alert(`Failed to backup preferences: ${message}`);
                 } finally {
                   setSaving(false);
                 }
@@ -589,11 +582,12 @@ export function SettingsView() {
                   const restored = await window.electronAPI.restorePreferences();
                   if (restored) {
                     alert('Preferences restored successfully! Reloading...');
-                    await loadPreferences();
+                    await loadAllData();
                   }
-                } catch (error: any) {
+                } catch (error: unknown) {
                   console.error('Failed to restore preferences:', error);
-                  alert(`Failed to restore preferences: ${error.message}`);
+                  const message = error instanceof Error ? error.message : String(error);
+                  alert(`Failed to restore preferences: ${message}`);
                 } finally {
                   setSaving(false);
                 }
@@ -721,7 +715,7 @@ export function SettingsView() {
                 ) : updateInfo.hasUpdate ? (
                   <span className="text-primary">Update available: v{updateInfo.latestVersion}</span>
                 ) : (
-                  <span>You're up to date (v{updateInfo.currentVersion})</span>
+                  <span>You&apos;re up to date (v{updateInfo.currentVersion})</span>
                 )
               ) : (
                 'Check if a newer version of MacTheme is available'

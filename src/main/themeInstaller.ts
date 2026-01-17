@@ -1,4 +1,3 @@
-import fs from 'fs';
 import path from 'path';
 import { getThemesDir } from './directories';
 import { logger } from './logger';
@@ -12,19 +11,7 @@ import {
   existsSync,
   copyFile,
   copyDir,
-  stat,
 } from './utils/asyncFs';
-
-/**
- * Write multiple theme files in parallel for better performance
- */
-async function writeThemeFiles(themeDir: string, files: Record<string, string>): Promise<void> {
-  await Promise.all(
-    Object.entries(files).map(([filename, content]) =>
-      writeFile(path.join(themeDir, filename), content)
-    )
-  );
-}
 
 /**
  * Install bundled themes to the themes directory
@@ -774,7 +761,7 @@ async function createRosePineTheme(themesDir: string): Promise<void> {
 }
 
 // Config generators
-function generateAlacrittyConfig(colors: any): string {
+function generateAlacrittyConfig(colors: ThemeColors): string {
   return `# Alacritty color configuration
 [colors.primary]
 background = "${colors.background}"
@@ -810,7 +797,7 @@ white = "${colors.brightWhite}"
 `;
 }
 
-function generateKittyConfig(colors: any): string {
+function generateKittyConfig(colors: ThemeColors): string {
   return `# Kitty color configuration
 background ${colors.background}
 foreground ${colors.foreground}
@@ -852,7 +839,7 @@ color15 ${colors.brightWhite}
 `;
 }
 
-function generateIterm2Config(colors: any): string {
+function generateIterm2Config(colors: ThemeColors): string {
   const hexToRgb = (hex: string) => {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     return result ? {
@@ -906,7 +893,7 @@ ${colorToXml('Ansi 15 Color', colors.brightWhite)}
 `;
 }
 
-function generateWarpConfig(colors: any): string {
+function generateWarpConfig(colors: ThemeColors): string {
   return `# Warp theme configuration
 background: "${colors.background}"
 foreground: "${colors.foreground}"
@@ -934,7 +921,7 @@ terminal_colors:
 `;
 }
 
-function generateHyperConfig(colors: any): string {
+function generateHyperConfig(colors: ThemeColors): string {
   return `// Hyper theme configuration
 module.exports = {
   backgroundColor: '${colors.background}',
@@ -965,7 +952,7 @@ module.exports = {
 `;
 }
 
-function generateVSCodeConfig(colors: any): string {
+function generateVSCodeConfig(colors: ThemeColors): string {
   return `{
   "workbench.colorTheme": "Generated Theme",
   "workbench.colorCustomizations": {
@@ -994,7 +981,7 @@ function generateVSCodeConfig(colors: any): string {
 `;
 }
 
-function generateCursorConfig(colors: any): string {
+function generateCursorConfig(colors: ThemeColors): string {
   // Cursor is built on VS Code, so it uses the same configuration format
   // with additional AI-specific customizations if needed
   return `{
@@ -1057,7 +1044,7 @@ function generateCursorConfig(colors: any): string {
 `;
 }
 
-function generateNeovimConfig(colors: any): string {
+function generateNeovimConfig(colors: ThemeColors): string {
   return `-- Neovim colorscheme configuration
 vim.cmd([[
   hi Normal guibg=${colors.background} guifg=${colors.foreground}
@@ -1075,7 +1062,7 @@ vim.cmd([[
 `;
 }
 
-function generateRaycastConfig(colors: any): string {
+function generateRaycastConfig(colors: ThemeColors): string {
   return `{
   "name": "Custom Theme",
   "author": "MacTheme",
@@ -1089,7 +1076,7 @@ function generateRaycastConfig(colors: any): string {
 `;
 }
 
-function generateBatConfig(colors: any): string {
+function generateBatConfig(_colors: ThemeColors): string {
   return `# Bat theme configuration
 --theme="MacTheme"
 --style="numbers,changes,grid"
@@ -1097,7 +1084,7 @@ function generateBatConfig(colors: any): string {
 `;
 }
 
-function generateDeltaConfig(colors: any): string {
+function generateDeltaConfig(colors: ThemeColors): string {
   return `[delta]
     syntax-theme = MacTheme
     line-numbers = true
@@ -1109,7 +1096,7 @@ function generateDeltaConfig(colors: any): string {
 `;
 }
 
-function generateStarshipConfig(colors: any): string {
+function generateStarshipConfig(colors: ThemeColors): string {
   return `# Starship prompt configuration
 format = """
 [┌───────────────────>](${colors.accent})
@@ -1130,7 +1117,7 @@ style = "${colors.red}"
 `;
 }
 
-function generateZshConfig(colors: any): string {
+function generateZshConfig(colors: ThemeColors): string {
   return `# Zsh syntax highlighting colors
 ZSH_HIGHLIGHT_STYLES[default]='fg=${colors.foreground}'
 ZSH_HIGHLIGHT_STYLES[unknown-token]='fg=${colors.red}'
@@ -1148,7 +1135,7 @@ ZSH_HIGHLIGHT_STYLES[double-quoted-argument]='fg=${colors.green}'
 `;
 }
 
-function generateWeztermConfig(colors: any): string {
+function generateWeztermConfig(colors: ThemeColors): string {
   return `-- WezTerm color configuration
 -- Add this to your wezterm.lua or require() this file
 return {
@@ -1210,7 +1197,7 @@ return {
 `;
 }
 
-function generateSketchybarConfig(colors: any): string {
+function generateSketchybarConfig(colors: ThemeColors): string {
   // Convert hex color to sketchybar's ARGB format (0xAARRGGBB)
   const toArgb = (hex: string) => {
     // Remove # if present
@@ -1265,7 +1252,7 @@ export COLOR_SEMI_TRANSPARENT="${toArgb(colors.background).replace('0xff', '0xcc
 `;
 }
 
-function generateSlackConfig(colors: any): string {
+function generateSlackConfig(colors: ThemeColors): string {
   // Slack sidebar theme format:
   // Column Background, Menu Background Hover, Active Item, Active Item Text,
   // Hover Item, Text Color, Active Presence, Mention Badge
@@ -1318,7 +1305,7 @@ ${themeString}
 `;
 }
 
-function generateAerospaceBordersConfig(colors: any): string {
+function generateAerospaceBordersConfig(colors: ThemeColors): string {
   // Convert hex color to ARGB format for JankyBorders (0xAARRGGBB)
   const toArgb = (hex: string) => {
     // Remove # if present
@@ -1371,7 +1358,7 @@ fi
 `;
 }
 
-function generateTmuxConfig(colors: any): string {
+function generateTmuxConfig(colors: ThemeColors): string {
   return `# tmux theme colors
 # Generated by MacTheme
 #

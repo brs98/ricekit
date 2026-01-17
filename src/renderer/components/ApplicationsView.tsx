@@ -338,7 +338,7 @@ export function ApplicationsView() {
                           </Button>
                           <Button
                             variant="outline"
-                            onClick={() => handleViewConfig(app.configPath)}
+                            onClick={() => app.configPath && handleViewConfig(app.configPath)}
                           >
                             View Config
                           </Button>

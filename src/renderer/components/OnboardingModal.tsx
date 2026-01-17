@@ -318,7 +318,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
             <div>
               <h2 className="text-2xl font-bold mb-2">Configure Applications</h2>
               <p className="text-muted-foreground mb-6">
-                Select which applications you'd like MacTheme to configure. We'll automatically set them up to use your themes.
+                Select which applications you&apos;d like MacTheme to configure. We&apos;ll automatically set them up to use your themes.
               </p>
               <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
                 {installedApps.map((app) => (
@@ -344,7 +344,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
               <div className="w-20 h-20 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto mb-4">
                 <Check className="h-10 w-10" />
               </div>
-              <h2 className="text-2xl font-bold mb-2">You're All Set!</h2>
+              <h2 className="text-2xl font-bold mb-2">You&apos;re All Set!</h2>
               <p className="text-muted-foreground mb-4">
                 Your theme has been applied and your applications have been configured.
               </p>

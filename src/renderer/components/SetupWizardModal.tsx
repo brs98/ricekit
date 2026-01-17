@@ -221,7 +221,7 @@ after-startup-command = [
         <div className="space-y-4 py-4">
           <p className="text-sm text-muted-foreground">
             To use MacTheme with {app.displayName}, you need to configure it to import
-            theme settings from MacTheme's current theme directory.
+            theme settings from MacTheme&apos;s current theme directory.
           </p>
 
           {/* Import Statement */}

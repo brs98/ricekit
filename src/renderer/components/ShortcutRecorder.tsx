@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 interface ShortcutRecorderProps {
   value: string;
@@ -57,21 +57,7 @@ export function ShortcutRecorder({ value, onChange, placeholder = 'Press keys...
   const [currentKeys, setCurrentKeys] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (isRecording) {
-      window.addEventListener('keydown', handleKeyDown);
-      window.addEventListener('keyup', handleKeyUp);
-      window.addEventListener('blur', handleBlur);
-
-      return () => {
-        window.removeEventListener('keydown', handleKeyDown);
-        window.removeEventListener('keyup', handleKeyUp);
-        window.removeEventListener('blur', handleBlur);
-      };
-    }
-  }, [isRecording, currentKeys]);
-
-  function handleKeyDown(e: KeyboardEvent) {
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -98,9 +84,9 @@ export function ShortcutRecorder({ value, onChange, placeholder = 'Press keys...
     }
 
     setCurrentKeys(keys);
-  }
+  }, []);
 
-  function handleKeyUp(e: KeyboardEvent) {
+  const handleKeyUp = useCallback((e: KeyboardEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -115,12 +101,26 @@ export function ShortcutRecorder({ value, onChange, placeholder = 'Press keys...
       // If only modifiers were pressed, don't save
       setCurrentKeys([]);
     }
-  }
+  }, [currentKeys, onChange]);
 
-  function handleBlur() {
+  const handleBlur = useCallback(() => {
     setIsRecording(false);
     setCurrentKeys([]);
-  }
+  }, []);
+
+  useEffect(() => {
+    if (isRecording) {
+      window.addEventListener('keydown', handleKeyDown);
+      window.addEventListener('keyup', handleKeyUp);
+      window.addEventListener('blur', handleBlur);
+
+      return () => {
+        window.removeEventListener('keydown', handleKeyDown);
+        window.removeEventListener('keyup', handleKeyUp);
+        window.removeEventListener('blur', handleBlur);
+      };
+    }
+  }, [isRecording, handleKeyDown, handleKeyUp, handleBlur]);
 
   function startRecording() {
     setIsRecording(true);

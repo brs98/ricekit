@@ -79,7 +79,7 @@ class Logger {
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${ms}`;
   }
 
-  private writeLog(level: LogLevel, message: string, data?: any): void {
+  private writeLog(level: LogLevel, message: string, data?: unknown): void {
     const timestamp = this.formatTimestamp();
     let logMessage = `[${timestamp}] [${level}] ${message}`;
 
@@ -132,21 +132,21 @@ class Logger {
     return this.debugEnabled;
   }
 
-  public debug(message: string, data?: any): void {
+  public debug(message: string, data?: unknown): void {
     if (this.debugEnabled) {
       this.writeLog(LogLevel.DEBUG, message, data);
     }
   }
 
-  public info(message: string, data?: any): void {
+  public info(message: string, data?: unknown): void {
     this.writeLog(LogLevel.INFO, message, data);
   }
 
-  public warn(message: string, data?: any): void {
+  public warn(message: string, data?: unknown): void {
     this.writeLog(LogLevel.WARN, message, data);
   }
 
-  public error(message: string, error?: any): void {
+  public error(message: string, error?: unknown): void {
     let errorData = error;
 
     // Format error objects properly

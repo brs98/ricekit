@@ -2,14 +2,14 @@
  * State IPC Handlers
  * Handles application state and UI state persistence
  */
-import { ipcMain } from 'electron';
+import { ipcMain, IpcMainInvokeEvent } from 'electron';
 import {
   getStatePath,
   getUIStatePath,
   ensureDirectories,
   ensureState,
 } from '../directories';
-import type { State } from '../../shared/types';
+import type { State, UIState } from '../../shared/types';
 import { logger } from '../logger';
 import { readJson, writeJson, existsSync, unlink } from '../utils/asyncFs';
 
@@ -27,7 +27,7 @@ export async function handleGetState(): Promise<State> {
  * Save UI state for crash recovery
  * Saves the current view, filters, search query, etc.
  */
-async function handleSaveUIState(_event: any, uiState: any): Promise<void> {
+async function handleSaveUIState(_event: IpcMainInvokeEvent, uiState: UIState): Promise<void> {
   try {
     const uiStatePath = getUIStatePath();
     const stateToSave = {
@@ -46,7 +46,7 @@ async function handleSaveUIState(_event: any, uiState: any): Promise<void> {
  * Get saved UI state for crash recovery
  * Returns null if no saved state exists or if it's too old (>24 hours)
  */
-async function handleGetUIState(): Promise<any | null> {
+async function handleGetUIState(): Promise<UIState | null> {
   try {
     const uiStatePath = getUIStatePath();
 
@@ -55,7 +55,7 @@ async function handleGetUIState(): Promise<any | null> {
       return null;
     }
 
-    const uiState = await readJson<any>(uiStatePath);
+    const uiState = await readJson<UIState & { timestamp?: number }>(uiStatePath);
 
     // Check if state is not too old (24 hours = 86400000 ms)
     const stateAge = Date.now() - (uiState.timestamp || 0);

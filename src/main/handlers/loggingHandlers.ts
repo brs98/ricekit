@@ -2,7 +2,7 @@
  * Logging IPC Handlers
  * Handles log file operations and debug logging settings
  */
-import { ipcMain } from 'electron';
+import { ipcMain, IpcMainInvokeEvent } from 'electron';
 import { getPreferencesPath } from '../directories';
 import type { Preferences } from '../../shared/types';
 import { logger } from '../logger';
@@ -32,7 +32,7 @@ async function handleClearLogs(): Promise<void> {
 /**
  * Enable or disable debug logging
  */
-async function handleSetDebugEnabled(_event: any, enabled: boolean): Promise<void> {
+async function handleSetDebugEnabled(_event: IpcMainInvokeEvent, enabled: boolean): Promise<void> {
   logger.setDebugEnabled(enabled);
 
   // Also update preferences

@@ -159,6 +159,19 @@ export interface State {
   lastSwitched: number;
 }
 
+// UI State for saving/restoring app state
+export interface UIState {
+  activeView?: string;
+  searchQuery?: string;
+  filterMode?: 'all' | 'light' | 'dark' | 'favorites';
+  sortMode?: 'default' | 'name-asc' | 'name-desc' | 'recent';
+  editorTheme?: {
+    name: string;
+    metadata: ThemeMetadata;
+  };
+  scrollPosition?: number;
+}
+
 // Window API types
 export interface ElectronAPI {
   listThemes: () => Promise<Theme[]>;
@@ -188,13 +201,16 @@ export interface ElectronAPI {
   getSunriseSunset: () => Promise<{ sunrise: string; sunset: string; location: string } | null>;
   onAppearanceChange: (callback: (appearance: string) => void) => void;
   getState: () => Promise<State>;
-  saveUIState: (uiState: any) => Promise<void>;
-  getUIState: () => Promise<any | null>;
+  saveUIState: (uiState: UIState) => Promise<void>;
+  getUIState: () => Promise<UIState | null>;
   closeQuickSwitcher: () => Promise<void>;
   onQuickSwitcherOpened: (callback: () => void) => void;
   onThemeChanged: (callback: (themeName: string) => void) => void;
   openExternal: (url: string) => Promise<void>;
+  openPath: (path: string) => Promise<void>;
   openHelp: () => Promise<void>;
+  addWallpapers: (themeName: string) => Promise<{ added: string[]; errors: string[] }>;
+  removeWallpaper: (wallpaperPath: string) => Promise<void>;
   getLogDirectory: () => Promise<string>;
   getLogFile: () => Promise<string>;
   clearLogs: () => Promise<void>;

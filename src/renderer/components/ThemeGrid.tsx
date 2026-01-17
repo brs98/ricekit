@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Theme } from '../../shared/types';
 import { ThemeCard } from './ThemeCard';
 import { ThemeDetailModal } from './ThemeDetailModal';
@@ -21,18 +21,23 @@ export function ThemeGrid({ searchQuery = '', filterMode = 'all', sortMode = 'de
   const [error, setError] = useState<string | null>(null);
   const [selectedTheme, setSelectedTheme] = useState<Theme | null>(null);
 
-  // Load themes on mount
+  // Load themes, state, and preferences in parallel on mount
   useEffect(() => {
-    loadThemes();
-    loadPreferences();
+    loadData();
   }, []);
 
-  const loadThemes = async () => {
+  const loadData = async () => {
     try {
       setLoading(true);
       const loadStart = performance.now();
 
-      const themeList = await window.electronAPI.listThemes();
+      // Parallelize all independent data fetches
+      const [themeList, state, prefs] = await Promise.all([
+        window.electronAPI.listThemes(),
+        window.electronAPI.getState(),
+        window.electronAPI.getPreferences(),
+      ]);
+
       const loadEnd = performance.now();
       const loadTime = loadEnd - loadStart;
 
@@ -43,27 +48,15 @@ export function ThemeGrid({ searchQuery = '', filterMode = 'all', sortMode = 'de
       }
 
       setThemes(themeList);
-
-      // Get current theme from state
-      const state = await window.electronAPI.getState();
       setCurrentTheme(state.currentTheme);
-
+      setFavorites(prefs.favorites);
+      setRecentThemes(prefs.recentThemes || []);
       setError(null);
     } catch (err) {
       console.error('Failed to load themes:', err);
       setError('Failed to load themes. Please try again.');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadPreferences = async () => {
-    try {
-      const prefs = await window.electronAPI.getPreferences();
-      setFavorites(prefs.favorites);
-      setRecentThemes(prefs.recentThemes || []);
-    } catch (err) {
-      console.error('Failed to load preferences:', err);
     }
   };
 
@@ -103,7 +96,7 @@ export function ThemeGrid({ searchQuery = '', filterMode = 'all', sortMode = 'de
     try {
       await window.electronAPI.deleteTheme(themeName);
       // Reload themes to update the grid
-      await loadThemes();
+      await loadData();
       // Remove from favorites if it was favorited
       if (favorites.includes(themeName)) {
         const prefs = await window.electronAPI.getPreferences();
@@ -121,59 +114,65 @@ export function ThemeGrid({ searchQuery = '', filterMode = 'all', sortMode = 'de
     try {
       await window.electronAPI.duplicateTheme(themeName);
       // Reload themes to show the new duplicate
-      await loadThemes();
+      await loadData();
     } catch (err) {
       console.error('Failed to duplicate theme:', err);
       showErrorAlert(err);
     }
   };
 
-  // Filter and sort themes based on search, filter mode, and sort mode
-  const filteredAndSortedThemes = themes
-    .filter((theme) => {
-      // Search filter
-      const matchesSearch = theme.metadata.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           theme.metadata.description.toLowerCase().includes(searchQuery.toLowerCase());
+  // Filter and sort themes based on search, filter mode, and sort mode (memoized)
+  const filteredAndSortedThemes = useMemo(() => {
+    // Create Sets for O(1) lookups instead of O(n) array.includes()
+    const favoritesSet = new Set(favorites);
+    const recentThemesMap = new Map(recentThemes.map((name, index) => [name, index]));
 
-      if (!matchesSearch) return false;
+    return themes
+      .filter((theme) => {
+        // Search filter
+        const matchesSearch = theme.metadata.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                             theme.metadata.description.toLowerCase().includes(searchQuery.toLowerCase());
 
-      // Mode filter
-      switch (filterMode) {
-        case 'light':
-          return theme.isLight;
-        case 'dark':
-          return !theme.isLight;
-        case 'favorites':
-          return favorites.includes(theme.name);
-        default:
-          return true;
-      }
-    })
-    .sort((a, b) => {
-      switch (sortMode) {
-        case 'name-asc':
-          return a.metadata.name.toLowerCase().localeCompare(b.metadata.name.toLowerCase());
-        case 'name-desc':
-          return b.metadata.name.toLowerCase().localeCompare(a.metadata.name.toLowerCase());
-        case 'recent': {
-          const aIndex = recentThemes.indexOf(a.name);
-          const bIndex = recentThemes.indexOf(b.name);
+        if (!matchesSearch) return false;
 
-          // If neither is in recent themes, maintain current order
-          if (aIndex === -1 && bIndex === -1) return 0;
-
-          // If only one is in recent themes, prioritize that one
-          if (aIndex === -1) return 1;
-          if (bIndex === -1) return -1;
-
-          // Both are in recent themes, sort by recency (lower index = more recent)
-          return aIndex - bIndex;
+        // Mode filter
+        switch (filterMode) {
+          case 'light':
+            return theme.isLight;
+          case 'dark':
+            return !theme.isLight;
+          case 'favorites':
+            return favoritesSet.has(theme.name);
+          default:
+            return true;
         }
-        default:
-          // Default order (as loaded from file system)
-          return 0;
-      }
-    });
+      })
+      .sort((a, b) => {
+        switch (sortMode) {
+          case 'name-asc':
+            return a.metadata.name.toLowerCase().localeCompare(b.metadata.name.toLowerCase());
+          case 'name-desc':
+            return b.metadata.name.toLowerCase().localeCompare(a.metadata.name.toLowerCase());
+          case 'recent': {
+            const aIndex = recentThemesMap.get(a.name) ?? -1;
+            const bIndex = recentThemesMap.get(b.name) ?? -1;
+
+            // If neither is in recent themes, maintain current order
+            if (aIndex === -1 && bIndex === -1) return 0;
+
+            // If only one is in recent themes, prioritize that one
+            if (aIndex === -1) return 1;
+            if (bIndex === -1) return -1;
+
+            // Both are in recent themes, sort by recency (lower index = more recent)
+            return aIndex - bIndex;
+          }
+          default:
+            // Default order (as loaded from file system)
+            return 0;
+        }
+      });
+  }, [themes, searchQuery, filterMode, sortMode, favorites, recentThemes]);
 
   if (loading) {
     return (
@@ -188,7 +187,7 @@ export function ThemeGrid({ searchQuery = '', filterMode = 'all', sortMode = 'de
     return (
       <div className="theme-grid-error">
         <p className="error-message">{error}</p>
-        <button onClick={loadThemes} className="retry-btn">Retry</button>
+        <button onClick={loadData} className="retry-btn">Retry</button>
       </div>
     );
   }

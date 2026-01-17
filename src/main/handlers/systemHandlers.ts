@@ -2,7 +2,7 @@
  * System IPC Handlers
  * Handles system operations, appearance detection, scheduling, and external operations
  */
-import { ipcMain, Notification, nativeTheme, shell, BrowserWindow, powerMonitor } from 'electron';
+import { ipcMain, Notification, nativeTheme, shell, BrowserWindow, powerMonitor, IpcMainInvokeEvent } from 'electron';
 import path from 'path';
 import os from 'os';
 import { promisify } from 'util';
@@ -19,20 +19,20 @@ export interface ApplyOptions {
 }
 
 // Forward declaration - will be set by theme handlers
-let applyThemeHandler: ((event: any, name: string, options?: ApplyOptions) => Promise<void>) | null = null;
-let applyWallpaperHandler: ((event: any, path: string, displayIndex?: number, options?: ApplyOptions) => Promise<void>) | null = null;
+let applyThemeHandler: ((event: IpcMainInvokeEvent | null, name: string, options?: ApplyOptions) => Promise<void>) | null = null;
+let applyWallpaperHandler: ((event: IpcMainInvokeEvent | null, path: string, displayIndex?: number, options?: ApplyOptions) => Promise<void>) | null = null;
 
 /**
  * Set the theme apply handler (called by themeHandlers to avoid circular deps)
  */
-export function setThemeApplyHandler(handler: (event: any, name: string, options?: ApplyOptions) => Promise<void>): void {
+export function setThemeApplyHandler(handler: (event: IpcMainInvokeEvent | null, name: string, options?: ApplyOptions) => Promise<void>): void {
   applyThemeHandler = handler;
 }
 
 /**
  * Set the wallpaper apply handler (called by wallpaperHandlers to avoid circular deps)
  */
-export function setWallpaperApplyHandler(handler: (event: any, path: string, displayIndex?: number, options?: ApplyOptions) => Promise<void>): void {
+export function setWallpaperApplyHandler(handler: (event: IpcMainInvokeEvent | null, path: string, displayIndex?: number, options?: ApplyOptions) => Promise<void>): void {
   applyWallpaperHandler = handler;
 }
 
@@ -47,19 +47,20 @@ export async function handleGetSystemAppearance(): Promise<'light' | 'dark'> {
 /**
  * Open a URL in the default external browser
  */
-async function handleOpenExternal(_event: any, url: string): Promise<void> {
+async function handleOpenExternal(_event: IpcMainInvokeEvent, url: string): Promise<void> {
   try {
     await shell.openExternal(url);
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Failed to open external URL:', error);
-    throw new Error(`Failed to open URL: ${error.message}`);
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to open URL: ${message}`);
   }
 }
 
 /**
  * Open a file or folder path in the default application
  */
-async function handleOpenPath(_event: any, filePath: string): Promise<void> {
+async function handleOpenPath(_event: IpcMainInvokeEvent, filePath: string): Promise<void> {
   try {
     // Expand ~ to home directory
     const expandedPath = filePath.replace(/^~/, os.homedir());
@@ -69,16 +70,17 @@ async function handleOpenPath(_event: any, filePath: string): Promise<void> {
     }
 
     await shell.openPath(expandedPath);
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Failed to open path:', error);
-    throw new Error(`Failed to open path: ${error.message}`);
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to open path: ${message}`);
   }
 }
 
 /**
  * Open help documentation in default markdown viewer or browser
  */
-async function handleOpenHelp(_event: any): Promise<void> {
+async function handleOpenHelp(_event: IpcMainInvokeEvent): Promise<void> {
   try {
     // Get the app's root directory (in development) or resources path (in production)
     const { app } = await import('electron');
@@ -107,9 +109,10 @@ async function handleOpenHelp(_event: any): Promise<void> {
     await shell.openPath(helpFilePath);
 
     logger.info('Opened help file:', helpFilePath);
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Failed to open help:', error);
-    throw new Error(`Failed to open help: ${error.message}`);
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to open help: ${message}`);
   }
 }
 

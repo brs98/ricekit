@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { PluginStatus, PluginConfig, PresetInfo, FontStatus } from '../../shared/types';
 import { Button } from './ui/button';
 import {
@@ -55,11 +55,7 @@ export function PluginCard({
   const [showRestoreDialog, setShowRestoreDialog] = useState(false);
   const [restoring, setRestoring] = useState(false);
 
-  useEffect(() => {
-    loadPluginData();
-  }, [appName]);
-
-  async function loadPluginData() {
+  const loadPluginData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -81,7 +77,11 @@ export function PluginCard({
     } finally {
       setLoading(false);
     }
-  }
+  }, [appName]);
+
+  useEffect(() => {
+    loadPluginData();
+  }, [loadPluginData]);
 
   async function handleInstall() {
     setInstalling(true);

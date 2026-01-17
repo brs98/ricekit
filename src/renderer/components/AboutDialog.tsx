@@ -100,7 +100,7 @@ export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
                   onClick={() => handleOpenExternal('https://github.com/omarchy/linux-themes')}
                   className="text-primary hover:underline"
                 >
-                  Omarchy's Linux theming system
+                  Omarchy&apos;s Linux theming system
                 </button>.
               </p>
               <p className="text-muted-foreground">

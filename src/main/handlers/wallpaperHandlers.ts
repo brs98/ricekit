@@ -2,9 +2,8 @@
  * Wallpaper IPC Handlers
  * Handles wallpaper listing, applying, and management
  */
-import { ipcMain, Notification, dialog } from 'electron';
+import { ipcMain, Notification, dialog, IpcMainInvokeEvent } from 'electron';
 import path from 'path';
-import os from 'os';
 import { promisify } from 'util';
 import { exec } from 'child_process';
 import { getThemesDir, getCustomThemesDir, getStatePath, getCurrentDir } from '../directories';
@@ -19,7 +18,6 @@ import {
   ensureDir,
   copyFile,
   unlink,
-  isSymlink,
   readSymlink,
   createSymlink,
 } from '../utils/asyncFs';
@@ -29,7 +27,7 @@ import { handleGetPreferences, handleSetPreferences } from './preferencesHandler
 /**
  * List wallpapers for a theme
  */
-export async function handleListWallpapers(_event: any, themeName: string): Promise<string[]> {
+export async function handleListWallpapers(_event: IpcMainInvokeEvent | null, themeName: string): Promise<string[]> {
   logger.info(`Listing wallpapers for theme: ${themeName}`);
 
   try {
@@ -72,7 +70,7 @@ export async function handleListWallpapers(_event: any, themeName: string): Prom
  * Returns an array of objects with original path and thumbnail path
  */
 async function handleListWallpapersWithThumbnails(
-  _event: any,
+  _event: IpcMainInvokeEvent,
   themeName: string
 ): Promise<Array<{ original: string; thumbnail: string }>> {
   logger.info(`Listing wallpapers with thumbnails for theme: ${themeName}`);
@@ -139,7 +137,7 @@ async function handleGetThumbnailCacheStats(): Promise<{ count: number; sizeByte
  * Apply a wallpaper
  */
 export async function handleApplyWallpaper(
-  _event: any,
+  _event: IpcMainInvokeEvent | null,
   wallpaperPath: string,
   displayIndex?: number,
   options?: ApplyOptions
@@ -189,9 +187,10 @@ export async function handleApplyWallpaper(
     // and returns false for broken symlinks, but the symlink itself still exists
     try {
       await unlink(wallpaperSymlink);
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Ignore ENOENT (file doesn't exist), re-throw other errors
-      if (err.code !== 'ENOENT') {
+      const nodeErr = err as NodeJS.ErrnoException;
+      if (nodeErr.code !== 'ENOENT') {
         throw err;
       }
     }
@@ -249,7 +248,29 @@ export async function handleApplyWallpaper(
 /**
  * Get list of connected displays
  */
-async function handleGetDisplays(): Promise<any[]> {
+interface DisplayInfo {
+  id: string;
+  index: number;
+  name: string;
+  resolution: string;
+  isMain: boolean;
+}
+
+interface SystemProfilerDisplay {
+  _name?: string;
+  _spdisplays_resolution?: string;
+  spdisplays_main?: string;
+}
+
+interface SystemProfilerGPU {
+  spdisplays_ndrvs?: SystemProfilerDisplay[];
+}
+
+interface SystemProfilerData {
+  SPDisplaysDataType?: SystemProfilerGPU[];
+}
+
+async function handleGetDisplays(): Promise<DisplayInfo[]> {
   logger.info('Getting connected displays');
 
   try {
@@ -257,15 +278,15 @@ async function handleGetDisplays(): Promise<any[]> {
 
     // Use system_profiler to get display information
     const { stdout } = await execAsync('system_profiler SPDisplaysDataType -json');
-    const data = JSON.parse(stdout);
+    const data: SystemProfilerData = JSON.parse(stdout);
 
-    const displays: any[] = [];
+    const displays: DisplayInfo[] = [];
 
     // Parse the display data
     if (data.SPDisplaysDataType && data.SPDisplaysDataType.length > 0) {
-      data.SPDisplaysDataType.forEach((gpu: any, gpuIndex: number) => {
+      data.SPDisplaysDataType.forEach((gpu: SystemProfilerGPU, gpuIndex: number) => {
         if (gpu.spdisplays_ndrvs && Array.isArray(gpu.spdisplays_ndrvs)) {
-          gpu.spdisplays_ndrvs.forEach((display: any, displayIndex: number) => {
+          gpu.spdisplays_ndrvs.forEach((display: SystemProfilerDisplay, displayIndex: number) => {
             displays.push({
               id: `display-${gpuIndex}-${displayIndex}`,
               index: displays.length + 1,
@@ -310,7 +331,7 @@ async function handleGetDisplays(): Promise<any[]> {
  * Add wallpaper(s) to a theme
  * Opens a file dialog and copies selected images to the theme's wallpapers directory
  */
-async function handleAddWallpapers(_event: any, themeName: string): Promise<{ added: string[]; errors: string[] }> {
+async function handleAddWallpapers(_event: IpcMainInvokeEvent, themeName: string): Promise<{ added: string[]; errors: string[] }> {
   logger.info(`Adding wallpapers to theme: ${themeName}`);
 
   try {
@@ -395,7 +416,7 @@ async function handleAddWallpapers(_event: any, themeName: string): Promise<{ ad
 /**
  * Remove a wallpaper from a theme
  */
-async function handleRemoveWallpaper(_event: any, wallpaperPath: string): Promise<void> {
+async function handleRemoveWallpaper(_event: IpcMainInvokeEvent, wallpaperPath: string): Promise<void> {
   logger.info(`Removing wallpaper: ${wallpaperPath}`);
 
   try {

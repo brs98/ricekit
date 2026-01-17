@@ -2,7 +2,7 @@
  * Preferences IPC Handlers
  * Handles user preferences management, backup, and restore
  */
-import { ipcMain, dialog } from 'electron';
+import { ipcMain, dialog, IpcMainInvokeEvent } from 'electron';
 import path from 'path';
 import os from 'os';
 import {
@@ -52,7 +52,7 @@ export async function handleGetPreferences(): Promise<Preferences> {
 /**
  * Set user preferences
  */
-export async function handleSetPreferences(_event: any, prefs: Preferences): Promise<void> {
+export async function handleSetPreferences(_event: IpcMainInvokeEvent | null, prefs: Preferences): Promise<void> {
   ensureDirectories();
   ensurePreferences();
   const prefsPath = getPreferencesPath();

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, nativeTheme, Tray, Menu, nativeImage, globalShortcut, protocol, net } from 'electron';
+import { app, BrowserWindow, nativeTheme, Tray, Menu, nativeImage, globalShortcut, protocol, net, screen } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import { initializeApp, initializeAppAfterThemes, getPreferencesPath, getStatePath } from './directories';
@@ -63,7 +63,7 @@ function updateTrayMenu() {
     const currentTheme = state.currentTheme || '';
 
     // Build menu items
-    const menuItems: any[] = [];
+    const menuItems: Electron.MenuItemConstructorOptions[] = [];
 
     // Recent themes section (limit to 5)
     if (recentThemes.length > 0) {
@@ -81,7 +81,7 @@ function updateTrayMenu() {
             // Apply theme via IPC
             const { handleApplyTheme } = await import('./ipcHandlers');
             try {
-              await (handleApplyTheme as any)(null, themeName);
+              await (handleApplyTheme as (event: unknown, name: string) => Promise<void>)(null, themeName);
               updateTrayMenu(); // Refresh menu
             } catch (err) {
               logger.error('Failed to apply theme from tray:', err);
@@ -292,7 +292,6 @@ function createQuickSwitcher() {
     return;
   }
 
-  const { screen } = require('electron');
   const primaryDisplay = screen.getPrimaryDisplay();
   const { width, height } = primaryDisplay.workAreaSize;
 

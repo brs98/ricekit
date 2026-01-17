@@ -2,7 +2,7 @@
  * Theme IPC Handlers
  * Handles theme listing, applying, creating, updating, deleting, importing, and exporting
  */
-import { ipcMain, Notification, dialog, BrowserWindow } from 'electron';
+import { ipcMain, Notification, dialog, BrowserWindow, IpcMainInvokeEvent } from 'electron';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
@@ -19,7 +19,7 @@ import {
   ensurePreferences,
   ensureState,
 } from '../directories';
-import type { Theme, ThemeMetadata, Preferences, State } from '../../shared/types';
+import type { Theme, ThemeMetadata, ThemeColors, Preferences, State } from '../../shared/types';
 import { createError } from '../../shared/errors';
 import { logger } from '../logger';
 import {
@@ -96,38 +96,33 @@ async function loadTheme(themePath: string, themeName: string, isCustom: boolean
  * List all available themes
  */
 async function handleListThemes(): Promise<Theme[]> {
-  const themes: Theme[] = [];
   const themesDir = getThemesDir();
   const customThemesDir = getCustomThemesDir();
 
-  // Load bundled themes
-  if (existsSync(themesDir)) {
-    const themeNames = await readDir(themesDir);
-    for (const themeName of themeNames) {
-      const themePath = path.join(themesDir, themeName);
+  // Helper to load themes from a directory
+  async function loadThemesFromDir(dir: string, isCustom: boolean): Promise<Theme[]> {
+    if (!existsSync(dir)) return [];
+
+    const themeNames = await readDir(dir);
+    const themePromises = themeNames.map(async (themeName) => {
+      const themePath = path.join(dir, themeName);
       if (await isDirectory(themePath)) {
-        const theme = await loadTheme(themePath, themeName, false);
-        if (theme) {
-          themes.push(theme);
-        }
+        return loadTheme(themePath, themeName, isCustom);
       }
-    }
+      return null;
+    });
+
+    const results = await Promise.all(themePromises);
+    return results.filter((theme): theme is Theme => theme !== null);
   }
 
-  // Load custom themes
-  if (existsSync(customThemesDir)) {
-    const themeNames = await readDir(customThemesDir);
-    for (const themeName of themeNames) {
-      const themePath = path.join(customThemesDir, themeName);
-      if (await isDirectory(themePath)) {
-        const theme = await loadTheme(themePath, themeName, true);
-        if (theme) {
-          themes.push(theme);
-        }
-      }
-    }
-  }
+  // Load bundled and custom themes in parallel
+  const [bundledThemes, customThemes] = await Promise.all([
+    loadThemesFromDir(themesDir, false),
+    loadThemesFromDir(customThemesDir, true),
+  ]);
 
+  const themes = [...bundledThemes, ...customThemes];
   logger.debug(`Loaded ${themes.length} themes`);
   return themes;
 }
@@ -135,7 +130,7 @@ async function handleListThemes(): Promise<Theme[]> {
 /**
  * Get a specific theme by name
  */
-export async function handleGetTheme(_event: any, name: string): Promise<Theme | null> {
+export async function handleGetTheme(_event: IpcMainInvokeEvent | null, name: string): Promise<Theme | null> {
   const themes = await handleListThemes();
   return themes.find((t) => t.name === name) || null;
 }
@@ -194,7 +189,7 @@ async function notifyTerminalsToReload(themePath: string): Promise<void> {
 
   // Get the colors from the theme for Kitty
   const themeJsonPath = path.join(themePath, 'theme.json');
-  let themeColors: any = null;
+  let themeColors: ThemeColors | null = null;
 
   try {
     const themeData = await readJson<ThemeMetadata>(themeJsonPath);
@@ -239,7 +234,7 @@ async function notifyTerminalsToReload(themePath: string): Promise<void> {
 
       if (colorArgs.length > 0) {
         const kittyCommand = `kitty @ set-colors ${colorArgs.join(' ')}`;
-        exec(kittyCommand, (error, stdout, stderr) => {
+        exec(kittyCommand, (error, _stdout, _stderr) => {
           if (error) {
             logger.info('Kitty not available or remote control disabled:', error.message);
           } else {
@@ -266,7 +261,7 @@ async function notifyTerminalsToReload(themePath: string): Promise<void> {
         end tell
       `;
 
-      exec(`osascript -e '${appleScript}'`, (error, stdout, stderr) => {
+      exec(`osascript -e '${appleScript}'`, (error, _stdout, _stderr) => {
         if (error) {
           logger.info('iTerm2 not available or not running:', error.message);
         } else {
@@ -330,8 +325,9 @@ async function notifyTerminalsToReload(themePath: string): Promise<void> {
           logger.info('✓ SketchyBar reloaded');
           reloadSuccess = true;
           break;
-        } catch (err: any) {
-          logger.warn(`SketchyBar reload attempt ${attempt} failed: ${err.message}`);
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : String(err);
+          logger.warn(`SketchyBar reload attempt ${attempt} failed: ${message}`);
           if (attempt < 2) {
             // Wait a bit before retrying
             await new Promise((resolve) => setTimeout(resolve, 200));
@@ -356,7 +352,7 @@ async function updateEditorSettings(
   editorName: string,
   settingsPath: string,
   themeName: string,
-  themePath: string
+  _themePath: string
 ): Promise<void> {
   logger.info(`Updating ${editorName} settings.json...`);
 
@@ -374,7 +370,7 @@ async function updateEditorSettings(
     }
 
     // Read current settings
-    let settings: any = {};
+    let settings: Record<string, unknown> = {};
     try {
       const settingsContent = await readFile(settingsPath);
       // Handle empty file or invalid JSON
@@ -505,7 +501,7 @@ async function refreshActiveThemeApps(themeName: string, themePath: string): Pro
 /**
  * Apply a theme
  */
-export async function handleApplyTheme(_event: any, name: string, options?: ApplyOptions): Promise<void> {
+export async function handleApplyTheme(_event: IpcMainInvokeEvent | null, name: string, options?: ApplyOptions): Promise<void> {
   logger.info(`Applying theme: ${name}`);
 
   try {
@@ -537,8 +533,9 @@ export async function handleApplyTheme(_event: any, name: string, options?: Appl
           logger.info(`Removed existing directory: ${symlinkPath}`);
         }
       }
-    } catch (err: any) {
-      if (err.code === 'EACCES' || err.code === 'EPERM') {
+    } catch (err: unknown) {
+      const nodeErr = err as NodeJS.ErrnoException;
+      if (nodeErr.code === 'EACCES' || nodeErr.code === 'EPERM') {
         throw createError(
           'PERMISSION_ERROR',
           "MacTheme doesn't have permission to modify theme files. Please check folder permissions."
@@ -551,22 +548,24 @@ export async function handleApplyTheme(_event: any, name: string, options?: Appl
     try {
       await createSymlink(theme.path, symlinkPath, 'dir');
       logger.debug(`Created symlink: ${symlinkPath} -> ${theme.path}`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error('Failed to create symlink', err);
-      if (err.code === 'EACCES' || err.code === 'EPERM') {
+      const nodeErr = err as NodeJS.ErrnoException;
+      if (nodeErr.code === 'EACCES' || nodeErr.code === 'EPERM') {
         throw createError(
           'PERMISSION_ERROR',
           'Cannot create theme link due to insufficient permissions. Please check folder permissions in ~/Library/Application Support/MacTheme.'
         );
-      } else if (err.code === 'EEXIST') {
+      } else if (nodeErr.code === 'EEXIST') {
         throw createError(
           'FILE_EXISTS',
           'A file or folder already exists at the theme location. Please remove it and try again.'
         );
-      } else if (err.code === 'ENOSPC') {
+      } else if (nodeErr.code === 'ENOSPC') {
         throw createError('NO_SPACE', 'Not enough disk space to apply theme.');
       }
-      throw createError('SYMLINK_ERROR', `Failed to create theme link: ${err.message}`);
+      const message = err instanceof Error ? err.message : String(err);
+      throw createError('SYMLINK_ERROR', `Failed to create theme link: ${message}`);
     }
 
     // Update state
@@ -574,8 +573,9 @@ export async function handleApplyTheme(_event: any, name: string, options?: Appl
     let state: State;
     try {
       state = await readJson<State>(statePath);
-    } catch (err: any) {
-      if (err.code === 'EACCES' || err.code === 'EPERM') {
+    } catch (err: unknown) {
+      const nodeErr = err as NodeJS.ErrnoException;
+      if (nodeErr.code === 'EACCES' || nodeErr.code === 'EPERM') {
         throw createError(
           'PERMISSION_ERROR',
           'Cannot read app state file. Please check permissions for ~/Library/Application Support/MacTheme.'
@@ -589,13 +589,14 @@ export async function handleApplyTheme(_event: any, name: string, options?: Appl
 
     try {
       await writeJson(statePath, state);
-    } catch (err: any) {
-      if (err.code === 'EACCES' || err.code === 'EPERM') {
+    } catch (err: unknown) {
+      const nodeErr = err as NodeJS.ErrnoException;
+      if (nodeErr.code === 'EACCES' || nodeErr.code === 'EPERM') {
         throw createError(
           'PERMISSION_ERROR',
           'Cannot save app state. Please check write permissions for ~/Library/Application Support/MacTheme.'
         );
-      } else if (err.code === 'ENOSPC') {
+      } else if (nodeErr.code === 'ENOSPC') {
         throw createError('NO_SPACE', 'Not enough disk space to save theme state.');
       }
       throw err;
@@ -606,8 +607,9 @@ export async function handleApplyTheme(_event: any, name: string, options?: Appl
     let prefs: Preferences;
     try {
       prefs = await readJson<Preferences>(prefsPath);
-    } catch (err: any) {
-      if (err.code === 'EACCES' || err.code === 'EPERM') {
+    } catch (err: unknown) {
+      const nodeErr = err as NodeJS.ErrnoException;
+      if (nodeErr.code === 'EACCES' || nodeErr.code === 'EPERM') {
         throw createError(
           'PERMISSION_ERROR',
           'Cannot read preferences. Please check permissions for ~/Library/Application Support/MacTheme.'
@@ -630,7 +632,7 @@ export async function handleApplyTheme(_event: any, name: string, options?: Appl
 
     try {
       await writeJson(prefsPath, prefs);
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Don't fail the theme application if we can't update preferences
       logger.error('Failed to update preferences:', err);
     }
@@ -756,17 +758,18 @@ export async function handleApplyTheme(_event: any, name: string, options?: Appl
       logger.error('Failed to apply automatic wallpaper:', err);
       // Don't throw - wallpaper failure shouldn't block theme application
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     // Log the full error for debugging
     logger.error('Error applying theme:', err);
 
     // Re-throw with user-friendly message
-    if (err.message && err.message.includes(':')) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (message && message.includes(':')) {
       // Already formatted error (e.g., "PERMISSION_ERROR: ...")
       throw err;
     } else {
       // Generic error - wrap it
-      throw new Error(`UNEXPECTED_ERROR: Failed to apply theme: ${err.message || 'Unknown error'}`);
+      throw new Error(`UNEXPECTED_ERROR: Failed to apply theme: ${message || 'Unknown error'}`);
     }
   }
 }
@@ -774,7 +777,7 @@ export async function handleApplyTheme(_event: any, name: string, options?: Appl
 /**
  * Create a new custom theme
  */
-async function handleCreateTheme(_event: any, data: ThemeMetadata): Promise<void> {
+async function handleCreateTheme(_event: IpcMainInvokeEvent, data: ThemeMetadata): Promise<void> {
   logger.info(`Creating theme: ${data.name}`);
 
   ensureDirectories();
@@ -813,7 +816,7 @@ async function handleCreateTheme(_event: any, data: ThemeMetadata): Promise<void
 /**
  * Update an existing custom theme
  */
-async function handleUpdateTheme(_event: any, name: string, data: ThemeMetadata): Promise<void> {
+async function handleUpdateTheme(_event: IpcMainInvokeEvent, name: string, data: ThemeMetadata): Promise<void> {
   logger.info(`Updating theme: ${name}`);
 
   try {
@@ -908,7 +911,7 @@ async function handleUpdateTheme(_event: any, name: string, data: ThemeMetadata)
 /**
  * Delete a custom theme
  */
-async function handleDeleteTheme(_event: any, name: string): Promise<void> {
+async function handleDeleteTheme(_event: IpcMainInvokeEvent, name: string): Promise<void> {
   logger.info(`Deleting theme: ${name}`);
 
   try {
@@ -953,7 +956,7 @@ async function handleDeleteTheme(_event: any, name: string): Promise<void> {
 /**
  * Duplicate a theme (creates a copy in custom-themes)
  */
-async function handleDuplicateTheme(_event: any, sourceThemeName: string): Promise<void> {
+async function handleDuplicateTheme(_event: IpcMainInvokeEvent, sourceThemeName: string): Promise<void> {
   logger.info(`Duplicating theme: ${sourceThemeName}`);
 
   try {
@@ -1033,7 +1036,7 @@ async function handleDuplicateTheme(_event: any, sourceThemeName: string): Promi
  * If exportPath is null/undefined, shows a save dialog
  * Returns the path where the theme was exported
  */
-async function handleExportTheme(_event: any, name: string, exportPath?: string): Promise<string> {
+async function handleExportTheme(_event: IpcMainInvokeEvent, name: string, exportPath?: string): Promise<string> {
   logger.info(`Exporting theme ${name}`);
 
   try {
@@ -1111,7 +1114,7 @@ async function handleExportTheme(_event: any, name: string, exportPath?: string)
  * Import a theme from a file
  * If importPath is null/undefined, shows an open dialog
  */
-async function handleImportTheme(_event: any, importPath?: string): Promise<void> {
+async function handleImportTheme(_event: IpcMainInvokeEvent, importPath?: string): Promise<void> {
   logger.info(`Importing theme${importPath ? ` from ${importPath}` : ''}`);
 
   try {
@@ -1233,13 +1236,12 @@ async function handleImportTheme(_event: any, importPath?: string): Promise<void
 /**
  * Import theme from URL
  */
-async function handleImportThemeFromUrl(_event: any, url: string): Promise<void> {
+async function handleImportThemeFromUrl(_event: IpcMainInvokeEvent, url: string): Promise<void> {
   logger.info(`Importing theme from URL: ${url}`);
 
   try {
     const https = await import('https');
     const http = await import('http');
-    const execAsync = promisify(exec);
 
     // Validate URL
     if (!url || typeof url !== 'string') {
@@ -1366,9 +1368,10 @@ async function handleImportThemeFromUrl(_event: any, url: string): Promise<void>
       }
       throw downloadError;
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Failed to import theme from URL:', error);
-    throw new Error(`Failed to import theme from URL: ${error.message}`);
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to import theme from URL: ${message}`);
   }
 }
 

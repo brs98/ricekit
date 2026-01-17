@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Theme } from '../../shared/types';
 import { Check, Image as ImageIcon, Star, Copy, Pencil, Trash2 } from 'lucide-react';
 import {
@@ -91,12 +91,7 @@ export function ThemeDetailModal({
   const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
   const [duplicateName, setDuplicateName] = useState('');
 
-  // Load wallpapers when modal opens
-  useEffect(() => {
-    loadWallpapers();
-  }, [theme.name]);
-
-  const loadWallpapers = async () => {
+  const loadWallpapers = useCallback(async () => {
     try {
       setWallpapersLoading(true);
       const wallpaperList = await window.electronAPI.listWallpapers(theme.name);
@@ -106,7 +101,12 @@ export function ThemeDetailModal({
     } finally {
       setWallpapersLoading(false);
     }
-  };
+  }, [theme.name]);
+
+  // Load wallpapers when modal opens
+  useEffect(() => {
+    loadWallpapers();
+  }, [loadWallpapers]);
 
   const handleCopyColor = async (colorName: string, colorValue: string) => {
     try {

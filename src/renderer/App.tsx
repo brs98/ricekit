@@ -1,13 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import './App.css';
 import { ThemeGrid } from './components/ThemeGrid';
-import { ThemeEditor } from './components/ThemeEditor';
-import { ApplicationsView } from './components/ApplicationsView';
-import { WallpapersView } from './components/WallpapersView';
-import { SettingsView } from './components/SettingsView';
-import { QuickSwitcher } from './components/QuickSwitcher';
-import { OnboardingModal } from './components/OnboardingModal';
 import { Theme } from '../shared/types';
+
+// Lazy load heavy components for better initial bundle size
+const ThemeEditor = lazy(() => import('./components/ThemeEditor').then(m => ({ default: m.ThemeEditor })));
+const ApplicationsView = lazy(() => import('./components/ApplicationsView').then(m => ({ default: m.ApplicationsView })));
+const WallpapersView = lazy(() => import('./components/WallpapersView').then(m => ({ default: m.WallpapersView })));
+const SettingsView = lazy(() => import('./components/SettingsView').then(m => ({ default: m.SettingsView })));
+const QuickSwitcher = lazy(() => import('./components/QuickSwitcher').then(m => ({ default: m.QuickSwitcher })));
+const OnboardingModal = lazy(() => import('./components/OnboardingModal').then(m => ({ default: m.OnboardingModal })));
 import { useThemeSelfStyling } from './hooks/useThemeSelfStyling';
 import {
   Dialog,
@@ -45,10 +47,13 @@ function App() {
     if (hash === '#/quick-switcher') {
       setIsQuickSwitcher(true);
     } else {
-      // Check if onboarding needs to be shown
-      checkOnboardingStatus();
-      // Restore UI state from crash recovery
-      restoreUIState();
+      // Parallelize independent async operations for faster startup
+      Promise.all([
+        checkOnboardingStatus(),
+        restoreUIState(),
+      ]).catch(error => {
+        console.error('Failed to initialize app:', error);
+      });
     }
   }, []);
 
@@ -73,7 +78,7 @@ function App() {
         if (savedState.searchQuery) setSearchQuery(savedState.searchQuery);
         if (savedState.filterMode) setFilterMode(savedState.filterMode);
         if (savedState.sortMode) setSortMode(savedState.sortMode);
-        if (savedState.editorTheme) setEditorTheme(savedState.editorTheme);
+        if (savedState.editorTheme) setEditorTheme(savedState.editorTheme as Theme);
         console.log('UI state restored successfully');
       }
     } catch (error) {
@@ -108,7 +113,7 @@ function App() {
         } : undefined,
       };
 
-      window.electronAPI.saveUIState(uiState).catch((error: any) => {
+      window.electronAPI.saveUIState(uiState).catch((error: unknown) => {
         console.error('Failed to save UI state:', error);
       });
     }, 500); // Debounce by 500ms
@@ -131,9 +136,10 @@ function App() {
 
       // Refresh the theme grid (trigger re-render)
       window.location.reload();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to import theme from URL:', error);
-      alert(`Failed to import theme: ${error.message}`);
+      const message = error instanceof Error ? error.message : String(error);
+      alert(`Failed to import theme: ${message}`);
     } finally {
       setImporting(false);
     }
@@ -141,13 +147,21 @@ function App() {
 
   // If this is the quick switcher, render only that component
   if (isQuickSwitcher) {
-    return <QuickSwitcher />;
+    return (
+      <Suspense fallback={<div className="loading-fallback">Loading...</div>}>
+        <QuickSwitcher />
+      </Suspense>
+    );
   }
 
   return (
     <div className="app">
       {/* Onboarding modal */}
-      {showOnboarding && <OnboardingModal onComplete={handleOnboardingComplete} />}
+      {showOnboarding && (
+        <Suspense fallback={null}>
+          <OnboardingModal onComplete={handleOnboardingComplete} />
+        </Suspense>
+      )}
 
       {/* Import from URL modal */}
       <Dialog open={showImportUrlModal} onOpenChange={(open) => {
@@ -300,29 +314,32 @@ function App() {
               }}
             />
           )}
-          {activeView === 'editor' && (
-            <ThemeEditor
-              initialTheme={editorTheme?.metadata}
-              sourceTheme={editorTheme}
-              onSave={() => {
-                setActiveView('themes');
-                setEditorTheme(undefined);
-              }}
-              onCancel={() => {
-                setActiveView('themes');
-                setEditorTheme(undefined);
-              }}
-            />
-          )}
-          {activeView === 'apps' && (
-            <ApplicationsView />
-          )}
-          {activeView === 'wallpapers' && (
-            <WallpapersView />
-          )}
-          {activeView === 'settings' && (
-            <SettingsView />
-          )}
+          {/* Lazy-loaded views wrapped in Suspense */}
+          <Suspense fallback={<div className="view-loading">Loading view...</div>}>
+            {activeView === 'editor' && (
+              <ThemeEditor
+                initialTheme={editorTheme?.metadata}
+                sourceTheme={editorTheme}
+                onSave={() => {
+                  setActiveView('themes');
+                  setEditorTheme(undefined);
+                }}
+                onCancel={() => {
+                  setActiveView('themes');
+                  setEditorTheme(undefined);
+                }}
+              />
+            )}
+            {activeView === 'apps' && (
+              <ApplicationsView />
+            )}
+            {activeView === 'wallpapers' && (
+              <WallpapersView />
+            )}
+            {activeView === 'settings' && (
+              <SettingsView />
+            )}
+          </Suspense>
         </div>
       </div>
     </div>

@@ -2,12 +2,12 @@
  * Application IPC Handlers
  * Handles application detection, setup, and refresh
  */
-import { ipcMain, Notification, shell } from 'electron';
+import { ipcMain, Notification, shell, IpcMainInvokeEvent } from 'electron';
 import path from 'path';
 import os from 'os';
 import fs from 'fs';
 import { execSync } from 'child_process';
-import type { Preferences, Theme } from '../../shared/types';
+import type { Theme, AppInfo } from '../../shared/types';
 import { logger } from '../logger';
 import {
   readFile,
@@ -20,7 +20,7 @@ import { handleGetPreferences, handleSetPreferences } from './preferencesHandler
 import { handleGetState } from './stateHandlers';
 
 // Forward declarations - will be set to avoid circular deps
-let getThemeHandler: ((event: any, name: string) => Promise<Theme | null>) | null = null;
+let getThemeHandler: ((event: IpcMainInvokeEvent | null, name: string) => Promise<Theme | null>) | null = null;
 let updateVSCodeSettingsHandler: ((themeName: string, themePath: string) => Promise<void>) | null = null;
 let updateCursorSettingsHandler: ((themeName: string, themePath: string) => Promise<void>) | null = null;
 
@@ -28,7 +28,7 @@ let updateCursorSettingsHandler: ((themeName: string, themePath: string) => Prom
  * Set theme handlers (called by themeHandlers to avoid circular deps)
  */
 export function setThemeHandlers(handlers: {
-  getTheme: (event: any, name: string) => Promise<Theme | null>;
+  getTheme: (event: IpcMainInvokeEvent | null, name: string) => Promise<Theme | null>;
   updateVSCodeSettings: (themeName: string, themePath: string) => Promise<void>;
   updateCursorSettings: (themeName: string, themePath: string) => Promise<void>;
 }): void {
@@ -40,7 +40,7 @@ export function setThemeHandlers(handlers: {
 /**
  * Detect installed applications
  */
-async function handleDetectApps(): Promise<any[]> {
+async function handleDetectApps(): Promise<AppInfo[]> {
   logger.info('Detecting installed applications');
 
   const apps = [
@@ -242,7 +242,7 @@ async function handleDetectApps(): Promise<any[]> {
     return {
       name: app.name,
       displayName: app.displayName,
-      category: app.category,
+      category: app.category as AppInfo['category'],
       isInstalled,
       isConfigured: isInstalled && isConfigured,
       configPath: app.configPath,
@@ -309,7 +309,7 @@ async function setupEditorApp(appName: string, displayName: string, settingsPath
  * Setup an application for theming
  * Automatically configures the app's config file to import MacTheme themes
  */
-async function handleSetupApp(_event: any, appName: string): Promise<void> {
+async function handleSetupApp(_event: IpcMainInvokeEvent, appName: string): Promise<void> {
   logger.info(`Setting up app: ${appName}`);
 
   const homeDir = os.homedir();
@@ -494,9 +494,10 @@ after-startup-command = [
       });
       notification.show();
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error(`Failed to setup ${appName}:`, error);
-    throw new Error(`Failed to setup ${appName}: ${error.message}`);
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to setup ${appName}: ${message}`);
   }
 }
 
@@ -504,7 +505,7 @@ after-startup-command = [
  * Refresh an application's theme
  * Sends reload signal to supported applications
  */
-async function handleRefreshApp(_event: any, appName: string): Promise<void> {
+async function handleRefreshApp(_event: IpcMainInvokeEvent, appName: string): Promise<void> {
   logger.info(`Refreshing app: ${appName}`);
 
   try {
@@ -518,9 +519,10 @@ async function handleRefreshApp(_event: any, appName: string): Promise<void> {
             timeout: 5000,
           });
           logger.info('Kitty theme refreshed successfully');
-        } catch (error: any) {
+        } catch (error: unknown) {
           // If socket doesn't exist or kitty isn't running, that's ok
-          if (error.message.includes('No such file') || error.message.includes('Connection refused')) {
+          const message = error instanceof Error ? error.message : String(error);
+          if (message.includes('No such file') || message.includes('Connection refused')) {
             logger.info('Kitty is not running or remote control is not enabled');
           } else {
             throw error;
@@ -536,8 +538,9 @@ async function handleRefreshApp(_event: any, appName: string): Promise<void> {
             timeout: 5000,
           });
           logger.info('iTerm2 theme refreshed successfully');
-        } catch (error: any) {
-          if (error.message.includes('not running')) {
+        } catch (error: unknown) {
+          const message = error instanceof Error ? error.message : String(error);
+          if (message.includes('not running')) {
             logger.info('iTerm2 is not running');
           } else {
             throw error;
@@ -545,7 +548,7 @@ async function handleRefreshApp(_event: any, appName: string): Promise<void> {
         }
         break;
 
-      case 'alacritty':
+      case 'alacritty': {
         // Alacritty watches config file, so just touching it triggers reload
         const alacrittyConfig = path.join(os.homedir(), '.config', 'alacritty', 'alacritty.toml');
         if (existsSync(alacrittyConfig)) {
@@ -556,6 +559,7 @@ async function handleRefreshApp(_event: any, appName: string): Promise<void> {
           logger.info('Alacritty config not found');
         }
         break;
+      }
 
       case 'vscode':
         // Re-apply the current theme settings to VS Code
@@ -619,7 +623,7 @@ async function handleRefreshApp(_event: any, appName: string): Promise<void> {
         }
         break;
 
-      case 'sketchybar':
+      case 'sketchybar': {
         // SketchyBar can be reloaded via command line
         // Use absolute path - in production, PATH doesn't include Homebrew
         const sketchybarPaths = ['/opt/homebrew/bin/sketchybar', '/usr/local/bin/sketchybar'];
@@ -638,6 +642,7 @@ async function handleRefreshApp(_event: any, appName: string): Promise<void> {
           logger.info('SketchyBar binary not found');
         }
         break;
+      }
 
       case 'slack':
         // Slack doesn't support automatic theme refresh
@@ -681,9 +686,10 @@ async function handleRefreshApp(_event: any, appName: string): Promise<void> {
       default:
         logger.info(`App refresh not supported for ${appName}`);
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error(`Failed to refresh ${appName}:`, error);
-    throw new Error(`Failed to refresh ${appName}: ${error.message}`);
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to refresh ${appName}: ${message}`);
   }
 }
 

@@ -24,7 +24,6 @@ import {
   SelectValue,
 } from '@/renderer/components/ui/select';
 import { Button } from '@/renderer/components/ui/button';
-import { Input } from '@/renderer/components/ui/input';
 import { Label } from '@/renderer/components/ui/label';
 import { Switch } from '@/renderer/components/ui/switch';
 
