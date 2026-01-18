@@ -95,7 +95,10 @@ import {
   handleGetPluginConfig,
   handleResetPluginToCustom,
   handleSetPreset,
+  handleInstallPlugin,
 } from '../handlers/pluginHandlers';
+import { execSync } from 'child_process';
+import { shell } from 'electron';
 import { handleGetPreferences, handleSetPreferences } from '../handlers/preferencesHandlers';
 import {
   existsSync as mockExistsSync,
@@ -554,5 +557,178 @@ describe('pluginHandlers - generateWrapperConfig', () => {
     expect(content).toContain('[alias]');
     // Old delta setting should be replaced
     expect(content).not.toContain('old-setting');
+  });
+});
+
+describe('handleInstallPlugin', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('should throw error and open brew.sh when Homebrew is not installed', async () => {
+    // Configure existsSync to return false for all brew paths
+    vi.mocked(mockExistsSync).mockImplementation((filePath) => {
+      const filePathStr = String(filePath);
+      // All binary paths including Homebrew should not exist
+      return false;
+    });
+
+    await expect(handleInstallPlugin(null, 'starship')).rejects.toThrow(
+      'Homebrew is required but not installed'
+    );
+
+    // Should have opened the Homebrew website
+    expect(shell.openExternal).toHaveBeenCalledWith('https://brew.sh');
+  });
+
+  it('should run brew install with correct command for starship', async () => {
+    // Configure existsSync to return true for Homebrew
+    vi.mocked(mockExistsSync).mockImplementation((filePath) => {
+      const filePathStr = String(filePath);
+      if (filePathStr === '/opt/homebrew/bin/brew') {
+        return true;
+      }
+      return false;
+    });
+
+    // Configure execSync to succeed
+    vi.mocked(execSync).mockReturnValue('');
+
+    await handleInstallPlugin(null, 'starship');
+
+    // Should have run the install command with quoted brew path
+    expect(execSync).toHaveBeenCalledWith(
+      '"/opt/homebrew/bin/brew" install starship',
+      expect.objectContaining({
+        encoding: 'utf-8',
+        stdio: 'pipe',
+        timeout: 300000,
+      })
+    );
+  });
+
+  it('should install dependencies before main package for aerospace', async () => {
+    // Configure existsSync to return true for Homebrew
+    vi.mocked(mockExistsSync).mockImplementation((filePath) => {
+      const filePathStr = String(filePath);
+      if (filePathStr === '/opt/homebrew/bin/brew') {
+        return true;
+      }
+      return false;
+    });
+
+    // Track the order of execSync calls
+    const execCalls: string[] = [];
+    vi.mocked(execSync).mockImplementation((cmd) => {
+      execCalls.push(String(cmd));
+      return '';
+    });
+
+    await handleInstallPlugin(null, 'aerospace');
+
+    // Should have installed borders dependency first
+    expect(execCalls.length).toBeGreaterThanOrEqual(2);
+    expect(execCalls[0]).toContain('FelixKratz/formulae/borders');
+    // Then install aerospace
+    expect(execCalls[1]).toContain('aerospace');
+  });
+
+  it('should start service for sketchybar after installation', async () => {
+    // Configure existsSync to return true for Homebrew
+    vi.mocked(mockExistsSync).mockImplementation((filePath) => {
+      const filePathStr = String(filePath);
+      if (filePathStr === '/opt/homebrew/bin/brew') {
+        return true;
+      }
+      return false;
+    });
+
+    // Track execSync calls
+    const execCalls: string[] = [];
+    vi.mocked(execSync).mockImplementation((cmd) => {
+      execCalls.push(String(cmd));
+      return '';
+    });
+
+    await handleInstallPlugin(null, 'sketchybar');
+
+    // Should have started the service
+    const serviceCall = execCalls.find((cmd) => cmd.includes('services start'));
+    expect(serviceCall).toBeDefined();
+    expect(serviceCall).toContain('sketchybar');
+  });
+
+  it('should throw error with helpful message when installation fails', async () => {
+    // Configure existsSync to return true for Homebrew
+    vi.mocked(mockExistsSync).mockImplementation((filePath) => {
+      const filePathStr = String(filePath);
+      if (filePathStr === '/opt/homebrew/bin/brew') {
+        return true;
+      }
+      return false;
+    });
+
+    // Configure execSync to throw an error
+    vi.mocked(execSync).mockImplementation(() => {
+      throw new Error('brew: command not found');
+    });
+
+    await expect(handleInstallPlugin(null, 'starship')).rejects.toThrow(
+      'Failed to install starship'
+    );
+  });
+
+  it('should not fail when dependency is already installed', async () => {
+    // Configure existsSync to return true for Homebrew
+    vi.mocked(mockExistsSync).mockImplementation((filePath) => {
+      const filePathStr = String(filePath);
+      if (filePathStr === '/opt/homebrew/bin/brew') {
+        return true;
+      }
+      return false;
+    });
+
+    // First call (dependency) throws "already installed", second call (main package) succeeds
+    let callCount = 0;
+    vi.mocked(execSync).mockImplementation((cmd) => {
+      callCount++;
+      if (callCount === 1 && String(cmd).includes('borders')) {
+        const error = new Error('already installed');
+        throw error;
+      }
+      return '';
+    });
+
+    // Should not throw despite dependency "already installed" error
+    await expect(handleInstallPlugin(null, 'aerospace')).resolves.not.toThrow();
+  });
+
+  it('should throw error for unknown plugin', async () => {
+    await expect(handleInstallPlugin(null, 'unknown-plugin')).rejects.toThrow(
+      'Unknown plugin: unknown-plugin'
+    );
+  });
+
+  it('should use Intel brew path when M1 path does not exist', async () => {
+    // Configure existsSync to return true only for Intel Homebrew path
+    vi.mocked(mockExistsSync).mockImplementation((filePath) => {
+      const filePathStr = String(filePath);
+      if (filePathStr === '/usr/local/bin/brew') {
+        return true;
+      }
+      return false;
+    });
+
+    vi.mocked(execSync).mockReturnValue('');
+
+    await handleInstallPlugin(null, 'bat');
+
+    // Should have used Intel brew path
+    expect(execSync).toHaveBeenCalledWith(
+      '"/usr/local/bin/brew" install bat',
+      expect.objectContaining({
+        encoding: 'utf-8',
+      })
+    );
   });
 });

@@ -40,7 +40,7 @@ export function setThemeHandlers(handlers: {
 /**
  * Detect installed applications
  */
-async function handleDetectApps(): Promise<AppInfo[]> {
+export async function handleDetectApps(): Promise<AppInfo[]> {
   logger.info('Detecting installed applications');
 
   const apps = [
@@ -309,7 +309,7 @@ async function setupEditorApp(appName: string, displayName: string, settingsPath
  * Setup an application for theming
  * Automatically configures the app's config file to import MacTheme themes
  */
-async function handleSetupApp(_event: IpcMainInvokeEvent, appName: string): Promise<void> {
+export async function handleSetupApp(_event: IpcMainInvokeEvent | null, appName: string): Promise<void> {
   logger.info(`Setting up app: ${appName}`);
 
   const homeDir = os.homedir();
@@ -505,7 +505,7 @@ after-startup-command = [
  * Refresh an application's theme
  * Sends reload signal to supported applications
  */
-async function handleRefreshApp(_event: IpcMainInvokeEvent, appName: string): Promise<void> {
+export async function handleRefreshApp(_event: IpcMainInvokeEvent | null, appName: string): Promise<void> {
   logger.info(`Refreshing app: ${appName}`);
 
   try {
