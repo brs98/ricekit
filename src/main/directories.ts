@@ -100,10 +100,10 @@ export function getDefaultPreferences() {
     },
     startAtLogin: false,
     showInMenuBar: true,
-    showNotifications: true,
+    showNotifications: false,
     notifications: {
-      onThemeChange: true,
-      onScheduledSwitch: true,
+      onThemeChange: false,
+      onScheduledSwitch: false,
     },
     onboardingCompleted: false,
     dynamicWallpaper: {
