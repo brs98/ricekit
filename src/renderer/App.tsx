@@ -21,7 +21,7 @@ import {
 } from '@/renderer/components/ui/dialog';
 import { Button } from '@/renderer/components/ui/button';
 import { Input } from '@/renderer/components/ui/input';
-import { Palette, Pencil, AppWindow, Image, Settings, Star, Download } from 'lucide-react';
+import { Palette, Pencil, AppWindow, Image, Settings, Star, Download, Search, ArrowUpDown } from 'lucide-react';
 
 type FilterMode = 'all' | 'light' | 'dark' | 'favorites';
 type SortMode = 'default' | 'name-asc' | 'name-desc' | 'recent';
@@ -208,96 +208,113 @@ function App() {
 
       <div className="sidebar">
         <div className="sidebar-header">
-          <h1 className="text-lg font-semibold">MacTheme</h1>
+          <h1 className="text-lg font-semibold tracking-tight">MacTheme</h1>
         </div>
         <nav className="sidebar-nav">
           <button
             className={`nav-item ${activeView === 'themes' ? 'active' : ''}`}
             onClick={() => setActiveView('themes')}
           >
-            <Palette size={18} /> Themes
+            <Palette size={20} /> Themes
           </button>
           <button
             className={`nav-item ${activeView === 'editor' ? 'active' : ''}`}
             onClick={() => setActiveView('editor')}
           >
-            <Pencil size={18} /> Editor
+            <Pencil size={20} /> Editor
           </button>
           <button
             className={`nav-item ${activeView === 'apps' ? 'active' : ''}`}
             onClick={() => setActiveView('apps')}
           >
-            <AppWindow size={18} /> Apps
+            <AppWindow size={20} /> Apps
           </button>
           <button
             className={`nav-item ${activeView === 'wallpapers' ? 'active' : ''}`}
             onClick={() => setActiveView('wallpapers')}
           >
-            <Image size={18} /> Wallpapers
+            <Image size={20} /> Wallpapers
           </button>
           <button
             className={`nav-item ${activeView === 'settings' ? 'active' : ''}`}
             onClick={() => setActiveView('settings')}
           >
-            <Settings size={18} /> Settings
+            <Settings size={20} /> Settings
           </button>
         </nav>
+        <div className="sidebar-footer">
+          <span className="version-text">v1.0.0</span>
+        </div>
       </div>
       <div className="main-content">
         <div className="content-header">
           <h2 className="text-2xl font-bold capitalize">{activeView}</h2>
           {activeView === 'themes' && (
             <div className="theme-controls">
-              <input
-                type="text"
-                placeholder="Search themes..."
-                className="search-input"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              <div className="filter-chips">
-                <button
-                  className={`filter-chip ${filterMode === 'all' ? 'active' : ''}`}
-                  onClick={() => setFilterMode('all')}
-                >
-                  All
-                </button>
-                <button
-                  className={`filter-chip ${filterMode === 'light' ? 'active' : ''}`}
-                  onClick={() => setFilterMode('light')}
-                >
-                  Light
-                </button>
-                <button
-                  className={`filter-chip ${filterMode === 'dark' ? 'active' : ''}`}
-                  onClick={() => setFilterMode('dark')}
-                >
-                  Dark
-                </button>
-                <button
-                  className={`filter-chip ${filterMode === 'favorites' ? 'active' : ''}`}
-                  onClick={() => setFilterMode('favorites')}
-                >
-                  <Star size={12} className="inline-block mr-1" /> Favorites
-                </button>
-                <select
-                  className="sort-dropdown"
-                  value={sortMode}
-                  onChange={(e) => setSortMode(e.target.value as SortMode)}
-                  title="Sort themes"
-                >
-                  <option value="default">Default Order</option>
-                  <option value="name-asc">Name (A-Z)</option>
-                  <option value="name-desc">Name (Z-A)</option>
-                  <option value="recent">Recently Used</option>
-                </select>
-                <button
-                  className="filter-chip import-url-button"
-                  onClick={() => setShowImportUrlModal(true)}
-                  title="Import theme from URL"
-                >
-                  <Download size={14} className="inline-block mr-1" /> Import from URL
-                </button>
+              {/* Search input with icon */}
+              <div className="search-wrapper">
+                <Search size={16} className="search-icon" />
+                <input
+                  type="text"
+                  placeholder="Search themes..."
+                  className="search-input"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+
+              {/* Filter row with chips on left, sort on right */}
+              <div className="filter-row">
+                <div className="filter-chips">
+                  <button
+                    className={`filter-chip ${filterMode === 'all' ? 'active' : ''}`}
+                    onClick={() => setFilterMode('all')}
+                  >
+                    All
+                  </button>
+                  <button
+                    className={`filter-chip ${filterMode === 'light' ? 'active' : ''}`}
+                    onClick={() => setFilterMode('light')}
+                  >
+                    Light
+                  </button>
+                  <button
+                    className={`filter-chip ${filterMode === 'dark' ? 'active' : ''}`}
+                    onClick={() => setFilterMode('dark')}
+                  >
+                    Dark
+                  </button>
+                  <button
+                    className={`filter-chip ${filterMode === 'favorites' ? 'active' : ''}`}
+                    onClick={() => setFilterMode('favorites')}
+                  >
+                    <Star size={12} className="inline-block mr-1" /> Favorites
+                  </button>
+                </div>
+
+                <div className="filter-actions">
+                  <div className="sort-wrapper">
+                    <ArrowUpDown size={14} className="sort-icon" />
+                    <select
+                      className="sort-dropdown"
+                      value={sortMode}
+                      onChange={(e) => setSortMode(e.target.value as SortMode)}
+                      title="Sort themes"
+                    >
+                      <option value="default">Default</option>
+                      <option value="name-asc">A-Z</option>
+                      <option value="name-desc">Z-A</option>
+                      <option value="recent">Recent</option>
+                    </select>
+                  </div>
+                  <button
+                    className="filter-chip import-url-button"
+                    onClick={() => setShowImportUrlModal(true)}
+                    title="Import theme from URL"
+                  >
+                    <Download size={14} />
+                  </button>
+                </div>
               </div>
             </div>
           )}

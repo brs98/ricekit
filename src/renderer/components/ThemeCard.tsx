@@ -40,7 +40,7 @@ export function ThemeCard({ theme, isActive, onApply, onToggleFavorite, isFavori
 
   return (
     <Card
-      className={`relative overflow-hidden cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 ${
+      className={`relative overflow-hidden cursor-pointer transition-all duration-200 ease-out hover:scale-[1.02] hover:shadow-lg hover:shadow-foreground/5 ${
         isActive ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''
       }`}
       onClick={onClick}
@@ -49,36 +49,44 @@ export function ThemeCard({ theme, isActive, onApply, onToggleFavorite, isFavori
       role={onClick ? 'button' : undefined}
       aria-label={onClick ? `View ${metadata.name} theme details` : undefined}
     >
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <h3 className="text-base font-semibold truncate pr-2">{metadata.name}</h3>
-          {onToggleFavorite && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 shrink-0"
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggleFavorite(name);
-              }}
-              aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-            >
-              <Star
-                className={`h-4 w-4 ${
-                  isFavorite ? 'fill-yellow-500 text-yellow-500' : 'text-muted-foreground'
-                }`}
-              />
-            </Button>
-          )}
-        </div>
+      {/* Favorite toggle - positioned top-right */}
+      {onToggleFavorite && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute top-2 right-2 h-8 w-8 z-10 opacity-60 hover:opacity-100 transition-opacity"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleFavorite(name);
+          }}
+          aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+        >
+          <Star
+            className={`h-4 w-4 ${
+              isFavorite ? 'fill-yellow-500 text-yellow-500' : 'text-muted-foreground'
+            }`}
+          />
+        </Button>
+      )}
+
+      <CardHeader className="pb-2 pr-10">
+        <h3 className="text-base font-semibold truncate">{metadata.name}</h3>
       </CardHeader>
 
       <CardContent className="pb-3">
-        <div className="flex gap-1.5">
+        {/* Gradient bar preview using theme colors */}
+        <div
+          className="h-3 rounded-full mb-3 overflow-hidden"
+          style={{
+            background: `linear-gradient(to right, ${previewColors.join(', ')})`
+          }}
+        />
+        {/* Color swatches row */}
+        <div className="flex gap-2">
           {previewColors.map((color, index) => (
             <div
               key={index}
-              className="w-8 h-8 rounded-[6px] border border-border/50 transition-transform duration-150 hover:scale-105"
+              className="flex-1 h-8 rounded-md border border-border/30 transition-transform duration-150"
               style={{ backgroundColor: color }}
               title={color}
             />
@@ -88,33 +96,32 @@ export function ThemeCard({ theme, isActive, onApply, onToggleFavorite, isFavori
 
       <CardFooter className="pt-0 flex items-center justify-between">
         <span
-          className={`text-xs px-2 py-0.5 rounded-full ${
+          className={`text-[10px] font-medium px-2 py-0.5 rounded-full uppercase tracking-wide ${
             isLight
-              ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-              : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+              ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+              : 'bg-slate-500/10 text-slate-600 dark:text-slate-400'
           }`}
         >
           {isLight ? 'Light' : 'Dark'}
         </span>
-        <Button
-          size="sm"
-          variant={isActive ? 'secondary' : 'default'}
-          onClick={(e) => {
-            e.stopPropagation();
-            onApply(name);
-          }}
-          disabled={isActive}
-          className="h-7"
-        >
-          {isActive ? (
-            <>
-              <Check className="h-3 w-3 mr-1" />
-              Active
-            </>
-          ) : (
-            'Apply'
-          )}
-        </Button>
+        {isActive ? (
+          <span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md bg-primary/10 text-primary">
+            <Check className="h-3.5 w-3.5" />
+            Active
+          </span>
+        ) : (
+          <Button
+            size="sm"
+            variant="default"
+            onClick={(e) => {
+              e.stopPropagation();
+              onApply(name);
+            }}
+            className="h-7"
+          >
+            Apply
+          </Button>
+        )}
       </CardFooter>
     </Card>
   );

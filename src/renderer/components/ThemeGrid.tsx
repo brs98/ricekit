@@ -205,6 +205,15 @@ export function ThemeGrid({ searchQuery = '', filterMode = 'all', sortMode = 'de
 
   return (
     <>
+      {/* Result count */}
+      <div className="theme-grid-header">
+        <span className="text-sm text-muted-foreground">
+          {filteredAndSortedThemes.length} {filteredAndSortedThemes.length === 1 ? 'theme' : 'themes'}
+          {filterMode !== 'all' && ` · ${filterMode}`}
+          {searchQuery && ` · "${searchQuery}"`}
+        </span>
+      </div>
+
       <div className="theme-grid">
         {filteredAndSortedThemes.map((theme) => (
           <ThemeCard

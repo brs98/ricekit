@@ -15,7 +15,6 @@ import {
   Package,
   RefreshCw,
   Plug,
-  Check,
 } from 'lucide-react';
 
 // Plugin definitions for auto-setup, organized by category
@@ -302,7 +301,21 @@ export function ApplicationsView() {
                   >
                     <div className="app-card-header">
                       <div className="app-name-row">
-                        <h4 className="app-name">{app.displayName}</h4>
+                        <div className="flex items-center gap-2">
+                          <h4 className="app-name">{app.displayName}</h4>
+                          {/* Compact status indicator */}
+                          {app.isInstalled ? (
+                            !app.isConfigured && (
+                              <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-600 dark:text-amber-400">
+                                Setup
+                              </span>
+                            )
+                          ) : (
+                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                              Not Found
+                            </span>
+                          )}
+                        </div>
                         {app.isInstalled && (
                           <Switch
                             checked={enabledApps.length === 0 || enabledApps.includes(app.name)}
@@ -311,63 +324,48 @@ export function ApplicationsView() {
                           />
                         )}
                       </div>
-                      <div className="app-badges">
-                        {app.isInstalled ? (
-                          <span className="badge badge-installed"><Check size={12} className="inline-block mr-0.5" /> Installed</span>
-                        ) : (
-                          <span className="badge badge-not-found">Not Found</span>
-                        )}
-                        {app.isInstalled && (
-                          <>
-                            {app.isConfigured ? (
-                              <span className="badge badge-configured">Configured</span>
-                            ) : (
-                              <span className="badge badge-needs-setup">Needs Setup</span>
-                            )}
-                          </>
-                        )}
-                      </div>
                     </div>
 
-                    <div className="app-card-body">
-                      <p className="app-config-path">
-                        <span className="config-label">Config:</span> {app.configPath}
-                      </p>
-                    </div>
+                    {app.isInstalled && (
+                      <div className="app-card-body">
+                        <p className="app-config-path text-[11px] opacity-70">
+                          {app.configPath}
+                        </p>
+                      </div>
+                    )}
 
                     <div className="app-card-actions">
                       {app.isInstalled && !app.isConfigured && (
-                        <Button onClick={() => setSetupApp(app)}>
+                        <Button size="sm" onClick={() => setSetupApp(app)}>
                           Setup Integration
                         </Button>
                       )}
                       {app.isInstalled && app.isConfigured && (
                         <>
                           <Button
-                            variant="outline"
+                            size="sm"
+                            variant="ghost"
                             onClick={() => setSetupApp(app)}
                             title="View setup instructions"
                           >
-                            Setup Guide
+                            Guide
                           </Button>
                           <Button
-                            variant="outline"
+                            size="sm"
+                            variant="ghost"
                             onClick={() => app.configPath && handleViewConfig(app.configPath)}
                           >
-                            View Config
+                            Config
                           </Button>
                           <Button
+                            size="sm"
+                            variant="outline"
                             onClick={() => handleRefreshApp(app.name)}
                             disabled={refreshingApp === app.name}
                           >
-                            {refreshingApp === app.name ? 'Refreshing...' : 'Refresh'}
+                            <RefreshCw size={14} className={refreshingApp === app.name ? 'animate-spin' : ''} />
                           </Button>
                         </>
-                      )}
-                      {!app.isInstalled && (
-                        <Button variant="secondary" disabled>
-                          Not Installed
-                        </Button>
                       )}
                     </div>
                   </div>
