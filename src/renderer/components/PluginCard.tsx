@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { PluginStatus, PluginConfig, PresetInfo, FontStatus } from '../../shared/types';
+import { AlertTriangle, XCircle } from 'lucide-react';
 import { Button } from './ui/button';
 import {
   Select,
@@ -290,7 +291,7 @@ export function PluginCard({
             {/* Existing config warning */}
             {status.hasExistingConfig && config?.mode !== 'preset' && (
               <div className="config-warning">
-                <span className="warning-icon">⚠️</span>
+                <AlertTriangle size={14} className="warning-icon shrink-0" />
                 <span>
                   Existing config detected. Applying a preset will back up your current config.
                 </span>
@@ -306,7 +307,7 @@ export function PluginCard({
 
         {error && (
           <div className="plugin-error">
-            <span className="error-icon">❌</span>
+            <XCircle size={14} className="error-icon shrink-0" />
             <span>{error}</span>
           </div>
         )}

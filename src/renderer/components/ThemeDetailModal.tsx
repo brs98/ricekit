@@ -228,8 +228,8 @@ export function ThemeDetailModal({
                 <div>
                   <span style={{ color: colors.foreground }}>$ npm test</span>
                 </div>
-                <div>
-                  <span style={{ color: colors.green }}>✓</span>
+                <div className="flex items-center">
+                  <Check size={14} style={{ color: colors.green }} className="inline-block" />
                   <span style={{ color: colors.foreground }}> All tests passed</span>
                 </div>
               </div>

@@ -105,6 +105,18 @@ body {
   cursor: pointer;
   transition: all 200ms ease;
   color: inherit;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nav-item svg {
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.nav-item.active svg {
+  opacity: 1;
 }
 
 .nav-item:hover {

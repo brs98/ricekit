@@ -55,9 +55,13 @@ export function setupIpcHandlers(): void {
   registerPluginHandlers();
 
   // Quick switcher handler (small, kept inline)
+  // Identify by URL containing 'quick-switcher' hash and alwaysOnTop property
   ipcMain.handle('quickswitcher:close', async () => {
     const allWindows = BrowserWindow.getAllWindows();
-    const quickSwitcher = allWindows.find((win) => win.getTitle() === '' && win.isAlwaysOnTop());
+    const quickSwitcher = allWindows.find((win) => {
+      const url = win.webContents.getURL();
+      return url.includes('quick-switcher') && win.isAlwaysOnTop();
+    });
     if (quickSwitcher) {
       quickSwitcher.hide();
     }

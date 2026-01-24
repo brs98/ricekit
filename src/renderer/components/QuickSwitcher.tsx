@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Star } from 'lucide-react';
 import { Theme, Preferences, State } from '../../shared/types';
 import {
@@ -41,6 +41,7 @@ export function QuickSwitcher() {
   const [state, setState] = useState<State | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Apply the current theme's colors to the QuickSwitcher UI
   useThemeSelfStyling();
@@ -66,16 +67,44 @@ export function QuickSwitcher() {
     loadData();
   }, []);
 
-  // Handle escape key to close
+  // Auto-focus the input when the component mounts
+  useEffect(() => {
+    // Small delay to ensure DOM is ready
+    const timer = setTimeout(() => {
+      inputRef.current?.focus();
+    }, 50);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Handle j/k navigation using capture phase (fires BEFORE cmdk handles events)
+  // Note: Escape is handled in main process via before-input-event
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') {
+
+      // Vim-style navigation: j = down, k = up
+      // Only navigate when search input is empty (so j/k can still be typed in search)
+      const input = inputRef.current;
+      const isSearchEmpty = !input || input.value.length === 0;
+
+      if ((e.key === 'j' || e.key === 'k') && isSearchEmpty) {
         e.preventDefault();
-        window.electronAPI.closeQuickSwitcher();
+        e.stopPropagation();
+
+        // Dispatch arrow key event to cmdk
+        const direction = e.key === 'j' ? 'ArrowDown' : 'ArrowUp';
+        const arrowEvent = new KeyboardEvent('keydown', {
+          key: direction,
+          code: direction,
+          bubbles: true,
+          cancelable: true,
+        });
+        input?.dispatchEvent(arrowEvent);
       }
     }
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+
+    // Use capture phase to intercept before cmdk
+    document.addEventListener('keydown', handleKeyDown, true);
+    return () => document.removeEventListener('keydown', handleKeyDown, true);
   }, []);
 
   // Extract primitives from preferences to avoid object reference comparison issues
@@ -177,6 +206,7 @@ export function QuickSwitcher() {
         filter={() => 1} // Disable built-in filter, we use custom fuzzy search
       >
         <CommandInput
+          ref={inputRef}
           placeholder="Search themes..."
           value={searchQuery}
           onValueChange={setSearchQuery}
@@ -262,6 +292,7 @@ export function QuickSwitcher() {
           <div className="flex items-center justify-center gap-4 px-4 py-2 border-t border-border text-xs text-muted-foreground">
             <span>
               <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px] font-mono">↑↓</kbd>
+              <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px] font-mono ml-1">jk</kbd>
               {' '}Navigate
             </span>
             <span>

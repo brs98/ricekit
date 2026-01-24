@@ -14,6 +14,7 @@ import {
 } from '../../shared/colorDerivation';
 import { validateColorJson, ValidationResult } from '../../shared/themeColorValidator';
 // node-vibrant is dynamically imported when needed (in handleImageSelected)
+import { Check, AlertTriangle, X, Lock, Unlock } from 'lucide-react';
 import { Button } from '@/renderer/components/ui/button';
 import { Input } from '@/renderer/components/ui/input';
 import { Label } from '@/renderer/components/ui/label';
@@ -315,7 +316,7 @@ function DerivedColorInput({
             }`}
             title={isLocked ? 'Locked (manual override) - click to auto-calculate' : 'Auto-calculated - click to lock'}
           >
-            {isLocked ? '🔒' : '🔓'}
+            {isLocked ? <Lock size={14} /> : <Unlock size={14} />}
           </button>
           <input
             type="color"
@@ -848,13 +849,19 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 min-h-[20px]">
                 {pasteValidation.status === 'valid' && (
-                  <span className="text-green-500 text-xs">✓ {pasteValidation.message}</span>
+                  <span className="text-green-500 text-xs flex items-center gap-1">
+                    <Check size={12} /> {pasteValidation.message}
+                  </span>
                 )}
                 {pasteValidation.status === 'warning' && (
-                  <span className="text-yellow-500 text-xs">⚠ {pasteValidation.message}</span>
+                  <span className="text-yellow-500 text-xs flex items-center gap-1">
+                    <AlertTriangle size={12} /> {pasteValidation.message}
+                  </span>
                 )}
                 {pasteValidation.status === 'error' && (
-                  <span className="text-red-500 text-xs">✗ {pasteValidation.message}</span>
+                  <span className="text-red-500 text-xs flex items-center gap-1">
+                    <X size={12} /> {pasteValidation.message}
+                  </span>
                 )}
               </div>
               <Button

@@ -338,7 +338,20 @@ function createQuickSwitcher() {
   // Send event to notify renderer that quick switcher opened
   quickSwitcherWindow.webContents.once('did-finish-load', () => {
     if (quickSwitcherWindow) {
+      // Focus the webContents so keyboard input works immediately
+      quickSwitcherWindow.webContents.focus();
       quickSwitcherWindow.webContents.send('quick-switcher-opened');
+    }
+  });
+
+  // Handle Escape key at the Electron level (before it reaches the renderer)
+  quickSwitcherWindow.webContents.on('before-input-event', (event, input) => {
+    if (input.key === 'Escape' && input.type === 'keyDown') {
+      event.preventDefault();
+      logger.info('Escape pressed - hiding quick switcher');
+      if (quickSwitcherWindow) {
+        quickSwitcherWindow.hide();
+      }
     }
   });
 }

@@ -4,6 +4,19 @@ import { SetupWizardModal } from './SetupWizardModal';
 import { Switch } from '@/renderer/components/ui/switch';
 import { Button } from '@/renderer/components/ui/button';
 import { PluginCard } from './PluginCard';
+import {
+  Monitor,
+  FileText,
+  Terminal,
+  Rocket,
+  Cpu,
+  MessageCircle,
+  LayoutGrid,
+  Package,
+  RefreshCw,
+  Plug,
+  Check,
+} from 'lucide-react';
 
 // Plugin definitions for auto-setup, organized by category
 const PLUGIN_CATEGORIES = [
@@ -148,23 +161,24 @@ export function ApplicationsView() {
   };
 
   const getCategoryIcon = (category: string) => {
+    const iconProps = { size: 16, className: 'inline-block' };
     switch (category) {
       case 'terminal':
-        return '💻';
+        return <Monitor {...iconProps} />;
       case 'editor':
-        return '📝';
+        return <FileText {...iconProps} />;
       case 'cli':
-        return '⚙️';
+        return <Terminal {...iconProps} />;
       case 'launcher':
-        return '🚀';
+        return <Rocket {...iconProps} />;
       case 'system':
-        return '🖥️';
+        return <Cpu {...iconProps} />;
       case 'communication':
-        return '💬';
+        return <MessageCircle {...iconProps} />;
       case 'tiling':
-        return '🪟';
+        return <LayoutGrid {...iconProps} />;
       default:
-        return '📦';
+        return <Package {...iconProps} />;
     }
   };
 
@@ -233,7 +247,7 @@ export function ApplicationsView() {
           Detected: {apps.filter(a => a.isInstalled).length} / {apps.length} apps installed
         </p>
         <Button variant="outline" onClick={loadApps}>
-          🔄 Refresh
+          <RefreshCw size={14} className="mr-1" /> Refresh
         </Button>
       </div>
 
@@ -241,7 +255,7 @@ export function ApplicationsView() {
       <div className="plugins-section">
         <div className="plugins-header">
           <h3 className="section-title">
-            <span className="category-icon">🔌</span>
+            <span className="category-icon"><Plug size={16} className="inline-block" /></span>
             Plugins
             <span className="category-subtitle">(Auto-setup with presets)</span>
           </h3>
@@ -299,7 +313,7 @@ export function ApplicationsView() {
                       </div>
                       <div className="app-badges">
                         {app.isInstalled ? (
-                          <span className="badge badge-installed">✓ Installed</span>
+                          <span className="badge badge-installed"><Check size={12} className="inline-block mr-0.5" /> Installed</span>
                         ) : (
                           <span className="badge badge-not-found">Not Found</span>
                         )}

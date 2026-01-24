@@ -21,6 +21,7 @@ import {
 } from '@/renderer/components/ui/dialog';
 import { Button } from '@/renderer/components/ui/button';
 import { Input } from '@/renderer/components/ui/input';
+import { Palette, Pencil, AppWindow, Image, Settings, Star, Download } from 'lucide-react';
 
 type FilterMode = 'all' | 'light' | 'dark' | 'favorites';
 type SortMode = 'default' | 'name-asc' | 'name-desc' | 'recent';
@@ -31,7 +32,8 @@ function App() {
   const [filterMode, setFilterMode] = useState<FilterMode>('all');
   const [sortMode, setSortMode] = useState<SortMode>('default');
   const [editorTheme, setEditorTheme] = useState<Theme | undefined>(undefined);
-  const [isQuickSwitcher, setIsQuickSwitcher] = useState(false);
+  // Check hash synchronously to avoid rendering full app then switching
+  const [isQuickSwitcher] = useState(() => window.location.hash === '#/quick-switcher');
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showImportUrlModal, setShowImportUrlModal] = useState(false);
   const [importUrl, setImportUrl] = useState('');
@@ -41,21 +43,19 @@ function App() {
   // Apply the current theme's colors to the app's own UI
   useThemeSelfStyling();
 
-  // Detect if this is the quick switcher window and check onboarding status
+  // Initialize main window (onboarding + UI state restore)
+  // Skip for quick switcher window
   useEffect(() => {
-    const hash = window.location.hash;
-    if (hash === '#/quick-switcher') {
-      setIsQuickSwitcher(true);
-    } else {
-      // Parallelize independent async operations for faster startup
-      Promise.all([
-        checkOnboardingStatus(),
-        restoreUIState(),
-      ]).catch(error => {
-        console.error('Failed to initialize app:', error);
-      });
-    }
-  }, []);
+    if (isQuickSwitcher) return;
+
+    // Parallelize independent async operations for faster startup
+    Promise.all([
+      checkOnboardingStatus(),
+      restoreUIState(),
+    ]).catch(error => {
+      console.error('Failed to initialize app:', error);
+    });
+  }, [isQuickSwitcher]);
 
   async function checkOnboardingStatus() {
     try {
@@ -215,31 +215,31 @@ function App() {
             className={`nav-item ${activeView === 'themes' ? 'active' : ''}`}
             onClick={() => setActiveView('themes')}
           >
-            🎨 Themes
+            <Palette size={18} /> Themes
           </button>
           <button
             className={`nav-item ${activeView === 'editor' ? 'active' : ''}`}
             onClick={() => setActiveView('editor')}
           >
-            ✏️ Editor
+            <Pencil size={18} /> Editor
           </button>
           <button
             className={`nav-item ${activeView === 'apps' ? 'active' : ''}`}
             onClick={() => setActiveView('apps')}
           >
-            📱 Apps
+            <AppWindow size={18} /> Apps
           </button>
           <button
             className={`nav-item ${activeView === 'wallpapers' ? 'active' : ''}`}
             onClick={() => setActiveView('wallpapers')}
           >
-            🖼️ Wallpapers
+            <Image size={18} /> Wallpapers
           </button>
           <button
             className={`nav-item ${activeView === 'settings' ? 'active' : ''}`}
             onClick={() => setActiveView('settings')}
           >
-            ⚙️ Settings
+            <Settings size={18} /> Settings
           </button>
         </nav>
       </div>
@@ -278,7 +278,7 @@ function App() {
                   className={`filter-chip ${filterMode === 'favorites' ? 'active' : ''}`}
                   onClick={() => setFilterMode('favorites')}
                 >
-                  ★ Favorites
+                  <Star size={12} className="inline-block mr-1" /> Favorites
                 </button>
                 <select
                   className="sort-dropdown"
@@ -296,7 +296,7 @@ function App() {
                   onClick={() => setShowImportUrlModal(true)}
                   title="Import theme from URL"
                 >
-                  📥 Import from URL
+                  <Download size={14} className="inline-block mr-1" /> Import from URL
                 </button>
               </div>
             </div>

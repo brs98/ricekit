@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Theme, AppInfo } from '../../shared/types';
-import { Check } from 'lucide-react';
+import { Check, Sparkles, Target, RefreshCw, Zap } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -247,7 +247,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
               <div className="text-left space-y-4 mb-8">
                 <div className="flex items-start">
                   <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 mr-4">
-                    <span className="text-lg">✨</span>
+                    <Sparkles size={20} />
                   </div>
                   <div>
                     <h3 className="font-semibold mb-1">One Theme, Everywhere</h3>
@@ -258,7 +258,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
                 </div>
                 <div className="flex items-start">
                   <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 mr-4">
-                    <span className="text-lg">🎯</span>
+                    <Target size={20} />
                   </div>
                   <div>
                     <h3 className="font-semibold mb-1">Beautiful Themes</h3>
@@ -269,7 +269,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
                 </div>
                 <div className="flex items-start">
                   <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 mr-4">
-                    <span className="text-lg">🔄</span>
+                    <RefreshCw size={20} />
                   </div>
                   <div>
                     <h3 className="font-semibold mb-1">Automatic Switching</h3>
@@ -280,7 +280,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
                 </div>
                 <div className="flex items-start">
                   <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 mr-4">
-                    <span className="text-lg">⚡</span>
+                    <Zap size={20} />
                   </div>
                   <div>
                     <h3 className="font-semibold mb-1">Quick Access</h3>
