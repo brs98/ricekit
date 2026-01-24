@@ -253,20 +253,29 @@ export const WallpapersView: React.FC = () => {
     return (
       <div className="wallpapers-view">
         <div className="wallpapers-header">
-          <h1>Wallpapers</h1>
-          <p>Current theme: <strong>{currentTheme}</strong></p>
+          <div>
+            <h1>Wallpapers</h1>
+            <p>Current theme: <strong>{currentTheme}</strong></p>
+          </div>
         </div>
         <div className="empty-state">
-          <p>No wallpapers available for this theme.</p>
-          <p className="empty-state-hint">
-            Add wallpapers to get started.
+          <div className="empty-state-icon">
+            <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground/40">
+              <rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect>
+              <circle cx="9" cy="9" r="2"></circle>
+              <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path>
+            </svg>
+          </div>
+          <p className="text-base font-medium text-foreground/80">No wallpapers yet</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Add images to personalize your theme
           </p>
           <Button
             onClick={handleAddWallpapers}
             disabled={isAdding}
-            className="mt-4"
+            className="mt-5"
           >
-            {isAdding ? 'Adding...' : '+ Add Wallpapers'}
+            {isAdding ? 'Adding...' : 'Add Wallpapers'}
           </Button>
         </div>
       </div>

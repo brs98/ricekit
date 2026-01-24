@@ -320,43 +320,46 @@ function App() {
           )}
         </div>
         <div className="content-body">
-          {activeView === 'themes' && (
-            <ThemeGrid
-              searchQuery={searchQuery}
-              filterMode={filterMode}
-              sortMode={sortMode}
-              onEditTheme={(theme) => {
-                setEditorTheme(theme);
-                setActiveView('editor');
-              }}
-            />
-          )}
-          {/* Lazy-loaded views wrapped in Suspense */}
-          <Suspense fallback={<div className="view-loading">Loading view...</div>}>
-            {activeView === 'editor' && (
-              <ThemeEditor
-                initialTheme={editorTheme?.metadata}
-                sourceTheme={editorTheme}
-                onSave={() => {
-                  setActiveView('themes');
-                  setEditorTheme(undefined);
-                }}
-                onCancel={() => {
-                  setActiveView('themes');
-                  setEditorTheme(undefined);
+          {/* View container with key for transition animation */}
+          <div className="view-container" key={activeView}>
+            {activeView === 'themes' && (
+              <ThemeGrid
+                searchQuery={searchQuery}
+                filterMode={filterMode}
+                sortMode={sortMode}
+                onEditTheme={(theme) => {
+                  setEditorTheme(theme);
+                  setActiveView('editor');
                 }}
               />
             )}
-            {activeView === 'apps' && (
-              <ApplicationsView />
-            )}
-            {activeView === 'wallpapers' && (
-              <WallpapersView />
-            )}
-            {activeView === 'settings' && (
-              <SettingsView />
-            )}
-          </Suspense>
+            {/* Lazy-loaded views wrapped in Suspense */}
+            <Suspense fallback={<div className="view-loading">Loading view...</div>}>
+              {activeView === 'editor' && (
+                <ThemeEditor
+                  initialTheme={editorTheme?.metadata}
+                  sourceTheme={editorTheme}
+                  onSave={() => {
+                    setActiveView('themes');
+                    setEditorTheme(undefined);
+                  }}
+                  onCancel={() => {
+                    setActiveView('themes');
+                    setEditorTheme(undefined);
+                  }}
+                />
+              )}
+              {activeView === 'apps' && (
+                <ApplicationsView />
+              )}
+              {activeView === 'wallpapers' && (
+                <WallpapersView />
+              )}
+              {activeView === 'settings' && (
+                <SettingsView />
+              )}
+            </Suspense>
+          </div>
         </div>
       </div>
     </div>

@@ -192,15 +192,41 @@ export function ThemeDetailModal({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto space-y-6 py-4">
+          <div className="flex-1 overflow-y-auto space-y-5 py-4">
+            {/* Wallpaper Banner (if available) */}
+            {wallpapers.length > 0 && !wallpapersLoading && (
+              <div className="-mx-6 -mt-4">
+                <button
+                  className="relative w-full aspect-[21/9] overflow-hidden group cursor-pointer"
+                  onClick={() => setSelectedWallpaper(wallpapers[0])}
+                >
+                  <img
+                    src={`local-file://${wallpapers[0]}`}
+                    alt="Theme wallpaper"
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
+                  <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between">
+                    <span className="text-xs text-foreground/80 flex items-center gap-1.5">
+                      <ImageIcon size={12} />
+                      {wallpapers.length} wallpaper{wallpapers.length > 1 ? 's' : ''}
+                    </span>
+                    <span className="text-xs text-foreground/60 opacity-0 group-hover:opacity-100 transition-opacity">
+                      Click to preview
+                    </span>
+                  </div>
+                </button>
+              </div>
+            )}
+
             {/* Description */}
             <p className="text-sm text-muted-foreground">{theme.metadata.description}</p>
 
-            {/* Terminal Preview */}
+            {/* Terminal Preview - Larger */}
             <div className="space-y-2">
-              <h3 className="text-sm font-semibold">Terminal Preview</h3>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Terminal Preview</h3>
               <div
-                className="rounded-[10px] p-4 font-mono text-sm border"
+                className="rounded-lg p-5 font-mono text-[13px] leading-relaxed border shadow-sm"
                 style={{
                   backgroundColor: colors.background,
                   color: colors.foreground,
@@ -225,7 +251,7 @@ export function ThemeDetailModal({
                 <div>
                   <span style={{ color: colors.green }}>  new file:   src/utils.ts</span>
                 </div>
-                <div>
+                <div className="mt-2">
                   <span style={{ color: colors.foreground }}>$ npm test</span>
                 </div>
                 <div className="flex items-center">
@@ -235,118 +261,139 @@ export function ThemeDetailModal({
               </div>
             </div>
 
-            {/* Code Preview */}
+            {/* Code Preview - Larger */}
             <div className="space-y-2">
-              <h3 className="text-sm font-semibold">Code Preview</h3>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Code Preview</h3>
               <div
-                className="rounded-[10px] p-4 font-mono text-sm border"
+                className="rounded-lg p-5 font-mono text-[13px] leading-relaxed border shadow-sm"
                 style={{
                   backgroundColor: colors.background,
                   color: colors.foreground,
                   borderColor: colors.border,
                 }}
               >
+                <div><span style={{ color: colors.brightBlack }}>{'// TypeScript example'}</span></div>
                 <div>
-                  <span style={{ color: colors.magenta }}>function</span>
-                  <span style={{ color: colors.blue }}> greet</span>
-                  <span style={{ color: colors.foreground }}>(</span>
-                  <span style={{ color: colors.cyan }}>name</span>
+                  <span style={{ color: colors.magenta }}>interface</span>
+                  <span style={{ color: colors.yellow }}> User</span>
+                  <span style={{ color: colors.foreground }}> {'{'}</span>
+                </div>
+                <div>
+                  <span style={{ color: colors.cyan }}>  name</span>
                   <span style={{ color: colors.foreground }}>: </span>
                   <span style={{ color: colors.yellow }}>string</span>
-                  <span style={{ color: colors.foreground }}>) {'{'}</span>
+                  <span style={{ color: colors.foreground }}>;</span>
+                </div>
+                <div>
+                  <span style={{ color: colors.cyan }}>  age</span>
+                  <span style={{ color: colors.foreground }}>: </span>
+                  <span style={{ color: colors.yellow }}>number</span>
+                  <span style={{ color: colors.foreground }}>;</span>
+                </div>
+                <div><span style={{ color: colors.foreground }}>{'}'}</span></div>
+                <div className="mt-2">
+                  <span style={{ color: colors.magenta }}>const</span>
+                  <span style={{ color: colors.blue }}> greet</span>
+                  <span style={{ color: colors.foreground }}> = (</span>
+                  <span style={{ color: colors.cyan }}>user</span>
+                  <span style={{ color: colors.foreground }}>: </span>
+                  <span style={{ color: colors.yellow }}>User</span>
+                  <span style={{ color: colors.foreground }}>) =&gt; {'{'}</span>
                 </div>
                 <div>
                   <span style={{ color: colors.foreground }}>  </span>
                   <span style={{ color: colors.magenta }}>return</span>
-                  <span style={{ color: colors.foreground }}> </span>
-                  <span style={{ color: colors.green }}>`Hello, ${'{'}name{'}'}`</span>
+                  <span style={{ color: colors.green }}> `Hello, ${'{'}user.name{'}'}`</span>
                   <span style={{ color: colors.foreground }}>;</span>
                 </div>
-                <div>
-                  <span style={{ color: colors.foreground }}>{'}'}</span>
-                </div>
+                <div><span style={{ color: colors.foreground }}>{'}'}</span></div>
               </div>
             </div>
 
-            {/* Wallpapers */}
-            {wallpapers.length > 0 && (
+            {/* More Wallpapers (if more than 1) */}
+            {wallpapers.length > 1 && (
               <div className="space-y-2">
-                <h3 className="text-sm font-semibold flex items-center gap-2">
-                  <ImageIcon size={14} />
-                  Wallpapers
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2">
+                  More Wallpapers
                 </h3>
-                {wallpapersLoading ? (
-                  <div className="text-sm text-muted-foreground">Loading wallpapers...</div>
-                ) : (
-                  <div className="grid grid-cols-3 gap-2">
-                    {wallpapers.map((wallpaper, index) => (
-                      <button
-                        key={wallpaper}
-                        className="relative aspect-video rounded-[8px] overflow-hidden border border-border/50 hover:border-primary transition-colors duration-150 group"
-                        onClick={() => setSelectedWallpaper(wallpaper)}
-                        title="Click to preview"
-                      >
-                        <img
-                          src={`local-file://${wallpaper}`}
-                          alt={`Wallpaper ${index + 1}`}
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-foreground/40 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex items-center justify-center">
-                          <ImageIcon size={20} className="text-background" />
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
+                <div className="grid grid-cols-4 gap-2">
+                  {wallpapers.slice(1).map((wallpaper, index) => (
+                    <button
+                      key={wallpaper}
+                      className="relative aspect-video rounded-md overflow-hidden border border-border/50 hover:border-primary transition-all duration-150 group hover:scale-[1.02]"
+                      onClick={() => setSelectedWallpaper(wallpaper)}
+                      title="Click to preview"
+                    >
+                      <img
+                        src={`local-file://${wallpaper}`}
+                        alt={`Wallpaper ${index + 2}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 
-            {/* Main Colors */}
-            <div className="space-y-2">
-              <h3 className="text-sm font-semibold">Main Colors</h3>
-              <div className="grid grid-cols-2 gap-1">
-                {mainColors.map(({ name, value }) => (
-                  <ColorSwatch
-                    key={name}
-                    name={name}
-                    value={value}
-                    copiedColor={copiedColor}
-                    onCopy={handleCopyColor}
-                  />
-                ))}
-              </div>
-            </div>
+            {/* Color Palette Section */}
+            <div className="space-y-3">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Color Palette</h3>
 
-            {/* ANSI Colors */}
-            <div className="space-y-2">
-              <h3 className="text-sm font-semibold">ANSI Colors</h3>
-              <div className="grid grid-cols-2 gap-1">
-                {ansiColors.map(({ name, value }) => (
-                  <ColorSwatch
-                    key={name}
-                    name={name}
-                    value={value}
-                    copiedColor={copiedColor}
-                    onCopy={handleCopyColor}
-                  />
-                ))}
+              {/* Main Colors - Always expanded */}
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium">Main Colors</h4>
+                <div className="grid grid-cols-2 gap-1">
+                  {mainColors.map(({ name, value }) => (
+                    <ColorSwatch
+                      key={name}
+                      name={name}
+                      value={value}
+                      copiedColor={copiedColor}
+                      onCopy={handleCopyColor}
+                    />
+                  ))}
+                </div>
               </div>
-            </div>
 
-            {/* Bright Colors */}
-            <div className="space-y-2">
-              <h3 className="text-sm font-semibold">Bright Colors</h3>
-              <div className="grid grid-cols-2 gap-1">
-                {brightColors.map(({ name, value }) => (
-                  <ColorSwatch
-                    key={name}
-                    name={name}
-                    value={value}
-                    copiedColor={copiedColor}
-                    onCopy={handleCopyColor}
-                  />
-                ))}
-              </div>
+              {/* ANSI Colors - Collapsible */}
+              <details className="group">
+                <summary className="text-sm font-medium cursor-pointer hover:text-primary transition-colors list-none flex items-center gap-2">
+                  <span className="text-[10px] text-muted-foreground group-open:rotate-90 transition-transform">▶</span>
+                  ANSI Colors
+                  <span className="text-xs text-muted-foreground">({ansiColors.length})</span>
+                </summary>
+                <div className="grid grid-cols-2 gap-1 mt-2 pl-4">
+                  {ansiColors.map(({ name, value }) => (
+                    <ColorSwatch
+                      key={name}
+                      name={name}
+                      value={value}
+                      copiedColor={copiedColor}
+                      onCopy={handleCopyColor}
+                    />
+                  ))}
+                </div>
+              </details>
+
+              {/* Bright Colors - Collapsible */}
+              <details className="group">
+                <summary className="text-sm font-medium cursor-pointer hover:text-primary transition-colors list-none flex items-center gap-2">
+                  <span className="text-[10px] text-muted-foreground group-open:rotate-90 transition-transform">▶</span>
+                  Bright Colors
+                  <span className="text-xs text-muted-foreground">({brightColors.length})</span>
+                </summary>
+                <div className="grid grid-cols-2 gap-1 mt-2 pl-4">
+                  {brightColors.map(({ name, value }) => (
+                    <ColorSwatch
+                      key={name}
+                      name={name}
+                      value={value}
+                      copiedColor={copiedColor}
+                      onCopy={handleCopyColor}
+                    />
+                  ))}
+                </div>
+              </details>
             </div>
           </div>
 

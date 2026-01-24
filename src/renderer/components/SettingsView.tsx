@@ -470,19 +470,14 @@ export function SettingsView() {
           </SettingItem>
 
           {preferences.schedule?.enabled && preferences.schedule?.schedules?.length === 0 && (
-            <div className="rounded-[10px] bg-muted p-4 text-sm">
-              <p className="text-muted-foreground">
-                Scheduling is enabled but no schedules are configured. Click &quot;Manage Schedules&quot; to add one.
-              </p>
-            </div>
+            <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
+              Scheduling is enabled but no schedules are configured.
+            </p>
           )}
 
-          <div className="rounded-[10px] bg-muted p-4 text-sm">
-            <p className="text-muted-foreground">
-              Note: Manually applying a theme or wallpaper will automatically disable scheduling.
-              Re-enable it here when you want to resume scheduled switching.
-            </p>
-          </div>
+          <p className="text-xs text-muted-foreground/70 mt-3">
+            Manually applying a theme or wallpaper will disable scheduling until re-enabled.
+          </p>
         </section>
 
         {/* Notifications Section */}

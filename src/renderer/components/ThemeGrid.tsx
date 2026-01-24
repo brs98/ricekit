@@ -176,9 +176,26 @@ export function ThemeGrid({ searchQuery = '', filterMode = 'all', sortMode = 'de
 
   if (loading) {
     return (
-      <div className="theme-grid-loading">
-        <div className="loading-spinner"></div>
-        <p>Loading themes...</p>
+      <div className="theme-grid-skeleton">
+        {/* Skeleton cards */}
+        {[...Array(8)].map((_, i) => (
+          <div key={i} className="skeleton-card">
+            <div className="skeleton-header">
+              <div className="skeleton-title"></div>
+              <div className="skeleton-icon"></div>
+            </div>
+            <div className="skeleton-gradient"></div>
+            <div className="skeleton-swatches">
+              {[...Array(6)].map((_, j) => (
+                <div key={j} className="skeleton-swatch"></div>
+              ))}
+            </div>
+            <div className="skeleton-footer">
+              <div className="skeleton-badge"></div>
+              <div className="skeleton-button"></div>
+            </div>
+          </div>
+        ))}
       </div>
     );
   }
@@ -195,10 +212,42 @@ export function ThemeGrid({ searchQuery = '', filterMode = 'all', sortMode = 'de
   if (filteredAndSortedThemes.length === 0) {
     return (
       <div className="theme-grid-empty">
-        <p>No themes found matching your filters.</p>
-        {filterMode !== 'all' && (
-          <p className="text-sm text-gray-500">Try changing your filter or search query.</p>
-        )}
+        <div className="empty-state-icon">
+          {filterMode === 'favorites' ? (
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground/50">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+          ) : searchQuery ? (
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground/50">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.3-4.3"></path>
+            </svg>
+          ) : (
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground/50">
+              <circle cx="13.5" cy="6.5" r="0.5" fill="currentColor"></circle>
+              <circle cx="17.5" cy="10.5" r="0.5" fill="currentColor"></circle>
+              <circle cx="8.5" cy="7.5" r="0.5" fill="currentColor"></circle>
+              <circle cx="6.5" cy="12.5" r="0.5" fill="currentColor"></circle>
+              <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.555C21.965 6.012 17.461 2 12 2z"></path>
+            </svg>
+          )}
+        </div>
+        <p className="text-base font-medium text-foreground/80">
+          {filterMode === 'favorites'
+            ? 'No favorites yet'
+            : searchQuery
+            ? `No results for "${searchQuery}"`
+            : 'No themes found'}
+        </p>
+        <p className="text-sm text-muted-foreground mt-1">
+          {filterMode === 'favorites'
+            ? 'Star themes you love to find them here'
+            : searchQuery
+            ? 'Try a different search term'
+            : filterMode !== 'all'
+            ? `No ${filterMode} themes match your criteria`
+            : 'Check back later or create your own'}
+        </p>
       </div>
     );
   }
