@@ -217,9 +217,86 @@ export function ApplicationsView() {
   if (loading) {
     return (
       <div className="apps-view">
-        <div className="loading-spinner">
-          <div className="spinner"></div>
-          <p>Detecting installed applications...</p>
+        {/* Header Skeleton */}
+        <div className="apps-header">
+          <div className="flex flex-col gap-2 flex-1">
+            <div className="h-4 w-96 bg-muted rounded animate-pulse" />
+            <div className="h-3 w-48 bg-muted rounded animate-pulse opacity-60" />
+          </div>
+          <div className="h-9 w-24 bg-muted rounded-lg animate-pulse" />
+        </div>
+
+        {/* Plugins Section Skeleton */}
+        <div className="plugins-section">
+          <div className="plugins-header">
+            <div className="flex items-center gap-2 mb-6">
+              <div className="h-4 w-4 bg-muted rounded animate-pulse" />
+              <div className="h-5 w-32 bg-muted rounded animate-pulse" />
+            </div>
+          </div>
+
+          {/* Plugin Categories - 3 skeleton plugin cards */}
+          {[1, 2, 3].map((categoryIndex) => (
+            <div key={categoryIndex} className="plugin-category">
+              <div className="h-4 w-40 bg-muted rounded animate-pulse mb-3 opacity-70" />
+              <div className="plugin-cards">
+                {[1, 2].map((cardIndex) => (
+                  <div
+                    key={cardIndex}
+                    className="bg-card border border-border rounded-xl p-4 flex flex-col gap-3"
+                    style={{ animationDelay: `${(categoryIndex * 2 + cardIndex) * 100}ms` }}
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="h-5 w-32 bg-muted rounded animate-pulse" />
+                      <div className="h-6 w-12 bg-muted rounded-full animate-pulse" />
+                    </div>
+                    <div className="h-3 w-full bg-muted rounded animate-pulse opacity-60" />
+                    <div className="h-3 w-3/4 bg-muted rounded animate-pulse opacity-60" />
+                    <div className="flex gap-2 mt-2">
+                      <div className="h-8 w-20 bg-muted rounded-md animate-pulse" />
+                      <div className="h-8 w-20 bg-muted rounded-md animate-pulse" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* App Categories Skeleton */}
+        <div className="apps-list">
+          {[1, 2, 3].map((categoryIndex) => (
+            <div key={categoryIndex} className="app-category">
+              {/* Category Title */}
+              <div className="flex items-center gap-2 mb-3">
+                <div className="h-3 w-3 bg-muted rounded animate-pulse" />
+                <div className="h-4 w-24 bg-muted rounded animate-pulse" />
+                <div className="h-3 w-12 bg-muted rounded animate-pulse opacity-60" />
+              </div>
+
+              {/* App Cards Grid */}
+              <div className="app-cards">
+                {[1, 2, 3].map((cardIndex) => (
+                  <div
+                    key={cardIndex}
+                    className="bg-card border border-border rounded-lg p-3 flex flex-col gap-2"
+                    style={{ animationDelay: `${(categoryIndex * 3 + cardIndex) * 80}ms` }}
+                  >
+                    <div className="flex justify-between items-center">
+                      <div className="h-4 w-28 bg-muted rounded animate-pulse" />
+                      <div className="h-5 w-10 bg-muted rounded-full animate-pulse" />
+                    </div>
+                    <div className="h-3 w-full bg-muted rounded animate-pulse opacity-50" />
+                    <div className="flex gap-2 mt-1">
+                      <div className="h-7 w-16 bg-muted rounded animate-pulse" />
+                      <div className="h-7 w-16 bg-muted rounded animate-pulse" />
+                      <div className="h-7 w-8 bg-muted rounded animate-pulse" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     );

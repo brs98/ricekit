@@ -223,15 +223,26 @@ export function PluginCard({
 
   if (loading) {
     return (
-      <div className="plugin-card loading">
+      <div className="plugin-card">
         <div className="plugin-card-header">
-          <h4 className="plugin-name">{displayName}</h4>
+          <div className="plugin-name-row">
+            <h4 className="plugin-name">{displayName}</h4>
+            <div className="h-5 w-20 bg-muted rounded animate-pulse" />
+          </div>
+          <div className="h-3 w-full bg-muted rounded animate-pulse mt-2" />
         </div>
         <div className="plugin-card-body">
-          <div className="loading-spinner">
-            <div className="spinner small"></div>
-            <span>Loading...</span>
+          <div className="plugin-config">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="h-3 w-12 bg-muted rounded animate-pulse" />
+              <div className="h-4 w-24 bg-muted rounded animate-pulse" />
+            </div>
+            <div className="h-9 w-full bg-muted rounded-md animate-pulse" />
           </div>
+        </div>
+        <div className="plugin-card-actions">
+          <div className="h-9 w-20 bg-muted rounded-md animate-pulse" />
+          <div className="h-9 w-28 bg-muted rounded-md animate-pulse" />
         </div>
       </div>
     );
