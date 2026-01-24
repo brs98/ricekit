@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import {
   Dialog,
   DialogContent,
@@ -182,9 +183,14 @@ export const WallpapersView: React.FC = () => {
   const handleApplyWallpaper = async (wallpaperPath: string, displayIndex?: number) => {
     try {
       await window.electronAPI.applyWallpaper(wallpaperPath, displayIndex);
+      const fileName = wallpaperPath.split('/').pop() || 'Wallpaper';
+      toast.success('Wallpaper applied', {
+        description: fileName.replace(/\.[^.]+$/, '').replace(/-/g, ' '),
+      });
     } catch (err) {
       console.error('Error applying wallpaper:', err);
       setError('Failed to apply wallpaper. Please try again.');
+      toast.error('Failed to apply wallpaper');
     }
   };
 
@@ -198,14 +204,17 @@ export const WallpapersView: React.FC = () => {
       if (result.added.length > 0) {
         // Reload wallpapers to show the new ones
         await loadWallpapers();
+        toast.success(`Added ${result.added.length} wallpaper${result.added.length > 1 ? 's' : ''}`);
       }
 
       if (result.errors.length > 0) {
         setError(`Some wallpapers failed to add: ${result.errors.join(', ')}`);
+        toast.error('Some wallpapers failed to add');
       }
     } catch (err) {
       console.error('Error adding wallpapers:', err);
       setError('Failed to add wallpapers. Please try again.');
+      toast.error('Failed to add wallpapers');
     } finally {
       setIsAdding(false);
     }
@@ -213,13 +222,18 @@ export const WallpapersView: React.FC = () => {
 
   const handleRemoveWallpaper = async (wallpaperPath: string) => {
     try {
+      const fileName = wallpaperPath.split('/').pop() || 'Wallpaper';
       await window.electronAPI.removeWallpaper(wallpaperPath);
       setWallpaperToDelete(null);
       // Reload wallpapers to reflect the removal
       await loadWallpapers();
+      toast.success('Wallpaper removed', {
+        description: fileName.replace(/\.[^.]+$/, '').replace(/-/g, ' '),
+      });
     } catch (err) {
       console.error('Error removing wallpaper:', err);
       setError('Failed to remove wallpaper. Please try again.');
+      toast.error('Failed to remove wallpaper');
     }
   };
 

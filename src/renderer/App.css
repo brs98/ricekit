@@ -721,9 +721,56 @@ body {
 }
 
 .theme-editor-sidebar {
-  flex: 0 0 400px;
+  flex: 0 0 380px;
   overflow-y: auto;
   padding: 0 16px 16px 0;
+}
+
+/* Collapsible editor sections */
+.editor-section {
+  border: 1px solid rgb(var(--border) / 0.5);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.editor-section[open] {
+  border-color: rgb(var(--border));
+}
+
+.editor-section-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  background: rgb(var(--muted) / 0.3);
+  transition: background 150ms ease;
+  list-style: none;
+}
+
+.editor-section-header::-webkit-details-marker {
+  display: none;
+}
+
+.editor-section-header:hover {
+  background: rgb(var(--muted) / 0.5);
+}
+
+.editor-section-chevron {
+  color: rgb(var(--muted-foreground));
+  transition: transform 150ms ease;
+  flex-shrink: 0;
+}
+
+.editor-section[open] .editor-section-chevron {
+  transform: rotate(90deg);
+}
+
+.editor-section-content {
+  padding: 12px;
+  border-top: 1px solid rgb(var(--border) / 0.5);
 }
 
 .theme-editor-preview {
@@ -2247,74 +2294,77 @@ body {
   font-weight: 600;
 }
 
-/* Shortcut Recorder Styles */
+/* Shortcut Recorder Styles - Keyboard Key Look */
 .shortcut-recorder {
   position: relative;
   display: inline-block;
-  width: 200px;
 }
 
 .shortcut-input {
-  width: 100%;
-  padding: 6px 30px 6px 12px;
+  min-width: 120px;
+  padding: 8px 32px 8px 16px;
   border: 1px solid rgb(var(--border));
-  border-radius: 6px;
-  background: rgb(var(--background));
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgb(var(--card)) 0%, rgb(var(--muted)) 100%);
+  font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
   font-size: 14px;
-  font-weight: 400;
+  font-weight: 500;
   color: rgb(var(--foreground));
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 150ms ease;
   text-align: center;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
+  box-shadow:
+    0 1px 0 rgb(var(--foreground) / 0.1),
+    0 2px 4px rgb(var(--foreground) / 0.05),
+    inset 0 1px 0 rgb(var(--background) / 0.5);
+}
+
+.shortcut-input:hover {
+  border-color: rgb(var(--muted-foreground) / 0.3);
 }
 
 .shortcut-input:focus {
   outline: none;
   border-color: rgb(var(--primary));
-  box-shadow: 0 0 0 3px rgb(var(--primary) / 0.15);
+  box-shadow:
+    0 0 0 3px rgb(var(--primary) / 0.15),
+    0 1px 0 rgb(var(--foreground) / 0.1),
+    inset 0 1px 0 rgb(var(--background) / 0.5);
 }
 
 .shortcut-input.recording {
-  background: rgb(var(--primary) / 0.05);
+  background: linear-gradient(180deg, rgb(var(--primary) / 0.1) 0%, rgb(var(--primary) / 0.05) 100%);
   border-color: rgb(var(--primary));
-  box-shadow: 0 0 0 3px rgb(var(--primary) / 0.15);
-  animation: pulse 1.5s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    box-shadow: 0 0 0 3px rgb(var(--primary) / 0.1);
-  }
-  50% {
-    box-shadow: 0 0 0 5px rgb(var(--primary) / 0.2);
-  }
+  box-shadow:
+    0 0 0 3px rgb(var(--primary) / 0.15),
+    inset 0 1px 2px rgb(var(--foreground) / 0.1);
+  transform: translateY(1px);
 }
 
 .shortcut-clear-button {
   position: absolute;
-  right: 8px;
+  right: 6px;
   top: 50%;
   transform: translateY(-50%);
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   border: none;
-  background: rgb(var(--foreground) / 0.1);
-  border-radius: 50%;
+  background: rgb(var(--foreground) / 0.08);
+  border-radius: 4px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 14px;
   line-height: 1;
   color: rgb(var(--muted-foreground));
-  transition: all 0.2s ease;
+  transition: all 150ms ease;
   padding: 0;
 }
 
 .shortcut-clear-button:hover {
-  background: rgb(var(--foreground) / 0.2);
+  background: rgb(var(--foreground) / 0.15);
   color: rgb(var(--foreground));
 }
 

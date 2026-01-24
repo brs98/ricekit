@@ -4,6 +4,7 @@ import { ThemeCard } from './ThemeCard';
 import { ThemeDetailModal } from './ThemeDetailModal';
 import { showErrorAlert } from '../utils/errorDisplay';
 import { emitThemeApplied } from '../hooks/useThemeSelfStyling';
+import { toast } from 'sonner';
 
 interface ThemeGridProps {
   searchQuery?: string;
@@ -72,21 +73,34 @@ export function ThemeGrid({ searchQuery = '', filterMode = 'all', sortMode = 'de
 
       // Update the app's own UI with the new theme colors
       emitThemeApplied();
+
+      // Show success toast
+      const theme = themes.find(t => t.name === themeName);
+      toast.success('Theme applied', {
+        description: theme?.metadata.name || themeName,
+      });
     } catch (err) {
       console.error('Failed to apply theme:', err);
       showErrorAlert(err);
+      toast.error('Failed to apply theme');
     }
   };
 
   const handleToggleFavorite = async (themeName: string) => {
     try {
       const prefs = await window.electronAPI.getPreferences();
-      const newFavorites = favorites.includes(themeName)
+      const isRemoving = favorites.includes(themeName);
+      const newFavorites = isRemoving
         ? favorites.filter(f => f !== themeName)
         : [...favorites, themeName];
 
       setFavorites(newFavorites);
       await window.electronAPI.setPreferences({ ...prefs, favorites: newFavorites });
+
+      const theme = themes.find(t => t.name === themeName);
+      toast(isRemoving ? 'Removed from favorites' : 'Added to favorites', {
+        description: theme?.metadata.name || themeName,
+      });
     } catch (err) {
       console.error('Failed to update favorites:', err);
     }
@@ -94,6 +108,7 @@ export function ThemeGrid({ searchQuery = '', filterMode = 'all', sortMode = 'de
 
   const handleDeleteTheme = async (themeName: string) => {
     try {
+      const theme = themes.find(t => t.name === themeName);
       await window.electronAPI.deleteTheme(themeName);
       // Reload themes to update the grid
       await loadData();
@@ -104,20 +119,29 @@ export function ThemeGrid({ searchQuery = '', filterMode = 'all', sortMode = 'de
         setFavorites(newFavorites);
         await window.electronAPI.setPreferences({ ...prefs, favorites: newFavorites });
       }
+      toast.success('Theme deleted', {
+        description: theme?.metadata.name || themeName,
+      });
     } catch (err) {
       console.error('Failed to delete theme:', err);
       showErrorAlert(err);
+      toast.error('Failed to delete theme');
     }
   };
 
   const handleDuplicateTheme = async (themeName: string) => {
     try {
+      const theme = themes.find(t => t.name === themeName);
       await window.electronAPI.duplicateTheme(themeName);
       // Reload themes to show the new duplicate
       await loadData();
+      toast.success('Theme duplicated', {
+        description: `Created copy of ${theme?.metadata.name || themeName}`,
+      });
     } catch (err) {
       console.error('Failed to duplicate theme:', err);
       showErrorAlert(err);
+      toast.error('Failed to duplicate theme');
     }
   };
 

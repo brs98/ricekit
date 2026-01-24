@@ -14,7 +14,7 @@ import {
 } from '../../shared/colorDerivation';
 import { validateColorJson, ValidationResult } from '../../shared/themeColorValidator';
 // node-vibrant is dynamically imported when needed (in handleImageSelected)
-import { Check, AlertTriangle, X, Lock, Unlock } from 'lucide-react';
+import { Check, AlertTriangle, X, Lock, Unlock, ChevronRight } from 'lucide-react';
 import { Button } from '@/renderer/components/ui/button';
 import { Input } from '@/renderer/components/ui/input';
 import { Label } from '@/renderer/components/ui/label';
@@ -793,151 +793,164 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
   return (
     <div className="theme-editor">
       <div className="theme-editor-sidebar">
-        <div className="space-y-6">
-          {/* Preset Section */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold">Start from Preset</h3>
-            <Select value={selectedPreset} onValueChange={applyPreset}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a preset..." />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(presetSchemes).map(([key, preset]) => (
-                  <SelectItem key={key} value={key}>
-                    {preset.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground">
-              Choose a preset color scheme to start with, then customize colors below
-            </p>
-          </div>
-
-          {/* Image Import Section */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold">Import from Image</h3>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleImageSelected}
-              className="hidden"
-            />
-            <Button
-              variant="secondary"
-              onClick={handleImageImport}
-              disabled={extractingColors}
-              className="w-full"
-            >
-              {extractingColors ? 'Extracting Colors...' : 'Choose Image'}
-            </Button>
-            <p className="text-xs text-muted-foreground">
-              Select an image to extract dominant colors automatically
-            </p>
-          </div>
-
-          {/* Paste Colors Section */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold">Paste Colors</h3>
-            <textarea
-              placeholder='{"background": "#1a1b26", "foreground": "#c0caf5", ...}'
-              className="w-full h-20 font-mono text-xs rounded-[8px] border border-input bg-transparent px-3 py-2 placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none"
-              value={pasteInput}
-              onChange={(e) => setPasteInput(e.target.value)}
-            />
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 min-h-[20px]">
-                {pasteValidation.status === 'valid' && (
-                  <span className="text-green-500 text-xs flex items-center gap-1">
-                    <Check size={12} /> {pasteValidation.message}
-                  </span>
-                )}
-                {pasteValidation.status === 'warning' && (
-                  <span className="text-yellow-500 text-xs flex items-center gap-1">
-                    <AlertTriangle size={12} /> {pasteValidation.message}
-                  </span>
-                )}
-                {pasteValidation.status === 'error' && (
-                  <span className="text-red-500 text-xs flex items-center gap-1">
-                    <X size={12} /> {pasteValidation.message}
-                  </span>
-                )}
+        <div className="space-y-5">
+          {/* Start From Section - Collapsible */}
+          <details open className="editor-section">
+            <summary className="editor-section-header">
+              <ChevronRight size={14} className="editor-section-chevron" />
+              <span>Start From</span>
+            </summary>
+            <div className="editor-section-content space-y-4">
+              {/* Preset */}
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground">Preset</Label>
+                <Select value={selectedPreset} onValueChange={applyPreset}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a preset..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(presetSchemes).map(([key, preset]) => (
+                      <SelectItem key={key} value={key}>
+                        {preset.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={handleApplyPastedColors}
-                disabled={!pasteValidation.isValid}
-              >
-                Apply Colors
-              </Button>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">Copy example:</span>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 px-2 text-xs"
-                onClick={() => {
-                  const baseExample = JSON.stringify({
-                    background: "#1a1b26",
-                    foreground: "#c0caf5",
-                    black: "#15161e",
-                    red: "#f7768e",
-                    green: "#9ece6a",
-                    yellow: "#e0af68",
-                    blue: "#7aa2f7",
-                    magenta: "#bb9af7",
-                    cyan: "#7dcfff",
-                    white: "#a9b1d6"
-                  }, null, 2);
-                  navigator.clipboard.writeText(baseExample);
-                }}
-              >
-                Base (10)
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 px-2 text-xs"
-                onClick={() => {
-                  const fullExample = JSON.stringify({
-                    background: "#1a1b26",
-                    foreground: "#c0caf5",
-                    cursor: "#c0caf5",
-                    selection: "#33467c",
-                    black: "#15161e",
-                    red: "#f7768e",
-                    green: "#9ece6a",
-                    yellow: "#e0af68",
-                    blue: "#7aa2f7",
-                    magenta: "#bb9af7",
-                    cyan: "#7dcfff",
-                    white: "#a9b1d6",
-                    brightBlack: "#414868",
-                    brightRed: "#f7768e",
-                    brightGreen: "#9ece6a",
-                    brightYellow: "#e0af68",
-                    brightBlue: "#7aa2f7",
-                    brightMagenta: "#bb9af7",
-                    brightCyan: "#7dcfff",
-                    brightWhite: "#c0caf5",
-                    accent: "#7aa2f7",
-                    border: "#414868"
-                  }, null, 2);
-                  navigator.clipboard.writeText(fullExample);
-                }}
-              >
-                Full (22)
-              </Button>
-            </div>
-          </div>
 
-          {/* Theme Information Section */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold">Theme Information</h3>
-            <div className="space-y-3">
+              {/* Image Import */}
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground">Extract from Image</Label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageSelected}
+                  className="hidden"
+                />
+                <Button
+                  variant="secondary"
+                  onClick={handleImageImport}
+                  disabled={extractingColors}
+                  className="w-full"
+                  size="sm"
+                >
+                  {extractingColors ? 'Extracting...' : 'Choose Image'}
+                </Button>
+              </div>
+            </div>
+          </details>
+
+          {/* Advanced Section - Collapsed by default */}
+          <details className="editor-section">
+            <summary className="editor-section-header">
+              <ChevronRight size={14} className="editor-section-chevron" />
+              <span>Advanced</span>
+              <span className="text-[10px] text-muted-foreground ml-auto">JSON import</span>
+            </summary>
+            <div className="editor-section-content space-y-3">
+              <textarea
+                placeholder='{"background": "#1a1b26", ...}'
+                className="w-full h-20 font-mono text-xs rounded-md border border-input bg-transparent px-3 py-2 placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none"
+                value={pasteInput}
+                onChange={(e) => setPasteInput(e.target.value)}
+              />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 min-h-[20px]">
+                  {pasteValidation.status === 'valid' && (
+                    <span className="text-green-500 text-xs flex items-center gap-1">
+                      <Check size={12} /> {pasteValidation.message}
+                    </span>
+                  )}
+                  {pasteValidation.status === 'warning' && (
+                    <span className="text-yellow-500 text-xs flex items-center gap-1">
+                      <AlertTriangle size={12} /> {pasteValidation.message}
+                    </span>
+                  )}
+                  {pasteValidation.status === 'error' && (
+                    <span className="text-red-500 text-xs flex items-center gap-1">
+                      <X size={12} /> {pasteValidation.message}
+                    </span>
+                  )}
+                </div>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleApplyPastedColors}
+                  disabled={!pasteValidation.isValid}
+                >
+                  Apply
+                </Button>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span>Copy example:</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-5 px-1.5 text-[10px]"
+                  onClick={() => {
+                    const baseExample = JSON.stringify({
+                      background: "#1a1b26",
+                      foreground: "#c0caf5",
+                      black: "#15161e",
+                      red: "#f7768e",
+                      green: "#9ece6a",
+                      yellow: "#e0af68",
+                      blue: "#7aa2f7",
+                      magenta: "#bb9af7",
+                      cyan: "#7dcfff",
+                      white: "#a9b1d6"
+                    }, null, 2);
+                    navigator.clipboard.writeText(baseExample);
+                  }}
+                >
+                  Base
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-5 px-1.5 text-[10px]"
+                  onClick={() => {
+                    const fullExample = JSON.stringify({
+                      background: "#1a1b26",
+                      foreground: "#c0caf5",
+                      cursor: "#c0caf5",
+                      selection: "#33467c",
+                      black: "#15161e",
+                      red: "#f7768e",
+                      green: "#9ece6a",
+                      yellow: "#e0af68",
+                      blue: "#7aa2f7",
+                      magenta: "#bb9af7",
+                      cyan: "#7dcfff",
+                      white: "#a9b1d6",
+                      brightBlack: "#414868",
+                      brightRed: "#f7768e",
+                      brightGreen: "#9ece6a",
+                      brightYellow: "#e0af68",
+                      brightBlue: "#7aa2f7",
+                      brightMagenta: "#bb9af7",
+                      brightCyan: "#7dcfff",
+                      brightWhite: "#c0caf5",
+                      accent: "#7aa2f7",
+                      border: "#414868"
+                    }, null, 2);
+                    navigator.clipboard.writeText(fullExample);
+                  }}
+                >
+                  Full
+                </Button>
+              </div>
+            </div>
+          </details>
+
+          {/* Theme Information Section - Collapsible */}
+          <details open className="editor-section">
+            <summary className="editor-section-header">
+              <ChevronRight size={14} className="editor-section-chevron" />
+              <span>Theme Info</span>
+            </summary>
+            <div className="editor-section-content space-y-3">
               <div className="space-y-1">
                 <Label htmlFor="theme-name" className="text-xs">Theme Name</Label>
                 <Input
@@ -977,18 +990,19 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
                 />
               </div>
             </div>
-          </div>
+          </details>
 
-          {/* Base Colors Section - the 10 colors users define */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold">Base Colors</h3>
-              <span className="text-xs text-muted-foreground">10 colors</span>
-            </div>
-            <p className="text-xs text-muted-foreground -mt-1">
-              Define these colors - the rest will be auto-calculated
-            </p>
-            <div className="space-y-2">
+          {/* Base Colors Section - Collapsible */}
+          <details open className="editor-section">
+            <summary className="editor-section-header">
+              <ChevronRight size={14} className="editor-section-chevron" />
+              <span>Base Colors</span>
+              <span className="text-[10px] text-muted-foreground ml-auto">10 colors</span>
+            </summary>
+            <div className="editor-section-content space-y-2">
+              <p className="text-xs text-muted-foreground">
+                Define these - the rest will be auto-calculated
+              </p>
               {baseColorKeys.map((key) => (
                 <ColorInput
                   key={key}
@@ -1001,18 +1015,19 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
                 />
               ))}
             </div>
-          </div>
+          </details>
 
-          {/* Derived Colors Section - auto-calculated with optional override */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold">Derived Colors</h3>
-              <span className="text-xs text-muted-foreground">12 colors</span>
-            </div>
-            <p className="text-xs text-muted-foreground -mt-1">
-              Auto-calculated from base colors. Click lock to override.
-            </p>
-            <div className="space-y-2">
+          {/* Derived Colors Section - Collapsible */}
+          <details className="editor-section">
+            <summary className="editor-section-header">
+              <ChevronRight size={14} className="editor-section-chevron" />
+              <span>Derived Colors</span>
+              <span className="text-[10px] text-muted-foreground ml-auto">12 colors</span>
+            </summary>
+            <div className="editor-section-content space-y-2">
+              <p className="text-xs text-muted-foreground">
+                Auto-calculated. Click lock to override.
+              </p>
               {derivedColorKeys.map((key) => (
                 <DerivedColorInput
                   key={key}
@@ -1027,7 +1042,7 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
                 />
               ))}
             </div>
-          </div>
+          </details>
 
           {/* Actions */}
           <div className="flex gap-2 pt-4 border-t border-border">

@@ -1,4 +1,5 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
+import { Toaster } from 'sonner';
 import './App.css';
 import { ThemeGrid } from './components/ThemeGrid';
 import { Theme } from '../shared/types';
@@ -156,6 +157,18 @@ function App() {
 
   return (
     <div className="app">
+      {/* Toast notifications */}
+      <Toaster
+        position="bottom-right"
+        toastOptions={{
+          style: {
+            background: 'rgb(var(--card))',
+            color: 'rgb(var(--foreground))',
+            border: '1px solid rgb(var(--border))',
+          },
+        }}
+      />
+
       {/* Onboarding modal */}
       {showOnboarding && (
         <Suspense fallback={null}>
