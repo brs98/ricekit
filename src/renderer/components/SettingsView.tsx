@@ -414,7 +414,7 @@ export function SettingsView() {
   return (
     <div className="settings-view">
       <div className="settings-header">
-        <h2 className="text-2xl font-bold">Settings</h2>
+        <h2 className="text-2xl font-bold tracking-tight">Settings</h2>
         <p className="text-muted-foreground mt-1">
           Configure MacTheme preferences and behavior
         </p>

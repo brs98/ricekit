@@ -227,7 +227,7 @@ export const WallpapersView: React.FC = () => {
     return (
       <div className="wallpapers-view">
         <div className="wallpapers-header">
-          <h1>Wallpapers</h1>
+          <h1 className="tracking-tight">Wallpapers</h1>
           <p>Loading wallpapers for {currentTheme}...</p>
         </div>
         <div className="loading-spinner"></div>
@@ -239,7 +239,7 @@ export const WallpapersView: React.FC = () => {
     return (
       <div className="wallpapers-view">
         <div className="wallpapers-header">
-          <h1>Wallpapers</h1>
+          <h1 className="tracking-tight">Wallpapers</h1>
           <p className="error-message">{error}</p>
         </div>
         <Button variant="outline" onClick={loadWallpapers}>
@@ -254,7 +254,7 @@ export const WallpapersView: React.FC = () => {
       <div className="wallpapers-view">
         <div className="wallpapers-header">
           <div>
-            <h1>Wallpapers</h1>
+            <h1 className="tracking-tight">Wallpapers</h1>
             <p>Current theme: <strong>{currentTheme}</strong></p>
           </div>
         </div>
@@ -286,7 +286,7 @@ export const WallpapersView: React.FC = () => {
     <div className="wallpapers-view">
       <div className="wallpapers-header">
         <div>
-          <h1>Wallpapers</h1>
+          <h1 className="tracking-tight">Wallpapers</h1>
           <p>
             Current theme: <strong>{currentTheme}</strong> • {wallpapers.length}{' '}
             {wallpapers.length === 1 ? 'wallpaper' : 'wallpapers'}

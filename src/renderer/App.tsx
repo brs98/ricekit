@@ -248,7 +248,7 @@ function App() {
       </div>
       <div className="main-content">
         <div className="content-header">
-          <h2 className="text-2xl font-bold capitalize">{activeView}</h2>
+          <h2 className="text-2xl font-bold capitalize tracking-tight">{activeView}</h2>
           {activeView === 'themes' && (
             <div className="theme-controls">
               {/* Search input with icon */}
