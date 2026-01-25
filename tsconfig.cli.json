@@ -1,0 +1,22 @@
+{
+  "extends": "./tsconfig.main.json",
+  "compilerOptions": {
+    "outDir": "dist/cli",
+    "rootDir": "src",
+    "declaration": false,
+    "declarationMap": false,
+    "sourceMap": false
+  },
+  "include": [
+    "src/cli/**/*",
+    "src/core/**/*",
+    "src/shared/**/*"
+  ],
+  "exclude": [
+    "src/main/**/*",
+    "src/renderer/**/*",
+    "src/preload/**/*",
+    "**/*.test.ts",
+    "**/__tests__/**"
+  ]
+}
