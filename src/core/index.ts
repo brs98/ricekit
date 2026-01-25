@@ -20,3 +20,4 @@ export * as state from './state';
 export * as preferences from './preferences';
 export * as wallpaper from './wallpaper';
 export * as apps from './apps';
+export * as plugins from './plugins';

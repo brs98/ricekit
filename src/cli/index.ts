@@ -16,6 +16,8 @@ import { createWallpaperCommand } from './commands/wallpaper';
 import { createAppsCommand } from './commands/apps';
 import { createConfigCommand } from './commands/config';
 import { createStatusCommand, createDoctorCommand } from './commands/status';
+import { createPluginsCommand } from './commands/plugins';
+import { createCompletionsCommand } from './commands/completions';
 
 // Read version from package.json (will be injected at build time)
 const VERSION = process.env.npm_package_version || '1.0.0';
@@ -49,8 +51,10 @@ program.addCommand(createThemeCommand());
 program.addCommand(createWallpaperCommand());
 program.addCommand(createAppsCommand());
 program.addCommand(createConfigCommand());
+program.addCommand(createPluginsCommand());
 program.addCommand(createStatusCommand());
 program.addCommand(createDoctorCommand());
+program.addCommand(createCompletionsCommand());
 
 // Default action (no command) - show status
 program.action(async () => {

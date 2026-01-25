@@ -1,11 +1,14 @@
 /**
- * App detection operations
+ * App detection and setup operations
  */
 
 import path from 'path';
 import os from 'os';
 import type { AppInfo } from '../../shared/types';
 import { existsSync } from '../utils/fs';
+
+// Re-export setup functions
+export * from './setup';
 
 /**
  * App definitions for detection

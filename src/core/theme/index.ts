@@ -4,3 +4,4 @@
 
 export * from './list';
 export * from './apply';
+export * from './operations';

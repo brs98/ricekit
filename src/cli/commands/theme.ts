@@ -4,7 +4,18 @@
 
 import { Command } from 'commander';
 import chalk from 'chalk';
-import { listThemes, getTheme, getCurrentTheme, applyTheme } from '../../core/theme';
+import {
+  listThemes,
+  getTheme,
+  getCurrentTheme,
+  applyTheme,
+  createTheme,
+  deleteTheme,
+  duplicateTheme,
+  exportTheme,
+  importTheme,
+  importThemeFromUrl,
+} from '../../core/theme';
 import { getCurrentThemeName } from '../../core/state';
 import { isJsonMode, output, success, error, table, formatThemeName } from '../utils/output';
 import type { CLIThemeListOutput, CLIThemeApplyOutput } from '../../core/interfaces';
@@ -211,6 +222,201 @@ export function createThemeCommand(): Command {
         }
       } catch (err) {
         error('Failed to get theme', err instanceof Error ? err.message : undefined);
+        process.exit(EXIT_CODES.ERROR);
+      }
+    });
+
+  // theme create <name>
+  theme
+    .command('create <name>')
+    .description('Create a new custom theme')
+    .option('-a, --author <author>', 'Theme author')
+    .option('-d, --description <desc>', 'Theme description')
+    .option('-b, --base <theme>', 'Base theme to duplicate from')
+    .action(async (name, options) => {
+      try {
+        const result = await createTheme(name, {
+          author: options.author,
+          description: options.description,
+          baseTheme: options.base,
+        });
+
+        if (!result.success) {
+          if (isJsonMode()) {
+            output({ success: false, error: result.error.message });
+          } else {
+            error('Failed to create theme', result.error.message);
+          }
+          process.exit(EXIT_CODES.ERROR);
+        }
+
+        if (isJsonMode()) {
+          output({
+            success: true,
+            name: result.data.name,
+            path: result.data.path,
+          });
+        } else {
+          success(`Created theme: ${chalk.bold(name)}`);
+          console.log(chalk.gray(`  Path: ${result.data.path}`));
+        }
+      } catch (err) {
+        error('Failed to create theme', err instanceof Error ? err.message : undefined);
+        process.exit(EXIT_CODES.ERROR);
+      }
+    });
+
+  // theme delete <name>
+  theme
+    .command('delete <name>')
+    .alias('rm')
+    .description('Delete a custom theme')
+    .option('-f, --force', 'Skip confirmation')
+    .action(async (name, options) => {
+      try {
+        // Confirm deletion unless --force
+        if (!options.force && !isJsonMode()) {
+          const readline = await import('readline');
+          const rl = readline.createInterface({
+            input: process.stdin,
+            output: process.stdout,
+          });
+
+          const answer = await new Promise<string>((resolve) => {
+            rl.question(chalk.yellow(`Delete theme "${name}"? [y/N] `), resolve);
+          });
+          rl.close();
+
+          if (answer.toLowerCase() !== 'y' && answer.toLowerCase() !== 'yes') {
+            console.log(chalk.gray('Cancelled'));
+            return;
+          }
+        }
+
+        const result = await deleteTheme(name);
+
+        if (!result.success) {
+          if (isJsonMode()) {
+            output({ success: false, error: result.error.message });
+          } else {
+            error('Failed to delete theme', result.error.message);
+          }
+          process.exit(EXIT_CODES.ERROR);
+        }
+
+        if (isJsonMode()) {
+          output({ success: true, deleted: name });
+        } else {
+          success(`Deleted theme: ${chalk.bold(name)}`);
+        }
+      } catch (err) {
+        error('Failed to delete theme', err instanceof Error ? err.message : undefined);
+        process.exit(EXIT_CODES.ERROR);
+      }
+    });
+
+  // theme duplicate <name> [new-name]
+  theme
+    .command('duplicate <name> [new-name]')
+    .alias('dup')
+    .description('Duplicate a theme')
+    .action(async (name, newName) => {
+      try {
+        const result = await duplicateTheme(name, newName);
+
+        if (!result.success) {
+          if (isJsonMode()) {
+            output({ success: false, error: result.error.message });
+          } else {
+            error('Failed to duplicate theme', result.error.message);
+          }
+          process.exit(EXIT_CODES.ERROR);
+        }
+
+        if (isJsonMode()) {
+          output({
+            success: true,
+            source: name,
+            name: result.data.name,
+            path: result.data.path,
+          });
+        } else {
+          success(`Duplicated theme: ${chalk.bold(name)} → ${chalk.bold(result.data.name)}`);
+          console.log(chalk.gray(`  Path: ${result.data.path}`));
+        }
+      } catch (err) {
+        error('Failed to duplicate theme', err instanceof Error ? err.message : undefined);
+        process.exit(EXIT_CODES.ERROR);
+      }
+    });
+
+  // theme export <name> [output-path]
+  theme
+    .command('export <name> [output-path]')
+    .description('Export a theme to a zip file')
+    .action(async (name, outputPath) => {
+      try {
+        const result = await exportTheme(name, outputPath);
+
+        if (!result.success) {
+          if (isJsonMode()) {
+            output({ success: false, error: result.error.message });
+          } else {
+            error('Failed to export theme', result.error.message);
+          }
+          process.exit(EXIT_CODES.ERROR);
+        }
+
+        if (isJsonMode()) {
+          output({
+            success: true,
+            theme: name,
+            path: result.data,
+          });
+        } else {
+          success(`Exported theme: ${chalk.bold(name)}`);
+          console.log(chalk.gray(`  File: ${result.data}`));
+        }
+      } catch (err) {
+        error('Failed to export theme', err instanceof Error ? err.message : undefined);
+        process.exit(EXIT_CODES.ERROR);
+      }
+    });
+
+  // theme import <path-or-url>
+  theme
+    .command('import <path-or-url>')
+    .description('Import a theme from a file or URL')
+    .action(async (pathOrUrl) => {
+      try {
+        // Check if it's a URL
+        const isUrl = pathOrUrl.startsWith('http://') || pathOrUrl.startsWith('https://');
+        const result = isUrl
+          ? await importThemeFromUrl(pathOrUrl)
+          : await importTheme(pathOrUrl);
+
+        if (!result.success) {
+          if (isJsonMode()) {
+            output({ success: false, error: result.error.message });
+          } else {
+            error('Failed to import theme', result.error.message);
+          }
+          process.exit(EXIT_CODES.ERROR);
+        }
+
+        if (isJsonMode()) {
+          output({
+            success: true,
+            source: pathOrUrl,
+            name: result.data.name,
+            path: result.data.path,
+          });
+        } else {
+          success(`Imported theme: ${chalk.bold(result.data.name)}`);
+          console.log(chalk.gray(`  Path: ${result.data.path}`));
+        }
+      } catch (err) {
+        error('Failed to import theme', err instanceof Error ? err.message : undefined);
         process.exit(EXIT_CODES.ERROR);
       }
     });

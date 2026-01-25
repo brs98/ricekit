@@ -4,8 +4,8 @@
 
 import { Command } from 'commander';
 import chalk from 'chalk';
-import { detectApps, getInstalledApps, getConfiguredApps } from '../../core/apps';
-import { isJsonMode, output, table } from '../utils/output';
+import { detectApps, getInstalledApps, getConfiguredApps, setupApp, getSetupableApps } from '../../core/apps';
+import { isJsonMode, output, success, error, table } from '../utils/output';
 import type { CLIAppsListOutput } from '../../core/interfaces';
 import { EXIT_CODES } from '../../shared/constants';
 
@@ -70,6 +70,62 @@ export function createAppsCommand(): Command {
           console.error(chalk.red('Failed to list apps:'), err instanceof Error ? err.message : err);
         }
         process.exit(EXIT_CODES.ERROR);
+      }
+    });
+
+  // apps setup <app>
+  apps
+    .command('setup <app>')
+    .description('Configure an app for theming')
+    .action(async (appName) => {
+      try {
+        const result = await setupApp(appName);
+
+        if (!result.success) {
+          if (isJsonMode()) {
+            output({ success: false, error: result.error.message });
+          } else {
+            error('Failed to setup app', result.error.message);
+          }
+          process.exit(EXIT_CODES.ERROR);
+        }
+
+        if (isJsonMode()) {
+          output({
+            success: true,
+            app: appName,
+            configPath: result.data.configPath,
+            backupPath: result.data.backupPath,
+          });
+        } else {
+          success(`Configured ${chalk.bold(appName)} for theming`);
+          console.log(chalk.gray(`  Config: ${result.data.configPath}`));
+          if (result.data.backupPath) {
+            console.log(chalk.gray(`  Backup: ${result.data.backupPath}`));
+          }
+        }
+      } catch (err) {
+        error('Failed to setup app', err instanceof Error ? err.message : undefined);
+        process.exit(EXIT_CODES.ERROR);
+      }
+    });
+
+  // apps supported
+  apps
+    .command('supported')
+    .description('List apps that can be set up')
+    .action(() => {
+      const supportedApps = getSetupableApps();
+
+      if (isJsonMode()) {
+        output({ apps: supportedApps });
+      } else {
+        console.log(chalk.bold('\nApps that can be set up:\n'));
+        supportedApps.forEach((app) => {
+          console.log(`  • ${app}`);
+        });
+        console.log(chalk.gray('\nUse: mactheme apps setup <app>'));
+        console.log();
       }
     });
 
