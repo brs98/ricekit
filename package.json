@@ -1,12 +1,12 @@
 {
-  "name": "mactheme",
+  "name": "flowstate",
   "version": "0.1.0",
   "description": "Unified macOS theming system for terminals, editors, and applications",
   "main": "dist/main/main.js",
   "bin": {
-    "mactheme": "./dist/cli/cli/index.js"
+    "flowstate": "./dist/cli/cli/index.js"
   },
-  "author": "MacTheme Contributors",
+  "author": "Flowstate Contributors",
   "license": "MIT",
   "private": true,
   "scripts": {
@@ -32,7 +32,8 @@
     "package:linux": "npm run build && electron-builder --linux",
     "test": "vitest",
     "test:run": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "icons": "node scripts/generate-icons.js"
   },
   "dependencies": {
     "chalk": "^5.4.1",
@@ -91,14 +92,15 @@
     "wait-on": "^7.2.0"
   },
   "build": {
-    "appId": "com.mactheme.app",
-    "productName": "MacTheme",
+    "appId": "com.flowstate.app",
+    "productName": "Flowstate",
     "directories": {
       "output": "release"
     },
     "files": [
       "dist/**/*",
       "bundled-presets/**/*",
+      "bundled-themes/**/*",
       "package.json",
       "node_modules/**/*"
     ],
