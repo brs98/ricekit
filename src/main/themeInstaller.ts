@@ -70,6 +70,7 @@ export async function installBundledThemes(): Promise<void> {
 
 /**
  * Create themes from code templates (fallback if bundled themes not found)
+ * All 14 themes match Omarchy: https://github.com/basecamp/omarchy/tree/master/themes
  */
 async function createThemesFromTemplates(): Promise<void> {
   const themesDir = getThemesDir();
@@ -77,19 +78,22 @@ async function createThemesFromTemplates(): Promise<void> {
   // Create all themes in parallel for better performance
   await Promise.all([
     createTokyoNightTheme(themesDir),
-    createCatppuccinMochaTheme(themesDir),
+    createCatppuccinTheme(themesDir),
     createCatppuccinLatteTheme(themesDir),
-    createGruvboxDarkTheme(themesDir),
-    createGruvboxLightTheme(themesDir),
+    createEtherealTheme(themesDir),
+    createEverforestTheme(themesDir),
+    createFlexokiLightTheme(themesDir),
+    createGruvboxTheme(themesDir),
+    createHackermanTheme(themesDir),
+    createKanagawaTheme(themesDir),
+    createMatteBlackTheme(themesDir),
     createNordTheme(themesDir),
-    createDraculaTheme(themesDir),
-    createOneDarkTheme(themesDir),
-    createSolarizedDarkTheme(themesDir),
-    createSolarizedLightTheme(themesDir),
+    createOsakaJadeTheme(themesDir),
+    createRistrettoTheme(themesDir),
     createRosePineTheme(themesDir),
   ]);
 
-  logger.info('Created all 11 bundled themes from templates');
+  logger.info('Created all 14 bundled themes from templates');
 
   // Copy wallpapers from bundled-themes if available
   await copyBundledWallpapers(themesDir);
@@ -147,6 +151,7 @@ async function createTokyoNightTheme(themesDir: string): Promise<void> {
   const themeDir = path.join(themesDir, 'tokyo-night');
   await ensureDir(themeDir);
 
+  // Colors from Omarchy: https://github.com/basecamp/omarchy/tree/master/themes/tokyo-night
   const metadata = {
     name: 'Tokyo Night',
     author: 'enkia',
@@ -154,38 +159,38 @@ async function createTokyoNightTheme(themesDir: string): Promise<void> {
     version: '1.0.0',
     colors: {
       background: '#1a1b26',
-      foreground: '#c0caf5',
+      foreground: '#a9b1d6',
       cursor: '#c0caf5',
-      selection: '#283457',
-      black: '#15161e',
+      selection: '#7aa2f7',
+      black: '#32344a',
       red: '#f7768e',
       green: '#9ece6a',
       yellow: '#e0af68',
       blue: '#7aa2f7',
-      magenta: '#bb9af7',
-      cyan: '#7dcfff',
-      white: '#a9b1d6',
-      brightBlack: '#414868',
-      brightRed: '#f7768e',
-      brightGreen: '#9ece6a',
-      brightYellow: '#e0af68',
-      brightBlue: '#7aa2f7',
+      magenta: '#ad8ee6',
+      cyan: '#449dab',
+      white: '#787c99',
+      brightBlack: '#444b6a',
+      brightRed: '#ff7a93',
+      brightGreen: '#b9f27c',
+      brightYellow: '#ff9e64',
+      brightBlue: '#7da6ff',
       brightMagenta: '#bb9af7',
-      brightCyan: '#7dcfff',
-      brightWhite: '#c0caf5',
+      brightCyan: '#0db9d7',
+      brightWhite: '#acb0d0',
       accent: '#7aa2f7',
-      border: '#414868',
+      border: '#363b54',
     },
   };
 
   await writeJson(path.join(themeDir, 'theme.json'), metadata);
 
-  // Create placeholder config files
   await writeFile(path.join(themeDir, 'alacritty.toml'), generateAlacrittyConfig(metadata.colors));
   await writeFile(path.join(themeDir, 'kitty.conf'), generateKittyConfig(metadata.colors));
   await writeFile(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
   await writeFile(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
   await writeFile(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'wezterm.lua'), generateWeztermConfig(metadata.colors));
   await writeFile(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
   await writeFile(path.join(themeDir, 'cursor.json'), generateCursorConfig(metadata.colors));
   await writeFile(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
@@ -200,12 +205,13 @@ async function createTokyoNightTheme(themesDir: string): Promise<void> {
   await writeFile(path.join(themeDir, 'tmux-colors.conf'), generateTmuxConfig(metadata.colors));
 }
 
-async function createCatppuccinMochaTheme(themesDir: string): Promise<void> {
-  const themeDir = path.join(themesDir, 'catppuccin-mocha');
+async function createCatppuccinTheme(themesDir: string): Promise<void> {
+  const themeDir = path.join(themesDir, 'catppuccin');
   await ensureDir(themeDir);
 
+  // Colors from Omarchy: https://github.com/basecamp/omarchy/tree/master/themes/catppuccin
   const metadata = {
-    name: 'Catppuccin Mocha',
+    name: 'Catppuccin',
     author: 'Catppuccin',
     description: 'Soothing pastel theme for the high-spirited - Mocha variant',
     version: '1.0.0',
@@ -213,7 +219,7 @@ async function createCatppuccinMochaTheme(themesDir: string): Promise<void> {
       background: '#1e1e2e',
       foreground: '#cdd6f4',
       cursor: '#f5e0dc',
-      selection: '#585b70',
+      selection: '#f5e0dc',
       black: '#45475a',
       red: '#f38ba8',
       green: '#a6e3a1',
@@ -231,7 +237,7 @@ async function createCatppuccinMochaTheme(themesDir: string): Promise<void> {
       brightCyan: '#94e2d5',
       brightWhite: '#a6adc8',
       accent: '#89b4fa',
-      border: '#585b70',
+      border: '#45475a',
     },
   };
 
@@ -260,6 +266,7 @@ async function createCatppuccinLatteTheme(themesDir: string): Promise<void> {
   const themeDir = path.join(themesDir, 'catppuccin-latte');
   await ensureDir(themeDir);
 
+  // Colors from Omarchy: https://github.com/basecamp/omarchy/tree/master/themes/catppuccin-latte
   const metadata = {
     name: 'Catppuccin Latte',
     author: 'Catppuccin',
@@ -269,25 +276,25 @@ async function createCatppuccinLatteTheme(themesDir: string): Promise<void> {
       background: '#eff1f5',
       foreground: '#4c4f69',
       cursor: '#dc8a78',
-      selection: '#bcc0cc',
-      black: '#5c5f77',
+      selection: '#dc8a78',
+      black: '#bcc0cc',
       red: '#d20f39',
       green: '#40a02b',
       yellow: '#df8e1d',
       blue: '#1e66f5',
       magenta: '#ea76cb',
       cyan: '#179299',
-      white: '#acb0be',
-      brightBlack: '#6c6f85',
+      white: '#5c5f77',
+      brightBlack: '#acb0be',
       brightRed: '#d20f39',
       brightGreen: '#40a02b',
       brightYellow: '#df8e1d',
       brightBlue: '#1e66f5',
       brightMagenta: '#ea76cb',
       brightCyan: '#179299',
-      brightWhite: '#bcc0cc',
+      brightWhite: '#6c6f85',
       accent: '#1e66f5',
-      border: '#bcc0cc',
+      border: '#ccd0da',
     },
   };
 
@@ -298,6 +305,7 @@ async function createCatppuccinLatteTheme(themesDir: string): Promise<void> {
   await writeFile(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
   await writeFile(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
   await writeFile(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'wezterm.lua'), generateWeztermConfig(metadata.colors));
   await writeFile(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
   await writeFile(path.join(themeDir, 'cursor.json'), generateCursorConfig(metadata.colors));
   await writeFile(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
@@ -312,38 +320,39 @@ async function createCatppuccinLatteTheme(themesDir: string): Promise<void> {
   await writeFile(path.join(themeDir, 'tmux-colors.conf'), generateTmuxConfig(metadata.colors));
 }
 
-async function createGruvboxDarkTheme(themesDir: string): Promise<void> {
-  const themeDir = path.join(themesDir, 'gruvbox-dark');
+async function createGruvboxTheme(themesDir: string): Promise<void> {
+  const themeDir = path.join(themesDir, 'gruvbox');
   await ensureDir(themeDir);
 
+  // Colors from Omarchy: https://github.com/basecamp/omarchy/tree/master/themes/gruvbox
   const metadata = {
-    name: 'Gruvbox Dark',
+    name: 'Gruvbox',
     author: 'morhetz',
     description: 'Retro groove color scheme with earthy tones',
     version: '1.0.0',
     colors: {
       background: '#282828',
-      foreground: '#ebdbb2',
-      cursor: '#ebdbb2',
-      selection: '#504945',
-      black: '#282828',
-      red: '#cc241d',
-      green: '#98971a',
-      yellow: '#d79921',
-      blue: '#458588',
-      magenta: '#b16286',
-      cyan: '#689d6a',
-      white: '#a89984',
-      brightBlack: '#928374',
-      brightRed: '#fb4934',
-      brightGreen: '#b8bb26',
-      brightYellow: '#fabd2f',
-      brightBlue: '#83a598',
+      foreground: '#d4be98',
+      cursor: '#bdae93',
+      selection: '#d65d0e',
+      black: '#3c3836',
+      red: '#ea6962',
+      green: '#a9b665',
+      yellow: '#d8a657',
+      blue: '#7daea3',
+      magenta: '#d3869b',
+      cyan: '#89b482',
+      white: '#d4be98',
+      brightBlack: '#3c3836',
+      brightRed: '#ea6962',
+      brightGreen: '#a9b665',
+      brightYellow: '#d8a657',
+      brightBlue: '#7daea3',
       brightMagenta: '#d3869b',
-      brightCyan: '#8ec07c',
-      brightWhite: '#ebdbb2',
-      accent: '#d79921',
-      border: '#504945',
+      brightCyan: '#89b482',
+      brightWhite: '#d4be98',
+      accent: '#7daea3',
+      border: '#3c3836',
     },
   };
 
@@ -368,66 +377,11 @@ async function createGruvboxDarkTheme(themesDir: string): Promise<void> {
   await writeFile(path.join(themeDir, 'tmux-colors.conf'), generateTmuxConfig(metadata.colors));
 }
 
-async function createGruvboxLightTheme(themesDir: string): Promise<void> {
-  const themeDir = path.join(themesDir, 'gruvbox-light');
-  await ensureDir(themeDir);
-
-  const metadata = {
-    name: 'Gruvbox Light',
-    author: 'morhetz',
-    description: 'Retro groove color scheme with earthy tones - Light variant',
-    version: '1.0.0',
-    colors: {
-      background: '#fbf1c7',
-      foreground: '#3c3836',
-      cursor: '#3c3836',
-      selection: '#d5c4a1',
-      black: '#fbf1c7',
-      red: '#cc241d',
-      green: '#98971a',
-      yellow: '#d79921',
-      blue: '#458588',
-      magenta: '#b16286',
-      cyan: '#689d6a',
-      white: '#7c6f64',
-      brightBlack: '#928374',
-      brightRed: '#9d0006',
-      brightGreen: '#79740e',
-      brightYellow: '#b57614',
-      brightBlue: '#076678',
-      brightMagenta: '#8f3f71',
-      brightCyan: '#427b58',
-      brightWhite: '#3c3836',
-      accent: '#d79921',
-      border: '#d5c4a1',
-    },
-  };
-
-  await writeJson(path.join(themeDir, 'theme.json'), metadata);
-  await writeFile(path.join(themeDir, 'light.mode'), '');
-  await writeFile(path.join(themeDir, 'alacritty.toml'), generateAlacrittyConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'kitty.conf'), generateKittyConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
-  await writeFile(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'cursor.json'), generateCursorConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'bat.conf'), generateBatConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'tmux-colors.conf'), generateTmuxConfig(metadata.colors));
-}
-
 async function createNordTheme(themesDir: string): Promise<void> {
   const themeDir = path.join(themesDir, 'nord');
   await ensureDir(themeDir);
 
+  // Colors from Omarchy: https://github.com/basecamp/omarchy/tree/master/themes/nord
   const metadata = {
     name: 'Nord',
     author: 'Arctic Ice Studio',
@@ -454,7 +408,7 @@ async function createNordTheme(themesDir: string): Promise<void> {
       brightMagenta: '#b48ead',
       brightCyan: '#8fbcbb',
       brightWhite: '#eceff4',
-      accent: '#88c0d0',
+      accent: '#81a1c1',
       border: '#4c566a',
     },
   };
@@ -480,262 +434,498 @@ async function createNordTheme(themesDir: string): Promise<void> {
   await writeFile(path.join(themeDir, 'tmux-colors.conf'), generateTmuxConfig(metadata.colors));
 }
 
-async function createDraculaTheme(themesDir: string): Promise<void> {
-  const themeDir = path.join(themesDir, 'dracula');
-  await ensureDir(themeDir);
-
-  const metadata = {
-    name: 'Dracula',
-    author: 'Dracula Theme',
-    description: 'A dark theme with vibrant colors',
-    version: '1.0.0',
-    colors: {
-      background: '#282a36',
-      foreground: '#f8f8f2',
-      cursor: '#f8f8f2',
-      selection: '#44475a',
-      black: '#21222c',
-      red: '#ff5555',
-      green: '#50fa7b',
-      yellow: '#f1fa8c',
-      blue: '#bd93f9',
-      magenta: '#ff79c6',
-      cyan: '#8be9fd',
-      white: '#f8f8f2',
-      brightBlack: '#6272a4',
-      brightRed: '#ff6e6e',
-      brightGreen: '#69ff94',
-      brightYellow: '#ffffa5',
-      brightBlue: '#d6acff',
-      brightMagenta: '#ff92df',
-      brightCyan: '#a4ffff',
-      brightWhite: '#ffffff',
-      accent: '#bd93f9',
-      border: '#44475a',
-    },
-  };
-
-  await writeJson(path.join(themeDir, 'theme.json'), metadata);
-  await writeFile(path.join(themeDir, 'alacritty.toml'), generateAlacrittyConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'kitty.conf'), generateKittyConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
-  await writeFile(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'wezterm.lua'), generateWeztermConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'cursor.json'), generateCursorConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'bat.conf'), generateBatConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'tmux-colors.conf'), generateTmuxConfig(metadata.colors));
-}
-
-async function createOneDarkTheme(themesDir: string): Promise<void> {
-  const themeDir = path.join(themesDir, 'one-dark');
-  await ensureDir(themeDir);
-
-  const metadata = {
-    name: 'One Dark',
-    author: 'Atom',
-    description: 'Iconic One Dark theme from Atom editor',
-    version: '1.0.0',
-    colors: {
-      background: '#282c34',
-      foreground: '#abb2bf',
-      cursor: '#528bff',
-      selection: '#3e4451',
-      black: '#282c34',
-      red: '#e06c75',
-      green: '#98c379',
-      yellow: '#e5c07b',
-      blue: '#61afef',
-      magenta: '#c678dd',
-      cyan: '#56b6c2',
-      white: '#abb2bf',
-      brightBlack: '#5c6370',
-      brightRed: '#e06c75',
-      brightGreen: '#98c379',
-      brightYellow: '#e5c07b',
-      brightBlue: '#61afef',
-      brightMagenta: '#c678dd',
-      brightCyan: '#56b6c2',
-      brightWhite: '#ffffff',
-      accent: '#61afef',
-      border: '#3e4451',
-    },
-  };
-
-  await writeJson(path.join(themeDir, 'theme.json'), metadata);
-  await writeFile(path.join(themeDir, 'alacritty.toml'), generateAlacrittyConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'kitty.conf'), generateKittyConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
-  await writeFile(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'wezterm.lua'), generateWeztermConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'cursor.json'), generateCursorConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'bat.conf'), generateBatConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'tmux-colors.conf'), generateTmuxConfig(metadata.colors));
-}
-
-async function createSolarizedDarkTheme(themesDir: string): Promise<void> {
-  const themeDir = path.join(themesDir, 'solarized-dark');
-  await ensureDir(themeDir);
-
-  const metadata = {
-    name: 'Solarized Dark',
-    author: 'Ethan Schoonover',
-    description: 'Precision colors for machines and people',
-    version: '1.0.0',
-    colors: {
-      background: '#002b36',
-      foreground: '#839496',
-      cursor: '#839496',
-      selection: '#073642',
-      black: '#073642',
-      red: '#dc322f',
-      green: '#859900',
-      yellow: '#b58900',
-      blue: '#268bd2',
-      magenta: '#d33682',
-      cyan: '#2aa198',
-      white: '#eee8d5',
-      brightBlack: '#002b36',
-      brightRed: '#cb4b16',
-      brightGreen: '#586e75',
-      brightYellow: '#657b83',
-      brightBlue: '#839496',
-      brightMagenta: '#6c71c4',
-      brightCyan: '#93a1a1',
-      brightWhite: '#fdf6e3',
-      accent: '#268bd2',
-      border: '#073642',
-    },
-  };
-
-  await writeJson(path.join(themeDir, 'theme.json'), metadata);
-  await writeFile(path.join(themeDir, 'alacritty.toml'), generateAlacrittyConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'kitty.conf'), generateKittyConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
-  await writeFile(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'wezterm.lua'), generateWeztermConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'cursor.json'), generateCursorConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'bat.conf'), generateBatConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'tmux-colors.conf'), generateTmuxConfig(metadata.colors));
-}
-
-async function createSolarizedLightTheme(themesDir: string): Promise<void> {
-  const themeDir = path.join(themesDir, 'solarized-light');
-  await ensureDir(themeDir);
-
-  const metadata = {
-    name: 'Solarized Light',
-    author: 'Ethan Schoonover',
-    description: 'Precision colors for machines and people - Light variant',
-    version: '1.0.0',
-    colors: {
-      background: '#fdf6e3',
-      foreground: '#657b83',
-      cursor: '#657b83',
-      selection: '#eee8d5',
-      black: '#073642',
-      red: '#dc322f',
-      green: '#859900',
-      yellow: '#b58900',
-      blue: '#268bd2',
-      magenta: '#d33682',
-      cyan: '#2aa198',
-      white: '#eee8d5',
-      brightBlack: '#002b36',
-      brightRed: '#cb4b16',
-      brightGreen: '#586e75',
-      brightYellow: '#657b83',
-      brightBlue: '#839496',
-      brightMagenta: '#6c71c4',
-      brightCyan: '#93a1a1',
-      brightWhite: '#fdf6e3',
-      accent: '#268bd2',
-      border: '#eee8d5',
-    },
-  };
-
-  await writeJson(path.join(themeDir, 'theme.json'), metadata);
-  await writeFile(path.join(themeDir, 'light.mode'), '');
-  await writeFile(path.join(themeDir, 'alacritty.toml'), generateAlacrittyConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'kitty.conf'), generateKittyConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
-  await writeFile(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'cursor.json'), generateCursorConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'bat.conf'), generateBatConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
-  await writeFile(path.join(themeDir, 'tmux-colors.conf'), generateTmuxConfig(metadata.colors));
-}
-
 async function createRosePineTheme(themesDir: string): Promise<void> {
   const themeDir = path.join(themesDir, 'rose-pine');
   await ensureDir(themeDir);
 
+  // Colors from Omarchy: https://github.com/basecamp/omarchy/tree/master/themes/rose-pine
+  // This is the Dawn (light) variant
   const metadata = {
     name: 'Rosé Pine',
     author: 'Rosé Pine',
-    description: 'All natural pine, faux fur and a bit of soho vibes',
+    description: 'All natural pine, faux fur and a bit of soho vibes - Dawn variant',
     version: '1.0.0',
     colors: {
-      background: '#191724',
-      foreground: '#e0def4',
-      cursor: '#524f67',
-      selection: '#2a273f',
-      black: '#26233a',
-      red: '#eb6f92',
-      green: '#9ccfd8',
-      yellow: '#f6c177',
-      blue: '#31748f',
-      magenta: '#c4a7e7',
-      cyan: '#ebbcba',
-      white: '#e0def4',
-      brightBlack: '#6e6a86',
-      brightRed: '#eb6f92',
-      brightGreen: '#9ccfd8',
-      brightYellow: '#f6c177',
-      brightBlue: '#31748f',
-      brightMagenta: '#c4a7e7',
-      brightCyan: '#ebbcba',
-      brightWhite: '#e0def4',
-      accent: '#c4a7e7',
-      border: '#2a273f',
+      background: '#faf4ed',
+      foreground: '#575279',
+      cursor: '#cecacd',
+      selection: '#dfdad9',
+      black: '#f2e9e1',
+      red: '#b4637a',
+      green: '#286983',
+      yellow: '#ea9d34',
+      blue: '#56949f',
+      magenta: '#907aa9',
+      cyan: '#d7827e',
+      white: '#575279',
+      brightBlack: '#9893a5',
+      brightRed: '#b4637a',
+      brightGreen: '#286983',
+      brightYellow: '#ea9d34',
+      brightBlue: '#56949f',
+      brightMagenta: '#907aa9',
+      brightCyan: '#d7827e',
+      brightWhite: '#575279',
+      accent: '#56949f',
+      border: '#f2e9e1',
+    },
+  };
+
+  await writeJson(path.join(themeDir, 'theme.json'), metadata);
+  await writeFile(path.join(themeDir, 'light.mode'), ''); // Marker file for light theme
+  await writeFile(path.join(themeDir, 'alacritty.toml'), generateAlacrittyConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'kitty.conf'), generateKittyConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
+  await writeFile(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'wezterm.lua'), generateWeztermConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'cursor.json'), generateCursorConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'bat.conf'), generateBatConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'tmux-colors.conf'), generateTmuxConfig(metadata.colors));
+}
+
+async function createEtherealTheme(themesDir: string): Promise<void> {
+  const themeDir = path.join(themesDir, 'ethereal');
+  await ensureDir(themeDir);
+
+  // Colors from Omarchy: https://github.com/basecamp/omarchy/tree/master/themes/ethereal
+  const metadata = {
+    name: 'Ethereal',
+    author: 'Omarchy',
+    description: 'A dreamy, atmospheric dark theme with warm peachy tones',
+    version: '1.0.0',
+    colors: {
+      background: '#060B1E',
+      foreground: '#ffcead',
+      cursor: '#ffcead',
+      selection: '#ffcead',
+      black: '#060B1E',
+      red: '#ED5B5A',
+      green: '#92a593',
+      yellow: '#E9BB4F',
+      blue: '#7d82d9',
+      magenta: '#c89dc1',
+      cyan: '#a3bfd1',
+      white: '#F99957',
+      brightBlack: '#6d7db6',
+      brightRed: '#faaaa9',
+      brightGreen: '#c4cfc4',
+      brightYellow: '#f7dc9c',
+      brightBlue: '#c2c4f0',
+      brightMagenta: '#ead7e7',
+      brightCyan: '#dfeaf0',
+      brightWhite: '#ffcead',
+      accent: '#7d82d9',
+      border: '#1a2040',
+    },
+  };
+
+  await writeJson(path.join(themeDir, 'theme.json'), metadata);
+  await writeFile(path.join(themeDir, 'alacritty.toml'), generateAlacrittyConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'kitty.conf'), generateKittyConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
+  await writeFile(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'wezterm.lua'), generateWeztermConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'cursor.json'), generateCursorConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'bat.conf'), generateBatConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'tmux-colors.conf'), generateTmuxConfig(metadata.colors));
+}
+
+async function createEverforestTheme(themesDir: string): Promise<void> {
+  const themeDir = path.join(themesDir, 'everforest');
+  await ensureDir(themeDir);
+
+  // Colors from Omarchy: https://github.com/basecamp/omarchy/tree/master/themes/everforest
+  const metadata = {
+    name: 'Everforest',
+    author: 'sainnhe',
+    description: 'A green-based comfortable and eye-friendly color scheme',
+    version: '1.0.0',
+    colors: {
+      background: '#2d353b',
+      foreground: '#d3c6aa',
+      cursor: '#d3c6aa',
+      selection: '#d3c6aa',
+      black: '#475258',
+      red: '#e67e80',
+      green: '#a7c080',
+      yellow: '#dbbc7f',
+      blue: '#7fbbb3',
+      magenta: '#d699b6',
+      cyan: '#83c092',
+      white: '#d3c6aa',
+      brightBlack: '#475258',
+      brightRed: '#e67e80',
+      brightGreen: '#a7c080',
+      brightYellow: '#dbbc7f',
+      brightBlue: '#7fbbb3',
+      brightMagenta: '#d699b6',
+      brightCyan: '#83c092',
+      brightWhite: '#d3c6aa',
+      accent: '#7fbbb3',
+      border: '#3d484d',
+    },
+  };
+
+  await writeJson(path.join(themeDir, 'theme.json'), metadata);
+  await writeFile(path.join(themeDir, 'alacritty.toml'), generateAlacrittyConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'kitty.conf'), generateKittyConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
+  await writeFile(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'wezterm.lua'), generateWeztermConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'cursor.json'), generateCursorConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'bat.conf'), generateBatConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'tmux-colors.conf'), generateTmuxConfig(metadata.colors));
+}
+
+async function createFlexokiLightTheme(themesDir: string): Promise<void> {
+  const themeDir = path.join(themesDir, 'flexoki-light');
+  await ensureDir(themeDir);
+
+  // Colors from Omarchy: https://github.com/basecamp/omarchy/tree/master/themes/flexoki-light
+  const metadata = {
+    name: 'Flexoki Light',
+    author: 'Steph Ango',
+    description: 'An inky color scheme for prose and code',
+    version: '1.0.0',
+    colors: {
+      background: '#FFFCF0',
+      foreground: '#100F0F',
+      cursor: '#100F0F',
+      selection: '#CECDC3',
+      black: '#100F0F',
+      red: '#D14D41',
+      green: '#879A39',
+      yellow: '#D0A215',
+      blue: '#205EA6',
+      magenta: '#CE5D97',
+      cyan: '#3AA99F',
+      white: '#FFFCF0',
+      brightBlack: '#100F0F',
+      brightRed: '#D14D41',
+      brightGreen: '#879A39',
+      brightYellow: '#D0A215',
+      brightBlue: '#4385BE',
+      brightMagenta: '#CE5D97',
+      brightCyan: '#3AA99F',
+      brightWhite: '#FFFCF0',
+      accent: '#205EA6',
+      border: '#E6E4D9',
+    },
+  };
+
+  await writeJson(path.join(themeDir, 'theme.json'), metadata);
+  await writeFile(path.join(themeDir, 'light.mode'), ''); // Marker file for light theme
+  await writeFile(path.join(themeDir, 'alacritty.toml'), generateAlacrittyConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'kitty.conf'), generateKittyConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
+  await writeFile(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'wezterm.lua'), generateWeztermConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'cursor.json'), generateCursorConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'bat.conf'), generateBatConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'tmux-colors.conf'), generateTmuxConfig(metadata.colors));
+}
+
+async function createHackermanTheme(themesDir: string): Promise<void> {
+  const themeDir = path.join(themesDir, 'hackerman');
+  await ensureDir(themeDir);
+
+  // Colors from Omarchy: https://github.com/basecamp/omarchy/tree/master/themes/hackerman
+  const metadata = {
+    name: 'Hackerman',
+    author: 'Omarchy',
+    description: 'A green-tinted cyberpunk hacker theme',
+    version: '1.0.0',
+    colors: {
+      background: '#0B0C16',
+      foreground: '#ddf7ff',
+      cursor: '#ddf7ff',
+      selection: '#ddf7ff',
+      black: '#0B0C16',
+      red: '#50f872',
+      green: '#4fe88f',
+      yellow: '#50f7d4',
+      blue: '#829dd4',
+      magenta: '#86a7df',
+      cyan: '#7cf8f7',
+      white: '#85E1FB',
+      brightBlack: '#6a6e95',
+      brightRed: '#85ff9d',
+      brightGreen: '#9cf7c2',
+      brightYellow: '#a4ffec',
+      brightBlue: '#c4d2ed',
+      brightMagenta: '#cddbf4',
+      brightCyan: '#d1fffe',
+      brightWhite: '#ddf7ff',
+      accent: '#82FB9C',
+      border: '#1a1c2a',
+    },
+  };
+
+  await writeJson(path.join(themeDir, 'theme.json'), metadata);
+  await writeFile(path.join(themeDir, 'alacritty.toml'), generateAlacrittyConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'kitty.conf'), generateKittyConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
+  await writeFile(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'wezterm.lua'), generateWeztermConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'cursor.json'), generateCursorConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'bat.conf'), generateBatConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'tmux-colors.conf'), generateTmuxConfig(metadata.colors));
+}
+
+async function createKanagawaTheme(themesDir: string): Promise<void> {
+  const themeDir = path.join(themesDir, 'kanagawa');
+  await ensureDir(themeDir);
+
+  // Colors from Omarchy: https://github.com/basecamp/omarchy/tree/master/themes/kanagawa
+  const metadata = {
+    name: 'Kanagawa',
+    author: 'rebelot',
+    description: 'A dark color scheme inspired by the famous painting by Katsushika Hokusai',
+    version: '1.0.0',
+    colors: {
+      background: '#1f1f28',
+      foreground: '#dcd7ba',
+      cursor: '#c8c093',
+      selection: '#2d4f67',
+      black: '#090618',
+      red: '#c34043',
+      green: '#76946a',
+      yellow: '#c0a36e',
+      blue: '#7e9cd8',
+      magenta: '#957fb8',
+      cyan: '#6a9589',
+      white: '#c8c093',
+      brightBlack: '#727169',
+      brightRed: '#e82424',
+      brightGreen: '#98bb6c',
+      brightYellow: '#e6c384',
+      brightBlue: '#7fb4ca',
+      brightMagenta: '#938aa9',
+      brightCyan: '#7aa89f',
+      brightWhite: '#dcd7ba',
+      accent: '#7e9cd8',
+      border: '#2a2a37',
+    },
+  };
+
+  await writeJson(path.join(themeDir, 'theme.json'), metadata);
+  await writeFile(path.join(themeDir, 'alacritty.toml'), generateAlacrittyConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'kitty.conf'), generateKittyConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
+  await writeFile(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'wezterm.lua'), generateWeztermConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'cursor.json'), generateCursorConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'bat.conf'), generateBatConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'tmux-colors.conf'), generateTmuxConfig(metadata.colors));
+}
+
+async function createMatteBlackTheme(themesDir: string): Promise<void> {
+  const themeDir = path.join(themesDir, 'matte-black');
+  await ensureDir(themeDir);
+
+  // Colors from Omarchy: https://github.com/basecamp/omarchy/tree/master/themes/matte-black
+  const metadata = {
+    name: 'Matte Black',
+    author: 'Omarchy',
+    description: 'A sleek, minimal dark theme with amber accents',
+    version: '1.0.0',
+    colors: {
+      background: '#121212',
+      foreground: '#bebebe',
+      cursor: '#eaeaea',
+      selection: '#333333',
+      black: '#333333',
+      red: '#D35F5F',
+      green: '#FFC107',
+      yellow: '#b91c1c',
+      blue: '#e68e0d',
+      magenta: '#D35F5F',
+      cyan: '#bebebe',
+      white: '#bebebe',
+      brightBlack: '#8a8a8d',
+      brightRed: '#B91C1C',
+      brightGreen: '#FFC107',
+      brightYellow: '#b90a0a',
+      brightBlue: '#f59e0b',
+      brightMagenta: '#B91C1C',
+      brightCyan: '#eaeaea',
+      brightWhite: '#ffffff',
+      accent: '#e68e0d',
+      border: '#2a2a2a',
+    },
+  };
+
+  await writeJson(path.join(themeDir, 'theme.json'), metadata);
+  await writeFile(path.join(themeDir, 'alacritty.toml'), generateAlacrittyConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'kitty.conf'), generateKittyConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
+  await writeFile(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'wezterm.lua'), generateWeztermConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'cursor.json'), generateCursorConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'bat.conf'), generateBatConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'tmux-colors.conf'), generateTmuxConfig(metadata.colors));
+}
+
+async function createOsakaJadeTheme(themesDir: string): Promise<void> {
+  const themeDir = path.join(themesDir, 'osaka-jade');
+  await ensureDir(themeDir);
+
+  // Colors from Omarchy: https://github.com/basecamp/omarchy/tree/master/themes/osaka-jade
+  const metadata = {
+    name: 'Osaka Jade',
+    author: 'Omarchy',
+    description: 'A deep green theme inspired by Japanese jade',
+    version: '1.0.0',
+    colors: {
+      background: '#111c18',
+      foreground: '#C1C497',
+      cursor: '#D7C995',
+      selection: '#C1C497',
+      black: '#23372B',
+      red: '#FF5345',
+      green: '#549e6a',
+      yellow: '#459451',
+      blue: '#509475',
+      magenta: '#D2689C',
+      cyan: '#2DD5B7',
+      white: '#F6F5DD',
+      brightBlack: '#53685B',
+      brightRed: '#db9f9c',
+      brightGreen: '#63b07a',
+      brightYellow: '#E5C736',
+      brightBlue: '#ACD4CF',
+      brightMagenta: '#75bbb3',
+      brightCyan: '#8CD3CB',
+      brightWhite: '#9eebb3',
+      accent: '#509475',
+      border: '#1e3028',
+    },
+  };
+
+  await writeJson(path.join(themeDir, 'theme.json'), metadata);
+  await writeFile(path.join(themeDir, 'alacritty.toml'), generateAlacrittyConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'kitty.conf'), generateKittyConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'iterm2.itermcolors'), generateIterm2Config(metadata.colors));
+  await writeFile(path.join(themeDir, 'warp.yaml'), generateWarpConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'hyper.js'), generateHyperConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'wezterm.lua'), generateWeztermConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'vscode.json'), generateVSCodeConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'cursor.json'), generateCursorConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'neovim.lua'), generateNeovimConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'raycast.json'), generateRaycastConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'bat.conf'), generateBatConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'delta.gitconfig'), generateDeltaConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'starship.toml'), generateStarshipConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'zsh-theme.zsh'), generateZshConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'sketchybar-colors.sh'), generateSketchybarConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'slack-theme.txt'), generateSlackConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'aerospace-borders.sh'), generateAerospaceBordersConfig(metadata.colors));
+  await writeFile(path.join(themeDir, 'tmux-colors.conf'), generateTmuxConfig(metadata.colors));
+}
+
+async function createRistrettoTheme(themesDir: string): Promise<void> {
+  const themeDir = path.join(themesDir, 'ristretto');
+  await ensureDir(themeDir);
+
+  // Colors from Omarchy: https://github.com/basecamp/omarchy/tree/master/themes/ristretto
+  const metadata = {
+    name: 'Ristretto',
+    author: 'Monokai',
+    description: 'A warm, coffee-inspired dark theme',
+    version: '1.0.0',
+    colors: {
+      background: '#2c2525',
+      foreground: '#e6d9db',
+      cursor: '#c3b7b8',
+      selection: '#403e41',
+      black: '#72696a',
+      red: '#fd6883',
+      green: '#adda78',
+      yellow: '#f9cc6c',
+      blue: '#f38d70',
+      magenta: '#a8a9eb',
+      cyan: '#85dacc',
+      white: '#e6d9db',
+      brightBlack: '#948a8b',
+      brightRed: '#ff8297',
+      brightGreen: '#c8e292',
+      brightYellow: '#fcd675',
+      brightBlue: '#f8a788',
+      brightMagenta: '#bebffd',
+      brightCyan: '#9bf1e1',
+      brightWhite: '#f1e5e7',
+      accent: '#f38d70',
+      border: '#3d3536',
     },
   };
 
@@ -1065,7 +1255,7 @@ vim.cmd([[
 function generateRaycastConfig(colors: ThemeColors): string {
   return `{
   "name": "Custom Theme",
-  "author": "MacTheme",
+  "author": "Flowstate",
   "colors": {
     "background": "${colors.background}",
     "text": "${colors.foreground}",
@@ -1078,7 +1268,7 @@ function generateRaycastConfig(colors: ThemeColors): string {
 
 function generateBatConfig(_colors: ThemeColors): string {
   return `# Bat theme configuration
---theme="MacTheme"
+--theme="Flowstate"
 --style="numbers,changes,grid"
 --color=always
 `;
@@ -1086,7 +1276,7 @@ function generateBatConfig(_colors: ThemeColors): string {
 
 function generateDeltaConfig(colors: ThemeColors): string {
   return `[delta]
-    syntax-theme = MacTheme
+    syntax-theme = Flowstate
     line-numbers = true
     side-by-side = true
     plus-style = "syntax ${colors.green}"
@@ -1174,7 +1364,7 @@ return {
     background = "${colors.background}",
     active_tab = {
       bg_color = "${colors.selection}",
-      fg_color = "${colors.foreground}",
+      fg_color = "${colors.background}",
     },
     inactive_tab = {
       bg_color = "${colors.background}",
@@ -1182,7 +1372,7 @@ return {
     },
     inactive_tab_hover = {
       bg_color = "${colors.selection}",
-      fg_color = "${colors.foreground}",
+      fg_color = "${colors.background}",
     },
     new_tab = {
       bg_color = "${colors.background}",
@@ -1190,7 +1380,7 @@ return {
     },
     new_tab_hover = {
       bg_color = "${colors.selection}",
-      fg_color = "${colors.foreground}",
+      fg_color = "${colors.background}",
     },
   },
 }
@@ -1208,7 +1398,7 @@ function generateSketchybarConfig(colors: ThemeColors): string {
   return `#!/bin/bash
 # SketchyBar color configuration
 # Source this file in your sketchybarrc: source "$CONFIG_DIR/colors.sh"
-# Generated by MacTheme
+# Generated by Flowstate
 
 # Color Definitions
 export COLOR_BACKGROUND="${toArgb(colors.background)}"
@@ -1274,7 +1464,7 @@ function generateSlackConfig(colors: ThemeColors): string {
   const themeString = `${columnBg},${menuBgHover},${activeItem},${activeItemText},${hoverItem},${textColor},${activePresence},${mentionBadge}`;
 
   return `# Slack Sidebar Theme
-# Generated by MacTheme
+# Generated by Flowstate
 #
 # To apply this theme in Slack:
 # 1. Open Slack Preferences (Cmd+,)
@@ -1319,14 +1509,14 @@ function generateAerospaceBordersConfig(colors: ThemeColors): string {
 
   return `#!/bin/bash
 # AeroSpace/JankyBorders color configuration
-# Generated by MacTheme
+# Generated by Flowstate
 #
 # This script configures JankyBorders to display themed window borders
 # JankyBorders must be installed: brew install FelixKratz/formulae/borders
 #
 # Usage in aerospace.toml:
 # after-startup-command = [
-#   'exec-and-forget source "$HOME/Library/Application Support/MacTheme/current/theme/aerospace-borders.sh"'
+#   'exec-and-forget source "$HOME/Library/Application Support/Flowstate/current/theme/aerospace-borders.sh"'
 # ]
 
 # Color values (ARGB format: 0xAARRGGBB)
@@ -1360,10 +1550,10 @@ fi
 
 function generateTmuxConfig(colors: ThemeColors): string {
   return `# tmux theme colors
-# Generated by MacTheme
+# Generated by Flowstate
 #
 # Source this file in your .tmux.conf:
-# source-file "~/Library/Application Support/MacTheme/current/theme/tmux-colors.conf"
+# source-file "~/Library/Application Support/Flowstate/current/theme/tmux-colors.conf"
 #
 # Use colors with: #{@variablename}
 # Example: set -g status-style "bg=#{@background}"
