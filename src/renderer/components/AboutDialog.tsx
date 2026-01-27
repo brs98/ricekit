@@ -15,7 +15,7 @@ interface AboutDialogProps {
 
 export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
   const version = '0.1.0';
-  const appName = 'MacTheme';
+  const appName = 'Flowstate';
 
   const handleOpenExternal = (url: string) => {
     window.electronAPI?.openExternal(url);
@@ -64,7 +64,7 @@ export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
           <div className="w-full space-y-4 text-sm">
             <div className="space-y-1">
               <h4 className="font-semibold">Credits</h4>
-              <p className="text-muted-foreground">Developed by MacTheme Contributors</p>
+              <p className="text-muted-foreground">Developed by Flowstate Contributors</p>
               <p className="text-muted-foreground">Built with Electron, React, and TypeScript</p>
             </div>
 
@@ -72,19 +72,19 @@ export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
               <h4 className="font-semibold">Links</h4>
               <div className="flex flex-col gap-1">
                 <button
-                  onClick={() => handleOpenExternal('https://github.com/mactheme/mactheme')}
+                  onClick={() => handleOpenExternal('https://github.com/flowstate/flowstate')}
                   className="text-left text-primary hover:underline"
                 >
                   GitHub Repository
                 </button>
                 <button
-                  onClick={() => handleOpenExternal('https://github.com/mactheme/mactheme/issues')}
+                  onClick={() => handleOpenExternal('https://github.com/flowstate/flowstate/issues')}
                   className="text-left text-primary hover:underline"
                 >
                   Report an Issue
                 </button>
                 <button
-                  onClick={() => handleOpenExternal('https://github.com/mactheme/mactheme/blob/main/LICENSE')}
+                  onClick={() => handleOpenExternal('https://github.com/flowstate/flowstate/blob/main/LICENSE')}
                   className="text-left text-primary hover:underline"
                 >
                   License (MIT)
@@ -111,7 +111,7 @@ export function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
 
           {/* Copyright */}
           <p className="text-xs text-muted-foreground pt-2">
-            © {new Date().getFullYear()} MacTheme Contributors. All rights reserved.
+            © {new Date().getFullYear()} Flowstate Contributors. All rights reserved.
           </p>
         </div>
 

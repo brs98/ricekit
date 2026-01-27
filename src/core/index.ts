@@ -1,5 +1,5 @@
 /**
- * Core module - shared business logic for MacTheme
+ * Core module - shared business logic for Flowstate
  *
  * This module contains all the pure business logic that can be used
  * by both the Electron app and the CLI. It has no Electron dependencies.

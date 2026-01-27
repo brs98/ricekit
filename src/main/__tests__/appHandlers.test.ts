@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import os from 'os';
 
-const testDir = path.join(os.tmpdir(), 'mactheme-app-test-' + Date.now());
+const testDir = path.join(os.tmpdir(), 'flowstate-app-test-' + Date.now());
 const mockHomeDir = path.join(testDir, 'home');
 
 // Mock electron modules
@@ -111,21 +111,56 @@ const realHomeDir = os.homedir();
 describe('appHandlers', () => {
   beforeEach(() => {
     // Create test directories
-    fs.mkdirSync(path.join(testDir, 'appdata', 'MacTheme', 'current', 'theme'), { recursive: true });
+    fs.mkdirSync(path.join(testDir, 'appdata', 'Flowstate', 'current', 'theme'), { recursive: true });
     fs.mkdirSync(path.join(mockHomeDir, '.config', 'alacritty'), { recursive: true });
     fs.mkdirSync(path.join(mockHomeDir, '.config', 'kitty'), { recursive: true });
     fs.mkdirSync(path.join(mockHomeDir, '.config', 'nvim'), { recursive: true });
     fs.mkdirSync(path.join(mockHomeDir, '.config'), { recursive: true });
     fs.mkdirSync(path.join(mockHomeDir, 'Library', 'Application Support', 'Code', 'User'), { recursive: true });
     fs.mkdirSync(path.join(mockHomeDir, 'Library', 'Application Support', 'Cursor', 'User'), { recursive: true });
-    fs.mkdirSync(path.join(mockHomeDir, 'Library', 'Application Support', 'MacTheme', 'current', 'theme'), { recursive: true });
+    fs.mkdirSync(path.join(mockHomeDir, 'Library', 'Application Support', 'Flowstate', 'current', 'theme'), { recursive: true });
 
     // Reset mocks
     vi.clearAllMocks();
 
     // Set up theme handlers mock
     setThemeHandlers({
-      getTheme: vi.fn(() => Promise.resolve({ name: 'test-theme', path: '/test/path' })),
+      getTheme: vi.fn(() => Promise.resolve({
+        name: 'test-theme',
+        path: '/test/path',
+        metadata: {
+          name: 'test-theme',
+          author: 'Test',
+          description: 'Test theme',
+          version: '1.0.0',
+          colors: {
+            background: '#1a1b26',
+            foreground: '#c0caf5',
+            cursor: '#c0caf5',
+            selection: '#33467c',
+            black: '#15161e',
+            red: '#f7768e',
+            green: '#9ece6a',
+            yellow: '#e0af68',
+            blue: '#7aa2f7',
+            magenta: '#bb9af7',
+            cyan: '#7dcfff',
+            white: '#a9b1d6',
+            brightBlack: '#414868',
+            brightRed: '#f7768e',
+            brightGreen: '#9ece6a',
+            brightYellow: '#e0af68',
+            brightBlue: '#7aa2f7',
+            brightMagenta: '#bb9af7',
+            brightCyan: '#7dcfff',
+            brightWhite: '#c0caf5',
+            accent: '#7aa2f7',
+            border: '#414868',
+          },
+        },
+        isCustom: false,
+        isLight: false,
+      })),
       updateVSCodeSettings: vi.fn(() => Promise.resolve()),
       updateCursorSettings: vi.fn(() => Promise.resolve()),
     });
@@ -160,7 +195,7 @@ describe('appHandlers', () => {
         if (filePathStr.includes('alacritty.toml')) {
           return true;
         }
-        if (filePathStr.includes('MacTheme/current/theme')) {
+        if (filePathStr.includes('Flowstate/current/theme')) {
           return false;
         }
         return false;
@@ -178,7 +213,7 @@ describe('appHandlers', () => {
       expect(mockWriteFile).toHaveBeenCalled();
       const writeCall = vi.mocked(mockWriteFile).mock.calls[0];
       const newContent = String(writeCall[1]);
-      expect(newContent).toContain('import = ["~/Library/Application Support/MacTheme/current/theme/alacritty.toml"]');
+      expect(newContent).toContain('import = ["~/Library/Application Support/Flowstate/current/theme/alacritty.toml"]');
       expect(newContent).toContain('# Existing alacritty config');
 
       // Should have added to enabledApps
@@ -204,7 +239,7 @@ describe('appHandlers', () => {
       expect(mockWriteFile).toHaveBeenCalled();
       const writeCall = vi.mocked(mockWriteFile).mock.calls[0];
       const newContent = String(writeCall[1]);
-      expect(newContent).toContain('include ~/Library/Application Support/MacTheme/current/theme/kitty.conf');
+      expect(newContent).toContain('include ~/Library/Application Support/Flowstate/current/theme/kitty.conf');
     });
 
     it('should add dofile line to neovim config', async () => {
@@ -227,12 +262,12 @@ describe('appHandlers', () => {
       expect(mockWriteFile).toHaveBeenCalled();
       const writeCall = vi.mocked(mockWriteFile).mock.calls[0];
       const newContent = String(writeCall[1]);
-      expect(newContent).toContain('dofile(vim.fn.expand("~/Library/Application Support/MacTheme/current/theme/neovim.lua"))');
+      expect(newContent).toContain('dofile(vim.fn.expand("~/Library/Application Support/Flowstate/current/theme/neovim.lua"))');
     });
 
-    it('should throw error if MacTheme import already exists', async () => {
+    it('should throw error if Flowstate import already exists', async () => {
       const configPath = path.join(mockHomeDir, '.config', 'alacritty', 'alacritty.toml');
-      fs.writeFileSync(configPath, 'import = ["~/Library/Application Support/MacTheme/current/theme/alacritty.toml"]\n');
+      fs.writeFileSync(configPath, 'import = ["~/Library/Application Support/Flowstate/current/theme/alacritty.toml"]\n');
 
       vi.mocked(mockExistsSync).mockImplementation((filePath) => {
         const filePathStr = String(filePath);
@@ -243,11 +278,11 @@ describe('appHandlers', () => {
       });
 
       vi.mocked(mockReadFile).mockResolvedValue(
-        'import = ["~/Library/Application Support/MacTheme/current/theme/alacritty.toml"]\n'
+        'import = ["~/Library/Application Support/Flowstate/current/theme/alacritty.toml"]\n'
       );
 
       await expect(handleSetupApp(null, 'alacritty')).rejects.toThrow(
-        'MacTheme import already exists in config file'
+        'Flowstate import already exists in config file'
       );
     });
 
@@ -276,7 +311,7 @@ describe('appHandlers', () => {
         mockHomeDir,
         'Library',
         'Application Support',
-        'MacTheme',
+        'Flowstate',
         'current',
         'theme',
         'slack-theme.txt'
@@ -331,7 +366,7 @@ describe('appHandlers', () => {
       const writeCall = vi.mocked(mockWriteFile).mock.calls[0];
       const newContent = String(writeCall[1]);
       expect(newContent).toContain('"$include"');
-      expect(newContent).toContain('MacTheme/current/theme/starship.toml');
+      expect(newContent).toContain('Flowstate/current/theme/starship.toml');
     });
   });
 });

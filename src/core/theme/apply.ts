@@ -108,7 +108,7 @@ async function notifyWezTerm(themePath: string, onLog?: (msg: string) => void): 
       os.homedir(),
       'Library',
       'Application Support',
-      'MacTheme',
+      'Flowstate',
       'wezterm-colors.lua'
     );
 

@@ -1,6 +1,6 @@
 # Production Readiness Checklist
 
-Track items needed before selling MacTheme to customers.
+Track items needed before selling Flowstate to customers.
 
 ---
 
@@ -50,7 +50,7 @@ Track items needed before selling MacTheme to customers.
 Consider building after core product is validated and generating revenue.
 
 **Phase 1 - Lean Validation:**
-- [ ] Enable sharing `.mactheme` files via external channels (GitHub, Discord)
+- [ ] Enable sharing `.flowstate` files via external channels (GitHub, Discord)
 - [ ] Track organic sharing behavior to validate demand
 
 **Phase 2 - Curated Gallery:**

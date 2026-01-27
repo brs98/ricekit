@@ -124,7 +124,7 @@ export function createPluginsCommand(): Command {
           output({ success: true, plugin: name });
         } else {
           success(`Installed ${chalk.bold(name)}`);
-          console.log(chalk.gray(`  Run: mactheme apps setup ${name}`));
+          console.log(chalk.gray(`  Run: flowstate apps setup ${name}`));
         }
       } catch (err) {
         error('Failed to install plugin', err instanceof Error ? err.message : undefined);

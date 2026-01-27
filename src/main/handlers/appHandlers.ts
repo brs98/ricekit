@@ -209,7 +209,7 @@ export async function handleDetectApps(): Promise<AppInfo[]> {
         process.env.HOME || '',
         'Library',
         'Application Support',
-        'MacTheme',
+        'Flowstate',
         'current',
         'theme',
         'slack-theme.txt'
@@ -270,7 +270,7 @@ async function setupEditorApp(appName: string, displayName: string, settingsPath
 
   // Create backup if settings file exists
   if (existsSync(settingsPath)) {
-    const backupPath = `${settingsPath}.mactheme-backup`;
+    const backupPath = `${settingsPath}.flowstate-backup`;
     await copyFile(settingsPath, backupPath);
     logger.info(`Created backup at: ${backupPath}`);
   }
@@ -307,13 +307,13 @@ async function setupEditorApp(appName: string, displayName: string, settingsPath
 
 /**
  * Setup an application for theming
- * Automatically configures the app's config file to import MacTheme themes
+ * Automatically configures the app's config file to import Flowstate themes
  */
 export async function handleSetupApp(_event: IpcMainInvokeEvent | null, appName: string): Promise<void> {
   logger.info(`Setting up app: ${appName}`);
 
   const homeDir = os.homedir();
-  const themeBasePath = '~/Library/Application Support/MacTheme/current/theme';
+  const themeBasePath = '~/Library/Application Support/Flowstate/current/theme';
 
   try {
     // Handle Cursor and VS Code specially - they don't support file imports
@@ -332,7 +332,7 @@ export async function handleSetupApp(_event: IpcMainInvokeEvent | null, appName:
       if (Notification.isSupported()) {
         const notification = new Notification({
           title: 'Setup Complete',
-          body: 'Cursor has been configured to use MacTheme themes. Themes will be applied automatically when you switch themes.',
+          body: 'Cursor has been configured to use Flowstate themes. Themes will be applied automatically when you switch themes.',
           silent: false,
         });
         notification.show();
@@ -348,7 +348,7 @@ export async function handleSetupApp(_event: IpcMainInvokeEvent | null, appName:
       if (Notification.isSupported()) {
         const notification = new Notification({
           title: 'Setup Complete',
-          body: 'VS Code has been configured to use MacTheme themes. Themes will be applied automatically when you switch themes.',
+          body: 'VS Code has been configured to use Flowstate themes. Themes will be applied automatically when you switch themes.',
           silent: false,
         });
         notification.show();
@@ -362,7 +362,7 @@ export async function handleSetupApp(_event: IpcMainInvokeEvent | null, appName:
         homeDir,
         'Library',
         'Application Support',
-        'MacTheme',
+        'Flowstate',
         'current',
         'theme',
         'slack-theme.txt'
@@ -418,23 +418,23 @@ export async function handleSetupApp(_event: IpcMainInvokeEvent | null, appName:
       },
       wezterm: {
         configPath: path.join(homeDir, '.config', 'wezterm', 'wezterm.lua'),
-        importLine: `-- MacTheme WezTerm integration
-local mactheme_colors = wezterm.home_dir .. "/Library/Application Support/MacTheme/wezterm-colors.lua"
-wezterm.add_to_config_reload_watch_list(mactheme_colors)
-config.colors = dofile(mactheme_colors)`,
+        importLine: `-- Flowstate WezTerm integration
+local flowstate_colors = wezterm.home_dir .. "/Library/Application Support/Flowstate/wezterm-colors.lua"
+wezterm.add_to_config_reload_watch_list(flowstate_colors)
+config.colors = dofile(flowstate_colors)`,
       },
       sketchybar: {
         configPath: path.join(homeDir, '.config', 'sketchybar', 'sketchybarrc'),
-        importLine: `# MacTheme SketchyBar integration
-source "$HOME/Library/Application Support/MacTheme/current/theme/sketchybar-colors.sh"`,
+        importLine: `# Flowstate SketchyBar integration
+source "$HOME/Library/Application Support/Flowstate/current/theme/sketchybar-colors.sh"`,
       },
       aerospace: {
         configPath: path.join(homeDir, '.config', 'aerospace', 'aerospace.toml'),
-        importLine: `# MacTheme AeroSpace/JankyBorders integration
+        importLine: `# Flowstate AeroSpace/JankyBorders integration
 # Note: JankyBorders must be installed for border colors to work
 # Install with: brew install FelixKratz/formulae/borders
 after-startup-command = [
-  'exec-and-forget source "$HOME/Library/Application Support/MacTheme/current/theme/aerospace-borders.sh"'
+  'exec-and-forget source "$HOME/Library/Application Support/Flowstate/current/theme/aerospace-borders.sh"'
 ]`,
       },
     };
@@ -463,8 +463,8 @@ after-startup-command = [
       configContent = await readFile(configPath);
 
       // Check if import already exists
-      if (configContent.includes(importLine) || configContent.includes('MacTheme/current/theme')) {
-        throw new Error('MacTheme import already exists in config file');
+      if (configContent.includes(importLine) || configContent.includes('Flowstate/current/theme')) {
+        throw new Error('Flowstate import already exists in config file');
       }
     }
 
@@ -489,7 +489,7 @@ after-startup-command = [
     if (Notification.isSupported()) {
       const notification = new Notification({
         title: 'Setup Complete',
-        body: `${appName} has been configured to use MacTheme themes`,
+        body: `${appName} has been configured to use Flowstate themes`,
         silent: false,
       });
       notification.show();
@@ -605,12 +605,12 @@ export async function handleRefreshApp(_event: IpcMainInvokeEvent | null, appNam
             os.homedir(),
             'Library',
             'Application Support',
-            'MacTheme',
+            'Flowstate',
             'current',
             'theme'
           );
           const weztermThemeSrc = path.join(currentThemePath, 'wezterm.lua');
-          const weztermThemeDest = path.join(os.homedir(), 'Library', 'Application Support', 'MacTheme', 'wezterm-colors.lua');
+          const weztermThemeDest = path.join(os.homedir(), 'Library', 'Application Support', 'Flowstate', 'wezterm-colors.lua');
 
           if (existsSync(weztermThemeSrc)) {
             await copyFile(weztermThemeSrc, weztermThemeDest);
@@ -660,7 +660,7 @@ export async function handleRefreshApp(_event: IpcMainInvokeEvent | null, appNam
             os.homedir(),
             'Library',
             'Application Support',
-            'MacTheme',
+            'Flowstate',
             'current',
             'theme'
           );

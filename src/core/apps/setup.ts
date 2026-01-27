@@ -1,7 +1,7 @@
 /**
  * App setup operations
  *
- * Configure applications for MacTheme integration.
+ * Configure applications for Flowstate integration.
  */
 
 import path from 'path';
@@ -42,19 +42,19 @@ const APP_CONFIGS: Record<string, { configPath: string; importLine: string }> = 
   },
   wezterm: {
     configPath: path.join(homeDir, '.config', 'wezterm', 'wezterm.lua'),
-    importLine: `-- MacTheme WezTerm integration
-local mactheme_colors = wezterm.home_dir .. "/Library/Application Support/${APP_CONFIG.dataDirName}/wezterm-colors.lua"
-wezterm.add_to_config_reload_watch_list(mactheme_colors)
-config.colors = dofile(mactheme_colors)`,
+    importLine: `-- Flowstate WezTerm integration
+local flowstate_colors = wezterm.home_dir .. "/Library/Application Support/${APP_CONFIG.dataDirName}/wezterm-colors.lua"
+wezterm.add_to_config_reload_watch_list(flowstate_colors)
+config.colors = dofile(flowstate_colors)`,
   },
   sketchybar: {
     configPath: path.join(homeDir, '.config', 'sketchybar', 'sketchybarrc'),
-    importLine: `# MacTheme SketchyBar integration
+    importLine: `# Flowstate SketchyBar integration
 source "$HOME/Library/Application Support/${APP_CONFIG.dataDirName}/current/theme/sketchybar-colors.sh"`,
   },
   aerospace: {
     configPath: path.join(homeDir, '.config', 'aerospace', 'aerospace.toml'),
-    importLine: `# MacTheme AeroSpace/JankyBorders integration
+    importLine: `# Flowstate AeroSpace/JankyBorders integration
 # Note: JankyBorders must be installed for border colors to work
 # Install with: brew install FelixKratz/formulae/borders
 after-startup-command = [
@@ -105,11 +105,11 @@ export async function setupApp(
 
     // Check if import already exists
     if (configContent.includes(importLine) || configContent.includes(`${APP_CONFIG.dataDirName}/current/theme`)) {
-      return err(new Error(`MacTheme integration already exists in ${configPath}`));
+      return err(new Error(`Flowstate integration already exists in ${configPath}`));
     }
 
     // Create backup
-    backupPath = `${configPath}.mactheme-backup`;
+    backupPath = `${configPath}.flowstate-backup`;
     await copyFile(configPath, backupPath);
   }
 

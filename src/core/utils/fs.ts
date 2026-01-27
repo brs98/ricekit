@@ -1,5 +1,5 @@
 /**
- * Async file system utilities for MacTheme
+ * Async file system utilities for Flowstate
  *
  * These utilities wrap fs/promises with common patterns used throughout
  * the app, eliminating blocking file operations in IPC handlers.

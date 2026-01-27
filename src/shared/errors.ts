@@ -1,5 +1,5 @@
 /**
- * Centralized error codes and utilities for MacTheme
+ * Centralized error codes and utilities for Flowstate
  *
  * All errors thrown in IPC handlers should use createError() to ensure
  * consistent formatting that the UI can parse and display appropriately.

@@ -78,7 +78,7 @@ export interface AppInfo {
 
 // Plugin system types
 export type PluginMode = 'preset' | 'custom';
-export type InstalledBy = 'mactheme' | 'user' | 'unknown';
+export type InstalledBy = 'flowstate' | 'user' | 'unknown';
 
 export interface PluginConfig {
   mode: PluginMode;

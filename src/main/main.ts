@@ -39,7 +39,7 @@ function createTray() {
     // Create tray icon
     const icon = createTrayIcon();
     tray = new Tray(icon);
-    tray.setToolTip('MacTheme - Theme Switcher');
+    tray.setToolTip('Flowstate - Theme Switcher');
   }
 
   updateTrayMenu();
@@ -96,7 +96,7 @@ function updateTrayMenu() {
     // Main menu items
     menuItems.push(
       {
-        label: 'Open MacTheme',
+        label: 'Open Flowstate',
         click: () => {
           if (mainWindow && !mainWindow.isDestroyed()) {
             mainWindow.show();
@@ -121,7 +121,7 @@ function updateTrayMenu() {
       },
       { type: 'separator' },
       {
-        label: 'Quit MacTheme',
+        label: 'Quit Flowstate',
         role: 'quit',
       }
     );
@@ -145,8 +145,8 @@ export function refreshTrayMenu() {
  */
 export function updateWindowTitle(themeName: string) {
   if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.setTitle(`MacTheme - ${themeName}`);
-    logger.info(`Window title updated to: MacTheme - ${themeName}`);
+    mainWindow.setTitle(`Flowstate - ${themeName}`);
+    logger.info(`Window title updated to: Flowstate - ${themeName}`);
   }
 }
 
@@ -231,12 +231,12 @@ function createWindow() {
     const statePath = getStatePath();
     const state = JSON.parse(fs.readFileSync(statePath, 'utf-8'));
     const currentTheme = state.currentTheme || 'tokyo-night';
-    logger.info(`Setting window title to: MacTheme - ${currentTheme}`);
-    mainWindow.setTitle(`MacTheme - ${currentTheme}`);
+    logger.info(`Setting window title to: Flowstate - ${currentTheme}`);
+    mainWindow.setTitle(`Flowstate - ${currentTheme}`);
     logger.info(`Window title set successfully`);
   } catch (err) {
     logger.error('Error setting initial window title:', err);
-    mainWindow.setTitle('MacTheme');
+    mainWindow.setTitle('Flowstate');
   }
 
   // In development, load from Vite dev server
@@ -257,11 +257,11 @@ function createWindow() {
       const statePath = getStatePath();
       const state = JSON.parse(fs.readFileSync(statePath, 'utf-8'));
       const currentTheme = state.currentTheme || 'tokyo-night';
-      mainWindow?.setTitle(`MacTheme - ${currentTheme}`);
-      logger.info(`Window title set after load: MacTheme - ${currentTheme}`);
+      mainWindow?.setTitle(`Flowstate - ${currentTheme}`);
+      logger.info(`Window title set after load: Flowstate - ${currentTheme}`);
     } catch (err) {
       logger.error('Error setting window title after load:', err);
-      mainWindow?.setTitle('MacTheme');
+      mainWindow?.setTitle('Flowstate');
     }
   });
 
@@ -406,8 +406,8 @@ if (!gotTheLock) {
     logger.info('Registered local-file protocol handler');
 
     // Initialize application directories and files
-    logger.info('=== MacTheme Starting ===');
-    logger.info('=== MacTheme Starting ===');
+    logger.info('=== Flowstate Starting ===');
+    logger.info('=== Flowstate Starting ===');
 
     // Load preferences to check if debug logging is enabled
     try {

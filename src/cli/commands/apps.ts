@@ -124,7 +124,7 @@ export function createAppsCommand(): Command {
         supportedApps.forEach((app) => {
           console.log(`  • ${app}`);
         });
-        console.log(chalk.gray('\nUse: mactheme apps setup <app>'));
+        console.log(chalk.gray('\nUse: flowstate apps setup <app>'));
         console.log();
       }
     });

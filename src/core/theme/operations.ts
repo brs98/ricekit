@@ -166,7 +166,7 @@ export async function exportTheme(
   }
 
   // Default output path
-  const exportPath = outputPath || path.join(os.homedir(), 'Downloads', `${name}.mactheme`);
+  const exportPath = outputPath || path.join(os.homedir(), 'Downloads', `${name}.flowstate`);
 
   // Ensure output directory exists
   await ensureDir(path.dirname(exportPath));
@@ -205,7 +205,7 @@ export async function importTheme(
   }
 
   // Create temporary directory for extraction
-  const tmpDir = path.join(os.tmpdir(), `mactheme-import-${Date.now()}`);
+  const tmpDir = path.join(os.tmpdir(), `flowstate-import-${Date.now()}`);
   await ensureDir(tmpDir);
 
   try {
@@ -290,15 +290,15 @@ export async function importThemeFromUrl(
   }
 
   // Create temporary directory for download
-  const tmpDir = path.join(os.tmpdir(), `mactheme-url-import-${Date.now()}`);
+  const tmpDir = path.join(os.tmpdir(), `flowstate-url-import-${Date.now()}`);
   await ensureDir(tmpDir);
 
   try {
     // Determine filename from URL or use default
     const urlPath = parsedUrl.pathname;
-    let filename = path.basename(urlPath) || 'theme.mactheme';
-    if (!filename.endsWith('.mactheme') && !filename.endsWith('.zip')) {
-      filename += '.mactheme';
+    let filename = path.basename(urlPath) || 'theme.flowstate';
+    if (!filename.endsWith('.flowstate') && !filename.endsWith('.zip')) {
+      filename += '.flowstate';
     }
     const downloadPath = path.join(tmpDir, filename);
 

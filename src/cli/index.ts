@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * MacTheme CLI
+ * Flowstate CLI
  *
  * Command-line interface for managing macOS themes.
  */

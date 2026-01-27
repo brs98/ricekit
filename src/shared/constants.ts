@@ -7,26 +7,26 @@
 
 export const APP_CONFIG = {
   /** Display name shown in UI, menus, and notifications */
-  name: 'MacTheme',
+  name: 'Flowstate',
 
   /** CLI command name (lowercase, no spaces) */
-  cliName: 'mactheme',
+  cliName: 'flowstate',
 
   /** Directory name in ~/Library/Application Support/ */
-  dataDirName: 'MacTheme',
+  dataDirName: 'Flowstate',
 
   /** macOS bundle identifier */
-  appId: 'com.mactheme.app',
+  appId: 'com.flowstate.app',
 
   /** Default theme applied on fresh install */
   defaultTheme: 'tokyo-night',
 
   /** Log file name (without extension) */
-  logFileName: 'mactheme',
+  logFileName: 'flowstate',
 
   /** GitHub repository for updates */
   repoOwner: 'your-org',
-  repoName: 'mactheme',
+  repoName: 'flowstate',
 } as const;
 
 /** Exit codes for CLI */

@@ -319,7 +319,7 @@ export function ApplicationsView() {
     <div className="apps-view">
       <div className="apps-header">
         <p className="apps-description">
-          Configure which applications should use MacTheme themes.
+          Configure which applications should use Flowstate themes.
           Detected: {apps.filter(a => a.isInstalled).length} / {apps.length} apps installed
         </p>
         <Button variant="outline" onClick={loadApps}>
@@ -457,7 +457,7 @@ export function ApplicationsView() {
         <div className="empty-state">
           <p>No supported applications detected.</p>
           <p className="empty-state-hint">
-            Install terminal emulators, editors, or CLI tools to use MacTheme.
+            Install terminal emulators, editors, or CLI tools to use Flowstate.
           </p>
         </div>
       )}

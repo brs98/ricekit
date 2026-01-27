@@ -187,7 +187,7 @@ function App() {
           <DialogHeader>
             <DialogTitle>Import Theme from URL</DialogTitle>
             <DialogDescription>
-              Enter the URL of a theme file (.zip or .mactheme) to import it.
+              Enter the URL of a theme file (.zip or .flowstate) to import it.
             </DialogDescription>
           </DialogHeader>
           <Input
@@ -221,7 +221,7 @@ function App() {
 
       <div className="sidebar">
         <div className="sidebar-header">
-          <h1 className="text-lg font-semibold tracking-tight">MacTheme</h1>
+          <h1 className="text-lg font-semibold tracking-tight">Flowstate</h1>
         </div>
         <nav className="sidebar-nav">
           <button

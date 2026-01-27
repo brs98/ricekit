@@ -23,7 +23,7 @@ export function SetupWizardModal({ app, onClose, onSetupComplete }: SetupWizardM
 
   // Generate import statement based on app type
   const getImportStatement = (): string => {
-    const basePath = '~/Library/Application Support/MacTheme/current/theme';
+    const basePath = '~/Library/Application Support/Flowstate/current/theme';
 
     switch (app.name) {
       case 'alacritty':
@@ -33,14 +33,14 @@ export function SetupWizardModal({ app, onClose, onSetupComplete }: SetupWizardM
       case 'iterm2':
         return 'iTerm2 uses .itermcolors files. Load via Preferences → Profiles → Colors → Color Presets → Import';
       case 'warp':
-        return `# Add to ~/.warp/themes/\ncp "${basePath}/warp.yaml" ~/.warp/themes/mactheme.yaml`;
+        return `# Add to ~/.warp/themes/\ncp "${basePath}/warp.yaml" ~/.warp/themes/flowstate.yaml`;
       case 'hyper':
         return `# Add to ~/.hyper.js config section\ncolors: require('${basePath}/hyper.js')`;
       case 'wezterm':
-        return `-- MacTheme WezTerm integration
-local mactheme_colors = wezterm.home_dir .. "/Library/Application Support/MacTheme/wezterm-colors.lua"
-wezterm.add_to_config_reload_watch_list(mactheme_colors)
-config.colors = dofile(mactheme_colors)`;
+        return `-- Flowstate WezTerm integration
+local flowstate_colors = wezterm.home_dir .. "/Library/Application Support/Flowstate/wezterm-colors.lua"
+wezterm.add_to_config_reload_watch_list(flowstate_colors)
+config.colors = dofile(flowstate_colors)`;
       case 'vscode':
         return 'VS Code themes are applied automatically via settings.json modification';
       case 'neovim':
@@ -67,7 +67,7 @@ config.colors = dofile(mactheme_colors)`;
         return `# Add to your sketchybarrc:
 source "$CONFIG_DIR/colors.sh"
 
-# Or source from MacTheme:
+# Or source from Flowstate:
 source "${basePath}/sketchybar-colors.sh"`;
       case 'slack':
         return `# Slack requires manual theme application
@@ -114,7 +114,7 @@ after-startup-command = [
       case 'vscode':
         return [
           'VS Code integration is automatic',
-          'MacTheme will modify your settings.json',
+          'Flowstate will modify your settings.json',
           'Click "Automatic Setup" below to configure',
           'Or manually edit settings.json to include theme colors'
         ];
@@ -160,7 +160,7 @@ after-startup-command = [
           'Scroll down and click "Create a custom theme"',
           `Open the theme file: ${app.configPath}`,
           'Copy the theme string from the file and paste it into Slack',
-          'The theme will be applied automatically when you switch themes in MacTheme'
+          'The theme will be applied automatically when you switch themes in Flowstate'
         ];
       case 'aerospace':
         return [
@@ -214,14 +214,14 @@ after-startup-command = [
         <DialogHeader>
           <DialogTitle>Setup {app.displayName}</DialogTitle>
           <DialogDescription>
-            Configure {app.displayName} to use MacTheme
+            Configure {app.displayName} to use Flowstate
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <p className="text-sm text-muted-foreground">
-            To use MacTheme with {app.displayName}, you need to configure it to import
-            theme settings from MacTheme&apos;s current theme directory.
+            To use Flowstate with {app.displayName}, you need to configure it to import
+            theme settings from Flowstate&apos;s current theme directory.
           </p>
 
           {/* Import Statement */}

@@ -101,7 +101,7 @@ async function handleOpenHelp(_event: IpcMainInvokeEvent): Promise<void> {
     if (!existsSync(helpFilePath)) {
       logger.warn('HELP.md not found at:', helpFilePath);
       // Fall back to opening GitHub URL
-      await shell.openExternal('https://github.com/yourusername/mactheme#readme');
+      await shell.openExternal('https://github.com/yourusername/flowstate#readme');
       return;
     }
 
@@ -373,7 +373,7 @@ async function handleCheckForUpdates(): Promise<{
       currentVersion,
       latestVersion: currentVersion,
       hasUpdate: false,
-      updateUrl: 'https://github.com/mactheme/mactheme/releases',
+      updateUrl: 'https://github.com/flowstate/flowstate/releases',
     };
   } catch (error) {
     logger.error('Error checking for updates', error);

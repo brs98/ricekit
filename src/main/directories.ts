@@ -4,10 +4,10 @@ import path from 'path';
 import { logger } from './logger';
 
 /**
- * Get the MacTheme application data directory
+ * Get the Flowstate application data directory
  */
 export function getAppDataDir(): string {
-  return path.join(app.getPath('appData'), 'MacTheme');
+  return path.join(app.getPath('appData'), 'Flowstate');
 }
 
 /**
@@ -67,7 +67,7 @@ export function getUIStatePath(): string {
 }
 
 /**
- * Create all required directories for MacTheme
+ * Create all required directories for Flowstate
  */
 export function ensureDirectories(): void {
   const dirs = [
@@ -342,14 +342,14 @@ export function ensureThemeSymlink(): void {
 }
 
 /**
- * Initialize all MacTheme directories and files
+ * Initialize all Flowstate directories and files
  */
 export function initializeApp(): void {
-  logger.info('Initializing MacTheme application directories...');
+  logger.info('Initializing Flowstate application directories...');
   ensureDirectories();
   ensurePreferences();
   ensureState();
-  logger.info('MacTheme initialization complete!');
+  logger.info('Flowstate initialization complete!');
 }
 
 /**

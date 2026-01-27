@@ -240,7 +240,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
           {/* Welcome Step */}
           {currentStep === 'welcome' && (
             <div className="text-center">
-              <h2 className="text-3xl font-bold mb-4">Welcome to MacTheme!</h2>
+              <h2 className="text-3xl font-bold mb-4">Welcome to Flowstate!</h2>
               <p className="text-lg text-muted-foreground mb-6">
                 Unified theming for all your favorite applications
               </p>
@@ -318,7 +318,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
             <div>
               <h2 className="text-2xl font-bold mb-2">Configure Applications</h2>
               <p className="text-muted-foreground mb-6">
-                Select which applications you&apos;d like MacTheme to configure. We&apos;ll automatically set them up to use your themes.
+                Select which applications you&apos;d like Flowstate to configure. We&apos;ll automatically set them up to use your themes.
               </p>
               <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
                 {installedApps.map((app) => (

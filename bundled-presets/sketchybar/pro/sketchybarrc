@@ -2,7 +2,7 @@
 
 # SketchyBar Pro Preset
 # Full-featured status bar with system stats and media
-# Colors are provided by MacTheme via environment variables
+# Colors are provided by Flowstate via environment variables
 
 PLUGIN_DIR="$HOME/.config/sketchybar/plugins"
 FONT="SF Pro"

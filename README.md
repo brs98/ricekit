@@ -10,7 +10,7 @@
 
 ## Overview
 
-MacTheme is inspired by Omarchy's Linux theming system and brings unified theme management to macOS. Using a symlink-based architecture, MacTheme allows you to switch themes across all your favorite applications with a single click.
+Flowstate is inspired by Omarchy's Linux theming system and brings unified theme management to macOS. Using a symlink-based architecture, Flowstate allows you to switch themes across all your favorite applications with a single click.
 
 ### Key Features
 
@@ -143,10 +143,10 @@ npm test         # Run tests
 
 ### Theming System
 
-MacTheme uses a symlink-based architecture for seamless theme switching:
+Flowstate uses a symlink-based architecture for seamless theme switching:
 
 ```
-~/Library/Application Support/MacTheme/
+~/Library/Application Support/Flowstate/
 ├── themes/              # Built-in themes
 │   ├── tokyo-night/
 │   ├── catppuccin-mocha/
@@ -168,19 +168,19 @@ MacTheme uses a symlink-based architecture for seamless theme switching:
 **Alacritty** (`~/.config/alacritty/alacritty.toml`):
 
 ```toml
-import = ["~/Library/Application Support/MacTheme/current/theme/alacritty.toml"]
+import = ["~/Library/Application Support/Flowstate/current/theme/alacritty.toml"]
 ```
 
 **Kitty** (`~/.config/kitty/kitty.conf`):
 
 ```
-include ~/Library/Application Support/MacTheme/current/theme/kitty.conf
+include ~/Library/Application Support/Flowstate/current/theme/kitty.conf
 ```
 
 **Neovim** (`~/.config/nvim/lua/plugins/theme.lua`):
 
 ```lua
-dofile(vim.fn.expand("~/Library/Application Support/MacTheme/current/theme/neovim.lua"))
+dofile(vim.fn.expand("~/Library/Application Support/Flowstate/current/theme/neovim.lua"))
 ```
 
 ### IPC Channels

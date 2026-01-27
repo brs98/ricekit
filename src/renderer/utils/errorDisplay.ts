@@ -24,7 +24,7 @@ export function getErrorDisplay(error: unknown): ErrorDisplay {
       return {
         title: 'Permission Error',
         message,
-        action: 'chmod -R u+w ~/Library/Application\\ Support/MacTheme',
+        action: 'chmod -R u+w ~/Library/Application\\ Support/Flowstate',
       };
 
     case 'THEME_NOT_FOUND':
