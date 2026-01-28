@@ -20,7 +20,7 @@ export const SUPPORTED_NERD_FONTS = [
 export type NerdFontName = (typeof SUPPORTED_NERD_FONTS)[number];
 
 // Homebrew cask names for each font
-export const NERD_FONT_CASKS: Record<string, string> = {
+export const NERD_FONT_CASKS = {
   'Hack Nerd Font': 'font-hack-nerd-font',
   'JetBrainsMono Nerd Font': 'font-jetbrains-mono-nerd-font',
   'FiraCode Nerd Font': 'font-fira-code-nerd-font',
@@ -31,7 +31,7 @@ export const NERD_FONT_CASKS: Record<string, string> = {
   'Inconsolata Nerd Font': 'font-inconsolata-nerd-font',
   'DroidSansMono Nerd Font': 'font-droid-sans-mono-nerd-font',
   'Cousine Nerd Font': 'font-cousine-nerd-font',
-};
+} as const satisfies Record<string, string>;
 
 // Recommended font for new installations
 export const RECOMMENDED_NERD_FONT = 'Hack Nerd Font';
@@ -95,11 +95,12 @@ export function hasAnyNerdFont(): boolean {
 export async function installNerdFont(
   fontName: string = RECOMMENDED_NERD_FONT
 ): Promise<{ success: boolean; error?: string }> {
-  const caskName = NERD_FONT_CASKS[fontName];
-
-  if (!caskName) {
+  // Use 'in' operator for type-safe property existence check
+  if (!(fontName in NERD_FONT_CASKS)) {
     return { success: false, error: `Unknown font: ${fontName}` };
   }
+
+  const caskName = NERD_FONT_CASKS[fontName as keyof typeof NERD_FONT_CASKS];
 
   try {
     // Check if Homebrew is installed

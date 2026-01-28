@@ -24,7 +24,7 @@ const themeBasePath = `~/Library/Application Support/${APP_CONFIG.dataDirName}/c
 /**
  * App configuration definitions
  */
-const APP_CONFIGS: Record<string, { configPath: string; importLine: string }> = {
+const APP_CONFIGS = {
   alacritty: {
     configPath: path.join(homeDir, '.config', 'alacritty', 'alacritty.toml'),
     importLine: `import = ["${themeBasePath}/alacritty.toml"]`,
@@ -62,7 +62,7 @@ after-startup-command = [
   'exec-and-forget source "$HOME/Library/Application Support/${APP_CONFIG.dataDirName}/current/theme/aerospace-borders.sh"'
 ]`,
   },
-};
+} as const satisfies Record<string, { readonly configPath: string; readonly importLine: string }>;
 
 /**
  * Setup an application for theming

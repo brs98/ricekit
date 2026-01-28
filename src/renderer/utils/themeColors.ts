@@ -1,4 +1,4 @@
-import { ThemeColors } from '../../shared/types';
+import type { ThemeColors } from '../../shared/types';
 
 /**
  * Convert a hex color to space-separated RGB values for CSS variables.

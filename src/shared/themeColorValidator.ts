@@ -2,7 +2,7 @@
  * Validation for pasted theme color JSON
  */
 
-import { ThemeColors } from './types';
+import type { ThemeColors } from './types';
 import { isValidHexColor } from './colorUtils';
 
 // All valid color keys in ThemeColors
