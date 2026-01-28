@@ -154,7 +154,8 @@ export async function handleGetPluginStatus(
         encoding: 'utf-8',
         timeout: 5000,
       });
-      version = output.trim().split('\n')[0];
+      const lines = output.trim().split('\n');
+      version = lines[0] ?? undefined;
     } catch {
       version = undefined;
     }

@@ -201,8 +201,13 @@ describe('pluginHandlers', () => {
       const presets = await handleListPresets(null, 'sketchybar');
 
       expect(presets.length).toBe(2);
-      expect(presets[0]!.name).toBe('minimal');
-      expect(presets[1]!.name).toBe('pro');
+      const preset0 = presets[0];
+      const preset1 = presets[1];
+      expect(preset0).toBeDefined();
+      expect(preset1).toBeDefined();
+      if (!preset0 || !preset1) return;
+      expect(preset0.name).toBe('minimal');
+      expect(preset1.name).toBe('pro');
     });
   });
 
@@ -265,7 +270,10 @@ describe('pluginHandlers', () => {
       await handleResetPluginToCustom(null, 'sketchybar');
 
       expect(handleSetPreferences).toHaveBeenCalled();
-      const setPrefsCall = vi.mocked(handleSetPreferences).mock.calls[0]!;
+      const calls = vi.mocked(handleSetPreferences).mock.calls;
+      const setPrefsCall = calls[0];
+      expect(setPrefsCall).toBeDefined();
+      if (!setPrefsCall) return;
       const updatedPrefs = setPrefsCall[1];
       expect(updatedPrefs.pluginConfigs?.sketchybar?.mode).toBe('custom');
       expect(updatedPrefs.pluginConfigs?.sketchybar?.preset).toBeUndefined();
@@ -362,7 +370,8 @@ describe('pluginHandlers - generateWrapperConfig', () => {
     );
 
     expect(starshipConfigCall).toBeDefined();
-    const content = String(starshipConfigCall![1]);
+    if (!starshipConfigCall) return;
+    const content = String(starshipConfigCall[1]);
     expect(content).toContain('# Flowstate Starship Configuration');
     expect(content).toContain('# Preset: minimal');
     // Preset content should be copied inline (starship doesn't support includes)
@@ -390,7 +399,8 @@ describe('pluginHandlers - generateWrapperConfig', () => {
     const tmuxConfigCall = writeFileCalls.find((call) => String(call[0]).includes('.tmux.conf'));
 
     expect(tmuxConfigCall).toBeDefined();
-    const content = String(tmuxConfigCall![1]);
+    if (!tmuxConfigCall) return;
+    const content = String(tmuxConfigCall[1]);
     expect(content).toContain('# Flowstate tmux Configuration');
     expect(content).toContain('source-file');
     expect(content).toContain('tmux-colors.conf');
@@ -432,7 +442,8 @@ describe('pluginHandlers - generateWrapperConfig', () => {
     );
 
     expect(batConfigCall).toBeDefined();
-    const content = String(batConfigCall![1]);
+    if (!batConfigCall) return;
+    const content = String(batConfigCall[1]);
     expect(content).toContain('# Flowstate bat Configuration');
     // bat copies preset content inline since it doesn't support includes
     expect(content).toContain('--');
@@ -490,7 +501,8 @@ describe('pluginHandlers - generateWrapperConfig', () => {
     const gitconfigCall = writeFileCalls.find((call) => String(call[0]).includes('.gitconfig'));
 
     expect(gitconfigCall).toBeDefined();
-    const content = String(gitconfigCall![1]);
+    if (!gitconfigCall) return;
+    const content = String(gitconfigCall[1]);
     // Should preserve existing sections
     expect(content).toContain('[user]');
     expect(content).toContain('name = Test User');
@@ -551,7 +563,8 @@ describe('pluginHandlers - generateWrapperConfig', () => {
     const gitconfigCall = writeFileCalls.find((call) => String(call[0]).includes('.gitconfig'));
 
     expect(gitconfigCall).toBeDefined();
-    const content = String(gitconfigCall![1]);
+    if (!gitconfigCall) return;
+    const content = String(gitconfigCall[1]);
     // Should preserve other sections
     expect(content).toContain('[user]');
     expect(content).toContain('[alias]');
