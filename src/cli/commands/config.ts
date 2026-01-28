@@ -39,7 +39,7 @@ export function createConfigCommand(): Command {
           }
           console.log();
         }
-      } catch (err) {
+      } catch (err: unknown) {
         error('Failed to get preferences', err instanceof Error ? err.message : undefined);
         process.exit(EXIT_CODES.ERROR);
       }
@@ -104,7 +104,7 @@ export function createConfigCommand(): Command {
         } else {
           success(`Set ${key} = ${parsedValue}`);
         }
-      } catch (err) {
+      } catch (err: unknown) {
         error('Failed to set preference', err instanceof Error ? err.message : undefined);
         process.exit(EXIT_CODES.ERROR);
       }
@@ -139,7 +139,7 @@ export function createConfigCommand(): Command {
             console.log(`${key}: ${JSON.stringify(value)}`);
           }
         }
-      } catch (err) {
+      } catch (err: unknown) {
         error('Failed to get preference', err instanceof Error ? err.message : undefined);
         process.exit(EXIT_CODES.ERROR);
       }

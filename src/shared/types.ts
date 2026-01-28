@@ -1,3 +1,9 @@
+/**
+ * StrictOmit - A stricter version of Omit that only allows keys that exist on T
+ * Use this instead of Omit when you want TypeScript to catch typos in key names
+ */
+export type StrictOmit<T, K extends keyof T> = Omit<T, K>;
+
 // Theme metadata structure
 export interface ThemeColors {
   background: string;
@@ -147,9 +153,7 @@ export interface Preferences {
     enabled: boolean; // Enable time-based scheduling
     schedules: ScheduleEntry[];
   };
-  pluginConfigs?: {
-    [appName: string]: PluginConfig;
-  };
+  pluginConfigs?: Record<string, PluginConfig>;
 }
 
 // State structure
@@ -159,12 +163,18 @@ export interface State {
   lastSwitched: number;
 }
 
+// Sort mode options for theme listing
+export type SortMode = 'default' | 'name-asc' | 'name-desc' | 'recent';
+
+// Filter mode options for theme listing
+export type FilterMode = 'all' | 'light' | 'dark' | 'favorites';
+
 // UI State for saving/restoring app state
 export interface UIState {
   activeView?: string;
   searchQuery?: string;
-  filterMode?: 'all' | 'light' | 'dark' | 'favorites';
-  sortMode?: 'default' | 'name-asc' | 'name-desc' | 'recent';
+  filterMode?: FilterMode;
+  sortMode?: SortMode;
   editorTheme?: {
     name: string;
     metadata: ThemeMetadata;

@@ -8,7 +8,7 @@ import { promisify } from 'util';
 import { exec } from 'child_process';
 import { getThemesDir, getCustomThemesDir, getStatePath, getCurrentDir } from '../directories';
 import type { State } from '../../shared/types';
-import { getErrorMessage } from '../../shared/errors';
+import { getErrorMessage, isNodeError } from '../../shared/errors';
 import { logger } from '../logger';
 import { generateThumbnails, clearOldThumbnails, getThumbnailCacheStats } from '../thumbnails';
 import {
@@ -190,8 +190,7 @@ export async function handleApplyWallpaper(
       await unlink(wallpaperSymlink);
     } catch (err: unknown) {
       // Ignore ENOENT (file doesn't exist), re-throw other errors
-      const nodeErr = err as NodeJS.ErrnoException;
-      if (nodeErr.code !== 'ENOENT') {
+      if (!isNodeError(err) || err.code !== 'ENOENT') {
         throw err;
       }
     }

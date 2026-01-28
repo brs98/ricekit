@@ -261,5 +261,10 @@ export function getDerivationDescription(key: DerivedColorKey): string {
       return 'cyan + 18% lightness';
     case 'brightWhite':
       return 'white + 18% lightness';
+    default: {
+      // Exhaustive check: if a new DerivedColorKey is added, this will error
+      const _exhaustive: never = key;
+      throw new Error(`Unhandled derived color key: ${_exhaustive}`);
+    }
   }
 }

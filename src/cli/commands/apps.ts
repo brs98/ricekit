@@ -63,7 +63,7 @@ export function createAppsCommand(): Command {
           table(['Name', 'Category', 'Installed', 'Configured'], rows);
           console.log();
         }
-      } catch (err) {
+      } catch (err: unknown) {
         if (isJsonMode()) {
           output({ success: false, error: err instanceof Error ? err.message : String(err) });
         } else {
@@ -104,7 +104,7 @@ export function createAppsCommand(): Command {
             console.log(chalk.gray(`  Backup: ${result.data.backupPath}`));
           }
         }
-      } catch (err) {
+      } catch (err: unknown) {
         error('Failed to setup app', err instanceof Error ? err.message : undefined);
         process.exit(EXIT_CODES.ERROR);
       }

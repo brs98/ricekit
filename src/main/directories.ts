@@ -285,7 +285,7 @@ export function ensureThemeSymlink(): void {
           logger.info(`Theme symlink points to non-existent theme, removing: ${target}`);
           fs.unlinkSync(symlinkPath);
         }
-      } catch (err) {
+      } catch (err: unknown) {
         logger.error('Error reading symlink:', getErrorMessage(err));
         // Remove invalid symlink
         fs.unlinkSync(symlinkPath);
@@ -306,7 +306,7 @@ export function ensureThemeSymlink(): void {
       if (state.currentTheme) {
         currentTheme = state.currentTheme;
       }
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('Error reading state file:', getErrorMessage(err));
     }
   }
@@ -338,7 +338,7 @@ export function ensureThemeSymlink(): void {
   try {
     fs.symlinkSync(path.join(getThemesDir(), currentTheme), symlinkPath, 'dir');
     logger.info(`Created theme symlink: ${symlinkPath} -> ${path.join(getThemesDir(), currentTheme)}`);
-  } catch (err) {
+  } catch (err: unknown) {
     logger.error('Failed to create theme symlink:', getErrorMessage(err));
   }
 }

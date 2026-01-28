@@ -86,7 +86,7 @@ export function createThemeCommand(): Command {
           table(['Name', 'Author', 'Description'], rows);
           console.log();
         }
-      } catch (err) {
+      } catch (err: unknown) {
         error('Failed to list themes', err instanceof Error ? err.message : undefined);
         process.exit(EXIT_CODES.ERROR);
       }
@@ -121,7 +121,7 @@ export function createThemeCommand(): Command {
             console.log(chalk.gray('No theme currently active'));
           }
         }
-      } catch (err) {
+      } catch (err: unknown) {
         error('Failed to get current theme', err instanceof Error ? err.message : undefined);
         process.exit(EXIT_CODES.ERROR);
       }
@@ -171,7 +171,7 @@ export function createThemeCommand(): Command {
             console.log(chalk.gray(`  Notified: ${result.data.notifiedApps.join(', ')}`));
           }
         }
-      } catch (err) {
+      } catch (err: unknown) {
         error('Failed to apply theme', err instanceof Error ? err.message : undefined);
         process.exit(EXIT_CODES.ERROR);
       }
@@ -220,7 +220,7 @@ export function createThemeCommand(): Command {
           console.log(`    Accent:     ${chalk.hex(colors.accent || '#007acc')(colors.accent)}`);
           console.log();
         }
-      } catch (err) {
+      } catch (err: unknown) {
         error('Failed to get theme', err instanceof Error ? err.message : undefined);
         process.exit(EXIT_CODES.ERROR);
       }
@@ -260,7 +260,7 @@ export function createThemeCommand(): Command {
           success(`Created theme: ${chalk.bold(name)}`);
           console.log(chalk.gray(`  Path: ${result.data.path}`));
         }
-      } catch (err) {
+      } catch (err: unknown) {
         error('Failed to create theme', err instanceof Error ? err.message : undefined);
         process.exit(EXIT_CODES.ERROR);
       }
@@ -309,7 +309,7 @@ export function createThemeCommand(): Command {
         } else {
           success(`Deleted theme: ${chalk.bold(name)}`);
         }
-      } catch (err) {
+      } catch (err: unknown) {
         error('Failed to delete theme', err instanceof Error ? err.message : undefined);
         process.exit(EXIT_CODES.ERROR);
       }
@@ -344,7 +344,7 @@ export function createThemeCommand(): Command {
           success(`Duplicated theme: ${chalk.bold(name)} → ${chalk.bold(result.data.name)}`);
           console.log(chalk.gray(`  Path: ${result.data.path}`));
         }
-      } catch (err) {
+      } catch (err: unknown) {
         error('Failed to duplicate theme', err instanceof Error ? err.message : undefined);
         process.exit(EXIT_CODES.ERROR);
       }
@@ -377,7 +377,7 @@ export function createThemeCommand(): Command {
           success(`Exported theme: ${chalk.bold(name)}`);
           console.log(chalk.gray(`  File: ${result.data}`));
         }
-      } catch (err) {
+      } catch (err: unknown) {
         error('Failed to export theme', err instanceof Error ? err.message : undefined);
         process.exit(EXIT_CODES.ERROR);
       }
@@ -415,7 +415,7 @@ export function createThemeCommand(): Command {
           success(`Imported theme: ${chalk.bold(result.data.name)}`);
           console.log(chalk.gray(`  Path: ${result.data.path}`));
         }
-      } catch (err) {
+      } catch (err: unknown) {
         error('Failed to import theme', err instanceof Error ? err.message : undefined);
         process.exit(EXIT_CODES.ERROR);
       }

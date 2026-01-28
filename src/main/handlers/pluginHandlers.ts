@@ -97,6 +97,13 @@ const PLUGIN_DEFINITIONS = {
 type PluginName = keyof typeof PLUGIN_DEFINITIONS;
 
 /**
+ * Type guard for plugin names
+ */
+function isPluginName(name: string): name is PluginName {
+  return name in PLUGIN_DEFINITIONS;
+}
+
+/**
  * Check if Homebrew is installed
  */
 function isHomebrewInstalled(): boolean {
@@ -119,10 +126,10 @@ export async function handleGetPluginStatus(
   _event: unknown,
   appName: string
 ): Promise<PluginStatus> {
-  const plugin = PLUGIN_DEFINITIONS[appName as PluginName];
-  if (!plugin) {
+  if (!isPluginName(appName)) {
     throw new Error(`Unknown plugin: ${appName}`);
   }
+  const plugin = PLUGIN_DEFINITIONS[appName];
 
   const binaryPath = plugin.binaryPaths.find((p) => existsSync(p));
   const configExists = existsSync(plugin.configDir);
@@ -154,10 +161,10 @@ export async function handleGetPluginStatus(
  * Install a plugin via Homebrew
  */
 export async function handleInstallPlugin(_event: unknown, appName: string): Promise<void> {
-  const plugin = PLUGIN_DEFINITIONS[appName as PluginName];
-  if (!plugin) {
+  if (!isPluginName(appName)) {
     throw new Error(`Unknown plugin: ${appName}`);
   }
+  const plugin = PLUGIN_DEFINITIONS[appName];
 
   // Check if Homebrew is installed
   if (!isHomebrewInstalled()) {
@@ -290,10 +297,10 @@ export async function handleSetPreset(
   appName: string,
   presetName: string
 ): Promise<void> {
-  const plugin = PLUGIN_DEFINITIONS[appName as PluginName];
-  if (!plugin) {
+  if (!isPluginName(appName)) {
     throw new Error(`Unknown plugin: ${appName}`);
   }
+  const plugin = PLUGIN_DEFINITIONS[appName];
 
   const configDir = plugin.configDir;
   const mainConfigPath = path.join(configDir, plugin.mainConfigFile);
@@ -561,10 +568,10 @@ async function generateDeltaGitconfig(
  * Reset plugin to custom mode
  */
 export async function handleResetPluginToCustom(_event: unknown, appName: string): Promise<void> {
-  const plugin = PLUGIN_DEFINITIONS[appName as PluginName];
-  if (!plugin) {
+  if (!isPluginName(appName)) {
     throw new Error(`Unknown plugin: ${appName}`);
   }
+  const _plugin = PLUGIN_DEFINITIONS[appName]; // Validate plugin exists
 
   // Update preferences
   const prefs = await handleGetPreferences();
@@ -582,10 +589,10 @@ export async function handleResetPluginToCustom(_event: unknown, appName: string
  * Check if a backup exists for a plugin
  */
 export async function handleHasPluginBackup(_event: unknown, appName: string): Promise<boolean> {
-  const plugin = PLUGIN_DEFINITIONS[appName as PluginName];
-  if (!plugin) {
+  if (!isPluginName(appName)) {
     return false;
   }
+  const plugin = PLUGIN_DEFINITIONS[appName];
 
   const backupPath = path.join(plugin.configDir, `${plugin.mainConfigFile}.flowstate-backup`);
   return existsSync(backupPath);
@@ -598,10 +605,10 @@ export async function handleRestorePluginBackup(
   _event: unknown,
   appName: string
 ): Promise<{ success: boolean; error?: string }> {
-  const plugin = PLUGIN_DEFINITIONS[appName as PluginName];
-  if (!plugin) {
+  if (!isPluginName(appName)) {
     return { success: false, error: `Unknown plugin: ${appName}` };
   }
+  const plugin = PLUGIN_DEFINITIONS[appName];
 
   const configPath = path.join(plugin.configDir, plugin.mainConfigFile);
   const backupPath = path.join(plugin.configDir, `${plugin.mainConfigFile}.flowstate-backup`);

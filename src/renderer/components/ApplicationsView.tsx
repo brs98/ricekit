@@ -85,7 +85,7 @@ export function ApplicationsView() {
       setError(null);
       const detectedApps = await window.electronAPI.detectApps();
       setApps(detectedApps);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Failed to load apps:', err);
       setError('Failed to detect applications');
     } finally {
@@ -97,7 +97,7 @@ export function ApplicationsView() {
     try {
       const prefs = await window.electronAPI.getPreferences();
       setEnabledApps(prefs.enabledApps);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Failed to load preferences:', err);
       // Default to all apps enabled
       setEnabledApps([]);
@@ -131,7 +131,7 @@ export function ApplicationsView() {
       const prefs = await window.electronAPI.getPreferences();
       prefs.enabledApps = newEnabledApps;
       await window.electronAPI.setPreferences(prefs);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Failed to toggle app:', err);
       // Reload preferences to sync state
       loadPreferences();
@@ -141,7 +141,7 @@ export function ApplicationsView() {
   const handleViewConfig = async (configPath: string) => {
     try {
       await window.electronAPI.openPath(configPath);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Failed to open config file:', err);
       setError('Failed to open config file. It may not exist yet.');
     }
@@ -151,7 +151,7 @@ export function ApplicationsView() {
     try {
       setRefreshingApp(appName);
       await window.electronAPI.refreshApp(appName);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Failed to refresh app:', err);
       setError(`Failed to refresh ${appName}. The app may not be running.`);
     } finally {

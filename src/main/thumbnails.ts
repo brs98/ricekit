@@ -78,7 +78,7 @@ export async function generateThumbnail(imagePath: string): Promise<string> {
  * Generate thumbnails for multiple images
  * Returns a map of original path to thumbnail path
  */
-export async function generateThumbnails(imagePaths: string[]): Promise<Map<string, string>> {
+export async function generateThumbnails(imagePaths: readonly string[]): Promise<Map<string, string>> {
   const thumbnailMap = new Map<string, string>();
 
   // Process thumbnails in parallel (but limit concurrency to avoid overwhelming the system)

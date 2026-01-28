@@ -1,6 +1,7 @@
 import { execSync } from 'child_process';
 import { logger } from '../logger';
 import { getErrorMessage } from '../../shared/errors';
+import type { FontStatus } from '../../shared/types';
 
 // Common Nerd Fonts that work well with sketchybar
 export const SUPPORTED_NERD_FONTS = [
@@ -132,13 +133,6 @@ export async function installNerdFont(
 /**
  * Get font status for UI display
  */
-export interface FontStatus {
-  hasNerdFont: boolean;
-  installedFont: string | null;
-  recommendedFont: string;
-  supportedFonts: readonly string[];
-}
-
 export function getFontStatus(): FontStatus {
   const installedFont = getAvailableNerdFont();
   return {

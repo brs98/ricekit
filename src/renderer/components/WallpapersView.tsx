@@ -119,7 +119,7 @@ export const WallpapersView: React.FC = () => {
     try {
       const prefs = await window.electronAPI.getPreferences();
       setDynamicWallpaperEnabled(prefs.dynamicWallpaper?.enabled || false);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Error loading preferences:', err);
     }
   };
@@ -137,7 +137,7 @@ export const WallpapersView: React.FC = () => {
       });
 
       setDynamicWallpaperEnabled(newValue);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Error toggling dynamic wallpaper:', err);
       setError('Failed to update dynamic wallpaper setting.');
     }
@@ -147,7 +147,7 @@ export const WallpapersView: React.FC = () => {
     try {
       const displayList = await window.electronAPI.getDisplays();
       setDisplays(displayList);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Error loading displays:', err);
       // Default to single display on error
       setDisplays([{
@@ -172,7 +172,7 @@ export const WallpapersView: React.FC = () => {
       // Load wallpapers with thumbnails for better performance
       const wallpaperItems = await window.electronAPI.listWallpapersWithThumbnails(state.currentTheme);
       setWallpapers(wallpaperItems);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Error loading wallpapers:', err);
       setError('Failed to load wallpapers. Please try again.');
     } finally {
@@ -187,7 +187,7 @@ export const WallpapersView: React.FC = () => {
       toast.success('Wallpaper applied', {
         description: fileName.replace(/\.[^.]+$/, '').replace(/-/g, ' '),
       });
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Error applying wallpaper:', err);
       setError('Failed to apply wallpaper. Please try again.');
       toast.error('Failed to apply wallpaper');
@@ -211,7 +211,7 @@ export const WallpapersView: React.FC = () => {
         setError(`Some wallpapers failed to add: ${result.errors.join(', ')}`);
         toast.error('Some wallpapers failed to add');
       }
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Error adding wallpapers:', err);
       setError('Failed to add wallpapers. Please try again.');
       toast.error('Failed to add wallpapers');
@@ -230,7 +230,7 @@ export const WallpapersView: React.FC = () => {
       toast.success('Wallpaper removed', {
         description: fileName.replace(/\.[^.]+$/, '').replace(/-/g, ' '),
       });
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Error removing wallpaper:', err);
       setError('Failed to remove wallpaper. Please try again.');
       toast.error('Failed to remove wallpaper');

@@ -58,7 +58,7 @@ export function createPluginsCommand(): Command {
           table(['Name', 'Installed', 'Config', 'Version', 'Description'], rows);
           console.log();
         }
-      } catch (err) {
+      } catch (err: unknown) {
         error('Failed to list plugins', err instanceof Error ? err.message : undefined);
         process.exit(EXIT_CODES.ERROR);
       }
@@ -97,7 +97,7 @@ export function createPluginsCommand(): Command {
           }
           console.log();
         }
-      } catch (err) {
+      } catch (err: unknown) {
         error('Failed to get plugin status', err instanceof Error ? err.message : undefined);
         process.exit(EXIT_CODES.ERROR);
       }
@@ -126,7 +126,7 @@ export function createPluginsCommand(): Command {
           success(`Installed ${chalk.bold(name)}`);
           console.log(chalk.gray(`  Run: flowstate apps setup ${name}`));
         }
-      } catch (err) {
+      } catch (err: unknown) {
         error('Failed to install plugin', err instanceof Error ? err.message : undefined);
         process.exit(EXIT_CODES.ERROR);
       }

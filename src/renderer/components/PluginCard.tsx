@@ -72,7 +72,7 @@ export function PluginCard({
       setPresets(presetsData);
       setSelectedPreset(configData?.preset || '');
       setHasBackup(backupExists);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error(`Failed to load plugin data for ${appName}:`, err);
       setError('Failed to load plugin data');
     } finally {
@@ -112,7 +112,7 @@ export function PluginCard({
           setShowFontDialog(true);
           return;
         }
-      } catch (err) {
+      } catch (err: unknown) {
         console.warn('Failed to check font status:', err);
         // Continue anyway - the preset will use fallback icons
       }

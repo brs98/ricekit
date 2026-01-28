@@ -70,8 +70,9 @@ export function validateColorJson(input: string): ValidationResult {
   const obj = parsed as Record<string, unknown>;
 
   // Check if it's a ThemeMetadata object (has colors property)
-  const colorSource = obj.colors && typeof obj.colors === 'object' && !Array.isArray(obj.colors)
-    ? obj.colors as Record<string, unknown>
+  // Use 'in' operator for property existence check (better narrowing)
+  const colorSource = 'colors' in obj && typeof obj.colors === 'object' && obj.colors !== null && !Array.isArray(obj.colors)
+    ? (obj.colors as Record<string, unknown>)
     : obj;
 
   // Extract and validate colors

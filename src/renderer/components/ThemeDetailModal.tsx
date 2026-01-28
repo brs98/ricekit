@@ -96,7 +96,7 @@ export function ThemeDetailModal({
       setWallpapersLoading(true);
       const wallpaperList = await window.electronAPI.listWallpapers(theme.name);
       setWallpapers(wallpaperList);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Failed to load wallpapers:', err);
     } finally {
       setWallpapersLoading(false);
@@ -113,7 +113,7 @@ export function ThemeDetailModal({
       await navigator.clipboard.writeText(colorValue);
       setCopiedColor(colorName);
       setTimeout(() => setCopiedColor(null), 2000);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Failed to copy color:', err);
     }
   };

@@ -20,8 +20,12 @@ export { existsSync };
 
 /**
  * Read and parse a JSON file
+ *
+ * Note: This function uses a type assertion for the parsed result.
+ * For critical data, consider using type guards from '@shared/validation'
+ * to validate the structure at runtime.
  */
-export async function readJson<T>(filePath: string): Promise<T> {
+export async function readJson<T = unknown>(filePath: string): Promise<T> {
   const content = await fs.readFile(filePath, 'utf-8');
   return JSON.parse(content) as T;
 }

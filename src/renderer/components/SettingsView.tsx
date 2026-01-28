@@ -242,7 +242,7 @@ export function SettingsView() {
       setThemes(allThemes);
       setDebugLogging(isLoggingEnabled);
       setLogFile(logFilePath);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Failed to load settings data:', err);
       setError('Failed to load preferences');
     } finally {
@@ -255,7 +255,7 @@ export function SettingsView() {
       setSaving(true);
       await window.electronAPI.setPreferences(updatedPrefs);
       setPreferences(updatedPrefs);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Failed to save preferences:', err);
       setError('Failed to save preferences');
     } finally {
@@ -652,7 +652,7 @@ export function SettingsView() {
                 setDebugLogging(checked);
                 try {
                   await window.electronAPI.setDebugLogging(checked);
-                } catch (err) {
+                } catch (err: unknown) {
                   console.error('Failed to toggle debug logging:', err);
                   setDebugLogging(!checked); // Revert on error
                 }
@@ -670,7 +670,7 @@ export function SettingsView() {
                 try {
                   const logDir = await window.electronAPI.getLogDirectory();
                   await window.electronAPI.openExternal(`file://${logDir}`);
-                } catch (err) {
+                } catch (err: unknown) {
                   console.error('Failed to open log directory:', err);
                   alert('Failed to open log directory');
                 }
@@ -691,7 +691,7 @@ export function SettingsView() {
                   try {
                     await window.electronAPI.clearLogs();
                     alert('Log files cleared successfully');
-                  } catch (err) {
+                  } catch (err: unknown) {
                     console.error('Failed to clear logs:', err);
                     alert('Failed to clear log files');
                   }

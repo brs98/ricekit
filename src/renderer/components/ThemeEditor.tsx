@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Theme, ThemeMetadata, ThemeColors, ColorLockState, DerivedColorKey } from '../../shared/types';
+import { Theme, ThemeMetadata, ThemeColors, ColorLockState, DerivedColorKey, StrictOmit } from '../../shared/types';
 import {
   isValidHexColor,
   toHex,
@@ -678,7 +678,7 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
     }
   }, []);
 
-  const updateMetadataField = (field: keyof Omit<ThemeMetadata, 'colors'>, value: string) => {
+  const updateMetadataField = (field: keyof StrictOmit<ThemeMetadata, 'colors'>, value: string) => {
     setMetadata({
       ...metadata,
       [field]: value,

@@ -2,7 +2,8 @@ import { useState, useEffect, lazy, Suspense } from 'react';
 import { Toaster } from 'sonner';
 import './App.css';
 import { ThemeGrid } from './components/ThemeGrid';
-import { Theme } from '../shared/types';
+import type { Theme, SortMode, FilterMode } from '../shared/types';
+import { isSortMode } from '../shared/validation';
 
 // Lazy load heavy components for better initial bundle size
 const ThemeEditor = lazy(() => import('./components/ThemeEditor').then(m => ({ default: m.ThemeEditor })));
@@ -23,9 +24,6 @@ import {
 import { Button } from '@/renderer/components/ui/button';
 import { Input } from '@/renderer/components/ui/input';
 import { Palette, Pencil, AppWindow, Image, Settings, Star, Download, Search, ArrowUpDown } from 'lucide-react';
-
-type FilterMode = 'all' | 'light' | 'dark' | 'favorites';
-type SortMode = 'default' | 'name-asc' | 'name-desc' | 'recent';
 
 function App() {
   const [activeView, setActiveView] = useState('themes');
@@ -311,7 +309,11 @@ function App() {
                     <select
                       className="sort-dropdown"
                       value={sortMode}
-                      onChange={(e) => setSortMode(e.target.value as SortMode)}
+                      onChange={(e) => {
+                        if (isSortMode(e.target.value)) {
+                          setSortMode(e.target.value);
+                        }
+                      }}
                       title="Sort themes"
                     >
                       <option value="default">Default</option>

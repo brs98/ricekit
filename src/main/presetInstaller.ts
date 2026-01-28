@@ -102,7 +102,7 @@ export async function listPresets(pluginName: string): Promise<PresetInfo[]> {
       try {
         const metadata = await readJson<PresetInfo>(metadataPath);
         presets.push(metadata);
-      } catch (err) {
+      } catch (err: unknown) {
         logger.error(`Failed to read preset metadata for ${pluginName}/${dir}:`, getErrorMessage(err));
         // Use fallback metadata
         presets.push({
@@ -170,7 +170,7 @@ export async function getActivePreset(pluginName: string): Promise<string | null
 
     const target = await readSymlink(symlinkPath);
     return path.basename(target);
-  } catch (err) {
+  } catch (err: unknown) {
     logger.error(`Failed to read preset symlink for ${pluginName}:`, getErrorMessage(err));
     return null;
   }

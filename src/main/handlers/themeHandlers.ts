@@ -18,9 +18,10 @@ import {
   ensureDirectories,
   ensurePreferences,
   ensureState,
+  getDefaultPreferences,
 } from '../directories';
 import type { Theme, ThemeMetadata, ThemeColors, Preferences, State } from '../../shared/types';
-import { createError, getErrorMessage } from '../../shared/errors';
+import { createError, getErrorMessage, isNodeError } from '../../shared/errors';
 import { logger } from '../logger';
 import {
   readJson,
@@ -429,7 +430,7 @@ async function refreshActiveThemeApps(themeName: string, themePath: string): Pro
     prefs = await readJson<Preferences>(prefsPath);
   } catch (err) {
     logger.error('Failed to read preferences for theme refresh:', getErrorMessage(err));
-    prefs = {} as Preferences;
+    prefs = getDefaultPreferences();
   }
 
   // Update UI (tray menu, window title, notify renderer)
@@ -534,8 +535,7 @@ export async function handleApplyTheme(_event: IpcMainInvokeEvent | null, name: 
         }
       }
     } catch (err: unknown) {
-      const nodeErr = err as NodeJS.ErrnoException;
-      if (nodeErr.code === 'EACCES' || nodeErr.code === 'EPERM') {
+      if (isNodeError(err) && (err.code === 'EACCES' || err.code === 'EPERM')) {
         throw createError(
           'PERMISSION_ERROR',
           "Flowstate doesn't have permission to modify theme files. Please check folder permissions."
@@ -550,19 +550,20 @@ export async function handleApplyTheme(_event: IpcMainInvokeEvent | null, name: 
       logger.debug(`Created symlink: ${symlinkPath} -> ${theme.path}`);
     } catch (err: unknown) {
       logger.error('Failed to create symlink:', getErrorMessage(err));
-      const nodeErr = err as NodeJS.ErrnoException;
-      if (nodeErr.code === 'EACCES' || nodeErr.code === 'EPERM') {
-        throw createError(
-          'PERMISSION_ERROR',
-          'Cannot create theme link due to insufficient permissions. Please check folder permissions in ~/Library/Application Support/Flowstate.'
-        );
-      } else if (nodeErr.code === 'EEXIST') {
-        throw createError(
-          'FILE_EXISTS',
-          'A file or folder already exists at the theme location. Please remove it and try again.'
-        );
-      } else if (nodeErr.code === 'ENOSPC') {
-        throw createError('NO_SPACE', 'Not enough disk space to apply theme.');
+      if (isNodeError(err)) {
+        if (err.code === 'EACCES' || err.code === 'EPERM') {
+          throw createError(
+            'PERMISSION_ERROR',
+            'Cannot create theme link due to insufficient permissions. Please check folder permissions in ~/Library/Application Support/Flowstate.'
+          );
+        } else if (err.code === 'EEXIST') {
+          throw createError(
+            'FILE_EXISTS',
+            'A file or folder already exists at the theme location. Please remove it and try again.'
+          );
+        } else if (err.code === 'ENOSPC') {
+          throw createError('NO_SPACE', 'Not enough disk space to apply theme.');
+        }
       }
       const message = err instanceof Error ? err.message : String(err);
       throw createError('SYMLINK_ERROR', `Failed to create theme link: ${message}`);
@@ -574,8 +575,7 @@ export async function handleApplyTheme(_event: IpcMainInvokeEvent | null, name: 
     try {
       state = await readJson<State>(statePath);
     } catch (err: unknown) {
-      const nodeErr = err as NodeJS.ErrnoException;
-      if (nodeErr.code === 'EACCES' || nodeErr.code === 'EPERM') {
+      if (isNodeError(err) && (err.code === 'EACCES' || err.code === 'EPERM')) {
         throw createError(
           'PERMISSION_ERROR',
           'Cannot read app state file. Please check permissions for ~/Library/Application Support/Flowstate.'
@@ -590,14 +590,15 @@ export async function handleApplyTheme(_event: IpcMainInvokeEvent | null, name: 
     try {
       await writeJson(statePath, state);
     } catch (err: unknown) {
-      const nodeErr = err as NodeJS.ErrnoException;
-      if (nodeErr.code === 'EACCES' || nodeErr.code === 'EPERM') {
-        throw createError(
-          'PERMISSION_ERROR',
-          'Cannot save app state. Please check write permissions for ~/Library/Application Support/Flowstate.'
-        );
-      } else if (nodeErr.code === 'ENOSPC') {
-        throw createError('NO_SPACE', 'Not enough disk space to save theme state.');
+      if (isNodeError(err)) {
+        if (err.code === 'EACCES' || err.code === 'EPERM') {
+          throw createError(
+            'PERMISSION_ERROR',
+            'Cannot save app state. Please check write permissions for ~/Library/Application Support/Flowstate.'
+          );
+        } else if (err.code === 'ENOSPC') {
+          throw createError('NO_SPACE', 'Not enough disk space to save theme state.');
+        }
       }
       throw err;
     }
@@ -608,8 +609,7 @@ export async function handleApplyTheme(_event: IpcMainInvokeEvent | null, name: 
     try {
       prefs = await readJson<Preferences>(prefsPath);
     } catch (err: unknown) {
-      const nodeErr = err as NodeJS.ErrnoException;
-      if (nodeErr.code === 'EACCES' || nodeErr.code === 'EPERM') {
+      if (isNodeError(err) && (err.code === 'EACCES' || err.code === 'EPERM')) {
         throw createError(
           'PERMISSION_ERROR',
           'Cannot read preferences. Please check permissions for ~/Library/Application Support/Flowstate.'

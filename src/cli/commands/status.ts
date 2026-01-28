@@ -97,7 +97,7 @@ export function createStatusCommand(): Command {
 
           console.log();
         }
-      } catch (err) {
+      } catch (err: unknown) {
         if (isJsonMode()) {
           output({ success: false, error: err instanceof Error ? err.message : String(err) });
         } else {
@@ -189,7 +189,7 @@ export function createDoctorCommand(): Command {
             console.log(chalk.green('\n✔ Everything looks good!\n'));
           }
         }
-      } catch (err) {
+      } catch (err: unknown) {
         if (isJsonMode()) {
           output({ success: false, error: err instanceof Error ? err.message : String(err) });
         } else {

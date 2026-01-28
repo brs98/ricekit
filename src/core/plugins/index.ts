@@ -10,6 +10,7 @@ import { execSync } from 'child_process';
 import type { Result } from '../interfaces';
 import { ok, err } from '../interfaces';
 import { existsSync } from '../utils/fs';
+import type { PluginStatus as BasePluginStatus } from '../../shared/types';
 
 const homeDir = os.homedir();
 
@@ -69,16 +70,22 @@ const PLUGIN_DEFINITIONS = {
 type PluginName = keyof typeof PLUGIN_DEFINITIONS;
 
 /**
- * Plugin status information
+ * Type guard for plugin names
+ * Use this to validate user input before accessing PLUGIN_DEFINITIONS
  */
-export interface PluginStatus {
+export function isPluginName(name: string): name is PluginName {
+  return name in PLUGIN_DEFINITIONS;
+}
+
+/**
+ * Extended plugin status for CLI use (includes metadata from PLUGIN_DEFINITIONS)
+ * Extends the base PluginStatus from shared types
+ */
+export interface PluginStatus extends BasePluginStatus {
   name: string;
   displayName: string;
   description: string;
-  isInstalled: boolean;
-  hasConfig: boolean;
-  version?: string;
-  binaryPath?: string;
+  hasConfig: boolean; // CLI uses hasConfig instead of hasExistingConfig
 }
 
 /**
@@ -126,6 +133,8 @@ export function getPluginStatus(name: string): PluginStatus | null {
     description: plugin.description,
     isInstalled: !!binaryPath,
     hasConfig,
+    hasExistingConfig: hasConfig, // Alias for base interface compatibility
+    configPath: plugin.configPath,
     version,
     binaryPath,
   };
@@ -135,7 +144,9 @@ export function getPluginStatus(name: string): PluginStatus | null {
  * List all plugins with their status
  */
 export function listPlugins(): PluginStatus[] {
-  return (Object.keys(PLUGIN_DEFINITIONS) as PluginName[]).map((name) => getPluginStatus(name)!);
+  return (Object.keys(PLUGIN_DEFINITIONS) as PluginName[])
+    .map((name) => getPluginStatus(name))
+    .filter((status): status is PluginStatus => status !== null);
 }
 
 /**

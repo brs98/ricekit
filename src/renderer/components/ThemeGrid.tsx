@@ -53,7 +53,7 @@ export function ThemeGrid({ searchQuery = '', filterMode = 'all', sortMode = 'de
       setFavorites(prefs.favorites);
       setRecentThemes(prefs.recentThemes || []);
       setError(null);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Failed to load themes:', err);
       setError('Failed to load themes. Please try again.');
     } finally {
@@ -79,7 +79,7 @@ export function ThemeGrid({ searchQuery = '', filterMode = 'all', sortMode = 'de
       toast.success('Theme applied', {
         description: theme?.metadata.name || themeName,
       });
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Failed to apply theme:', err);
       showErrorAlert(err);
       toast.error('Failed to apply theme');
@@ -101,7 +101,7 @@ export function ThemeGrid({ searchQuery = '', filterMode = 'all', sortMode = 'de
       toast(isRemoving ? 'Removed from favorites' : 'Added to favorites', {
         description: theme?.metadata.name || themeName,
       });
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Failed to update favorites:', err);
     }
   };
@@ -122,7 +122,7 @@ export function ThemeGrid({ searchQuery = '', filterMode = 'all', sortMode = 'de
       toast.success('Theme deleted', {
         description: theme?.metadata.name || themeName,
       });
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Failed to delete theme:', err);
       showErrorAlert(err);
       toast.error('Failed to delete theme');
@@ -138,7 +138,7 @@ export function ThemeGrid({ searchQuery = '', filterMode = 'all', sortMode = 'de
       toast.success('Theme duplicated', {
         description: `Created copy of ${theme?.metadata.name || themeName}`,
       });
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Failed to duplicate theme:', err);
       showErrorAlert(err);
       toast.error('Failed to duplicate theme');

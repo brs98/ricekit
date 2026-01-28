@@ -57,7 +57,7 @@ export function createWallpaperCommand(): Command {
           });
           console.log();
         }
-      } catch (err) {
+      } catch (err: unknown) {
         error('Failed to list wallpapers', err instanceof Error ? err.message : undefined);
         process.exit(EXIT_CODES.ERROR);
       }
@@ -81,7 +81,7 @@ export function createWallpaperCommand(): Command {
             console.log(chalk.gray('No wallpaper currently set'));
           }
         }
-      } catch (err) {
+      } catch (err: unknown) {
         error('Failed to get current wallpaper', err instanceof Error ? err.message : undefined);
         process.exit(EXIT_CODES.ERROR);
       }
@@ -111,7 +111,7 @@ export function createWallpaperCommand(): Command {
             console.log(chalk.gray(`  Applied to display ${displayIndex}`));
           }
         }
-      } catch (err) {
+      } catch (err: unknown) {
         if (isJsonMode()) {
           output({
             success: false,

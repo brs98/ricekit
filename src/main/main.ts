@@ -85,7 +85,7 @@ function updateTrayMenu() {
             try {
               await (handleApplyTheme as (event: unknown, name: string) => Promise<void>)(null, themeName);
               updateTrayMenu(); // Refresh menu
-            } catch (err) {
+            } catch (err: unknown) {
               logger.error('Failed to apply theme from tray:', getErrorMessage(err));
             }
           },
@@ -130,7 +130,7 @@ function updateTrayMenu() {
 
     const contextMenu = Menu.buildFromTemplate(menuItems);
     tray.setContextMenu(contextMenu);
-  } catch (err) {
+  } catch (err: unknown) {
     logger.error('Error updating tray menu:', getErrorMessage(err));
   }
 }
@@ -236,7 +236,7 @@ function createWindow() {
     logger.info(`Setting window title to: Flowstate - ${currentTheme}`);
     mainWindow.setTitle(`Flowstate - ${currentTheme}`);
     logger.info(`Window title set successfully`);
-  } catch (err) {
+  } catch (err: unknown) {
     logger.error('Error setting initial window title:', getErrorMessage(err));
     mainWindow.setTitle('Flowstate');
   }
@@ -261,7 +261,7 @@ function createWindow() {
       const currentTheme = state.currentTheme || 'tokyo-night';
       mainWindow?.setTitle(`Flowstate - ${currentTheme}`);
       logger.info(`Window title set after load: Flowstate - ${currentTheme}`);
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('Error setting window title after load:', getErrorMessage(err));
       mainWindow?.setTitle('Flowstate');
     }
@@ -419,7 +419,7 @@ if (!gotTheLock) {
         logger.setDebugEnabled(true);
         logger.debug('Debug logging enabled from preferences');
       }
-    } catch (err) {
+    } catch (err: unknown) {
       logger.warn('Could not load debug logging preference', getErrorMessage(err));
     }
 
@@ -458,7 +458,7 @@ if (!gotTheLock) {
     } else {
       logger.info('Menu bar tray icon disabled by preference');
     }
-  } catch (err) {
+  } catch (err: unknown) {
     logger.error('Error reading preferences for tray:', getErrorMessage(err));
     // Default to creating tray if preferences can't be read
     createTray();
@@ -490,7 +490,7 @@ if (!gotTheLock) {
 
     // Verify shortcut is registered
     logger.info('Shortcut registered:', globalShortcut.isRegistered(accelerator));
-  } catch (err) {
+  } catch (err: unknown) {
     logger.error('Failed to register keyboard shortcut:', getErrorMessage(err));
   }
 

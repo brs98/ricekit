@@ -85,3 +85,11 @@ export function getErrorMessage(error: unknown): string {
   }
   return String(error);
 }
+
+/**
+ * Type guard for Node.js errors with error codes (ENOENT, EACCES, etc.)
+ * Use this instead of casting to NodeJS.ErrnoException
+ */
+export function isNodeError(error: unknown): error is NodeJS.ErrnoException {
+  return error instanceof Error && 'code' in error;
+}
