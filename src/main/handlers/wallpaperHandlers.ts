@@ -8,6 +8,7 @@ import { promisify } from 'util';
 import { exec } from 'child_process';
 import { getThemesDir, getCustomThemesDir, getStatePath, getCurrentDir } from '../directories';
 import type { State } from '../../shared/types';
+import { getErrorMessage } from '../../shared/errors';
 import { logger } from '../logger';
 import { generateThumbnails, clearOldThumbnails, getThumbnailCacheStats } from '../thumbnails';
 import {
@@ -59,8 +60,8 @@ export async function handleListWallpapers(_event: IpcMainInvokeEvent | null, th
 
     logger.info(`Found ${wallpaperPaths.length} wallpapers for theme: ${themeName}`);
     return wallpaperPaths;
-  } catch (error) {
-    logger.error(`Error listing wallpapers for theme ${themeName}:`, error);
+  } catch (error: unknown) {
+    logger.error(`Error listing wallpapers for theme ${themeName}:`, getErrorMessage(error));
     return [];
   }
 }
@@ -95,8 +96,8 @@ async function handleListWallpapersWithThumbnails(
 
     logger.info(`Successfully generated ${result.length} thumbnails`);
     return result;
-  } catch (error) {
-    logger.error(`Error listing wallpapers with thumbnails for theme ${themeName}:`, error);
+  } catch (error: unknown) {
+    logger.error(`Error listing wallpapers with thumbnails for theme ${themeName}:`, getErrorMessage(error));
     // Fallback: return original paths
     const wallpaperPaths = await handleListWallpapers(_event, themeName);
     return wallpaperPaths.map((p) => ({ original: p, thumbnail: p }));
@@ -111,9 +112,9 @@ async function handleClearThumbnailCache(): Promise<void> {
     logger.info('Clearing thumbnail cache...');
     await clearOldThumbnails();
     logger.info('Thumbnail cache cleared successfully');
-  } catch (error) {
-    logger.error('Error clearing thumbnail cache:', error);
-    throw error;
+  } catch (error: unknown) {
+    logger.error('Error clearing thumbnail cache:', getErrorMessage(error));
+    throw new Error(getErrorMessage(error));
   }
 }
 
@@ -127,8 +128,8 @@ async function handleGetThumbnailCacheStats(): Promise<{ count: number; sizeByte
       ...stats,
       sizeMB: Math.round((stats.sizeBytes / (1024 * 1024)) * 100) / 100,
     };
-  } catch (error) {
-    logger.error('Error getting thumbnail cache stats:', error);
+  } catch (error: unknown) {
+    logger.error('Error getting thumbnail cache stats:', getErrorMessage(error));
     return { count: 0, sizeBytes: 0, sizeMB: 0 };
   }
 }
@@ -218,8 +219,8 @@ export async function handleApplyWallpaper(
             },
           });
         }
-      } catch (err) {
-        logger.error('Failed to disable scheduling after manual apply:', err);
+      } catch (err: unknown) {
+        logger.error('Failed to disable scheduling after manual apply:', getErrorMessage(err));
       }
     }
 
@@ -239,9 +240,9 @@ export async function handleApplyWallpaper(
     }
 
     logger.info(`Wallpaper applied successfully: ${wallpaperPath}`);
-  } catch (error) {
-    logger.error(`Error applying wallpaper:`, error);
-    throw error;
+  } catch (error: unknown) {
+    logger.error(`Error applying wallpaper:`, getErrorMessage(error));
+    throw new Error(getErrorMessage(error));
   }
 }
 
@@ -312,8 +313,8 @@ async function handleGetDisplays(): Promise<DisplayInfo[]> {
 
     logger.info(`Found ${displays.length} display(s):`, displays);
     return displays;
-  } catch (error) {
-    logger.error('Error getting displays:', error);
+  } catch (error: unknown) {
+    logger.error('Error getting displays:', getErrorMessage(error));
     // Return a default display on error
     return [
       {
@@ -407,9 +408,9 @@ async function handleAddWallpapers(_event: IpcMainInvokeEvent, themeName: string
     }
 
     return { added, errors };
-  } catch (error) {
-    logger.error(`Error adding wallpapers to theme ${themeName}:`, error);
-    throw error;
+  } catch (error: unknown) {
+    logger.error(`Error adding wallpapers to theme ${themeName}:`, getErrorMessage(error));
+    throw new Error(getErrorMessage(error));
   }
 }
 
@@ -466,9 +467,9 @@ async function handleRemoveWallpaper(_event: IpcMainInvokeEvent, wallpaperPath: 
       });
       notification.show();
     }
-  } catch (error) {
-    logger.error(`Error removing wallpaper:`, error);
-    throw error;
+  } catch (error: unknown) {
+    logger.error(`Error removing wallpaper:`, getErrorMessage(error));
+    throw new Error(getErrorMessage(error));
   }
 }
 

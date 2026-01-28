@@ -84,7 +84,7 @@ export async function setupApp(
       ));
     }
 
-    const supportedApps = Object.keys(APP_CONFIGS).join(', ');
+    const supportedApps = (Object.keys(APP_CONFIGS) as AppConfigKey[]).join(', ');
     return err(new Error(`Unsupported app: ${appName}. Supported: ${supportedApps}`));
   }
 
@@ -120,9 +120,11 @@ export async function setupApp(
   return ok({ configPath, backupPath });
 }
 
+type AppConfigKey = keyof typeof APP_CONFIGS;
+
 /**
  * Get list of apps that can be set up
  */
-export function getSetupableApps(): string[] {
-  return Object.keys(APP_CONFIGS);
+export function getSetupableApps(): AppConfigKey[] {
+  return Object.keys(APP_CONFIGS) as AppConfigKey[];
 }

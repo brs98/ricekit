@@ -60,12 +60,17 @@ export function isValidHslColor(color: string): boolean {
   if (parts.length !== 3) return false;
 
   // Parse H (0-360)
-  const h = parseFloat(parts[0]);
+  const hPart = parts[0];
+  const sPart = parts[1];
+  const lPart = parts[2];
+  if (!hPart || !sPart || !lPart) return false;
+
+  const h = parseFloat(hPart);
   if (isNaN(h) || h < 0 || h > 360) return false;
 
   // Parse S and L (0-100, may have % suffix)
-  const s = parseFloat(parts[1].replace(/%/g, ''));
-  const l = parseFloat(parts[2].replace(/%/g, ''));
+  const s = parseFloat(sPart.replace(/%/g, ''));
+  const l = parseFloat(lPart.replace(/%/g, ''));
 
   if (isNaN(s) || s < 0 || s > 100) return false;
   if (isNaN(l) || l < 0 || l > 100) return false;
@@ -75,7 +80,7 @@ export function isValidHslColor(color: string): boolean {
   if (!originalColor.includes('hsl(') && !originalColor.includes('%')) {
     // Without hsl() or %, this could be mistaken for RGB, so be more strict
     // Only accept if H value is clearly in hue range (> 255 or has decimal indicating degrees)
-    if (h <= 255 && !parts[0].includes('.')) {
+    if (h <= 255 && !hPart.includes('.')) {
       return false;
     }
   }
@@ -93,10 +98,15 @@ export function parseRgb(color: string): RGB | null {
   const cleanedColor = color.replace(/rgb\s*\(\s*|\s*\)/gi, '').trim();
   const parts = cleanedColor.split(/[,\s]+/).filter(p => p.length > 0);
 
+  const rPart = parts[0];
+  const gPart = parts[1];
+  const bPart = parts[2];
+  if (!rPart || !gPart || !bPart) return null;
+
   return {
-    r: parseInt(parts[0], 10),
-    g: parseInt(parts[1], 10),
-    b: parseInt(parts[2], 10),
+    r: parseInt(rPart, 10),
+    g: parseInt(gPart, 10),
+    b: parseInt(bPart, 10),
   };
 }
 
@@ -110,10 +120,15 @@ export function parseHsl(color: string): HSL | null {
   const cleanedColor = color.replace(/hsl\s*\(\s*|\s*\)/gi, '').trim();
   const parts = cleanedColor.split(/[,\s]+/).filter(p => p.length > 0);
 
+  const hPart = parts[0];
+  const sPart = parts[1];
+  const lPart = parts[2];
+  if (!hPart || !sPart || !lPart) return null;
+
   return {
-    h: parseFloat(parts[0]),
-    s: parseFloat(parts[1].replace('%', '')),
-    l: parseFloat(parts[2].replace('%', '')),
+    h: parseFloat(hPart),
+    s: parseFloat(sPart.replace('%', '')),
+    l: parseFloat(lPart.replace('%', '')),
   };
 }
 
@@ -215,6 +230,9 @@ export function rgbToHsl(rgb: RGB): HSL {
       case b:
         h = ((r - g) / d + 4) / 6;
         break;
+      default:
+        // max is always one of r, g, or b by definition of Math.max
+        throw new Error(`Unexpected max value in rgbToHsl: ${max}`);
     }
   }
 

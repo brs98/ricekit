@@ -135,7 +135,7 @@ export function getPluginStatus(name: string): PluginStatus | null {
  * List all plugins with their status
  */
 export function listPlugins(): PluginStatus[] {
-  return Object.keys(PLUGIN_DEFINITIONS).map((name) => getPluginStatus(name)!);
+  return (Object.keys(PLUGIN_DEFINITIONS) as PluginName[]).map((name) => getPluginStatus(name)!);
 }
 
 /**
@@ -147,7 +147,7 @@ export async function installPlugin(
 ): Promise<Result<void, Error>> {
   const plugin = PLUGIN_DEFINITIONS[name as PluginName];
   if (!plugin) {
-    return err(new Error(`Unknown plugin: ${name}. Available: ${Object.keys(PLUGIN_DEFINITIONS).join(', ')}`));
+    return err(new Error(`Unknown plugin: ${name}. Available: ${(Object.keys(PLUGIN_DEFINITIONS) as PluginName[]).join(', ')}`));
   }
 
   // Check if already installed
@@ -210,6 +210,6 @@ export async function installPlugin(
 /**
  * Get list of available plugins
  */
-export function getAvailablePlugins(): string[] {
-  return Object.keys(PLUGIN_DEFINITIONS);
+export function getAvailablePlugins(): PluginName[] {
+  return Object.keys(PLUGIN_DEFINITIONS) as PluginName[];
 }

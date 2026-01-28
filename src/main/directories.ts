@@ -2,6 +2,7 @@ import { app } from 'electron';
 import fs from 'fs';
 import path from 'path';
 import { logger } from './logger';
+import { getErrorMessage } from '../shared/errors';
 
 /**
  * Get the Flowstate application data directory
@@ -213,7 +214,8 @@ export function ensurePreferences(): void {
     const mergedPrefs = { ...defaultPreferences, ...migratedPrefs };
 
     // Check if any new fields were added
-    const hasNewFields = Object.keys(defaultPreferences).some(
+    type PreferenceKey = keyof typeof defaultPreferences;
+    const hasNewFields = (Object.keys(defaultPreferences) as PreferenceKey[]).some(
       key => !(key in migratedPrefs)
     );
 
@@ -233,7 +235,7 @@ export function ensurePreferences(): void {
       fs.copyFileSync(prefsPath, backupPath);
       logger.info(`Backed up corrupted file to: ${backupPath}`);
     } catch (backupError) {
-      logger.error('Failed to backup corrupted file:', backupError);
+      logger.error('Failed to backup corrupted file:', getErrorMessage(backupError));
     }
 
     // Replace with default preferences
@@ -284,7 +286,7 @@ export function ensureThemeSymlink(): void {
           fs.unlinkSync(symlinkPath);
         }
       } catch (err) {
-        logger.error('Error reading symlink:', err);
+        logger.error('Error reading symlink:', getErrorMessage(err));
         // Remove invalid symlink
         fs.unlinkSync(symlinkPath);
       }
@@ -305,7 +307,7 @@ export function ensureThemeSymlink(): void {
         currentTheme = state.currentTheme;
       }
     } catch (err) {
-      logger.error('Error reading state file:', err);
+      logger.error('Error reading state file:', getErrorMessage(err));
     }
   }
 
@@ -337,7 +339,7 @@ export function ensureThemeSymlink(): void {
     fs.symlinkSync(path.join(getThemesDir(), currentTheme), symlinkPath, 'dir');
     logger.info(`Created theme symlink: ${symlinkPath} -> ${path.join(getThemesDir(), currentTheme)}`);
   } catch (err) {
-    logger.error('Failed to create theme symlink:', err);
+    logger.error('Failed to create theme symlink:', getErrorMessage(err));
   }
 }
 

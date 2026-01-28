@@ -13,6 +13,7 @@ import {
 import type { Preferences } from '../../shared/types';
 import { logger } from '../logger';
 import { readJson, writeJson, copyFile } from '../utils/asyncFs';
+import { getErrorMessage } from '../../shared/errors';
 
 // Reference to scheduler functions - will be set by system handlers
 let schedulerCallbacks: {
@@ -40,9 +41,9 @@ export async function handleGetPreferences(): Promise<Preferences> {
 
   try {
     return await readJson<Preferences>(prefsPath);
-  } catch (error) {
+  } catch (error: unknown) {
     // This should never happen after ensurePreferences(), but just in case...
-    logger.error('Failed to read preferences after validation:', error);
+    logger.error('Failed to read preferences after validation:', getErrorMessage(error));
     // Import the function to get defaults
     const { getDefaultPreferences } = await import('../directories');
     return getDefaultPreferences();
@@ -70,8 +71,8 @@ export async function handleSetPreferences(_event: IpcMainInvokeEvent | null, pr
       const { updateTrayVisibility } = await import('../main');
       updateTrayVisibility(prefs.showInMenuBar);
       logger.info(`Menu bar icon ${prefs.showInMenuBar ? 'shown' : 'hidden'}`);
-    } catch (err) {
-      logger.error('Failed to update tray visibility:', err);
+    } catch (err: unknown) {
+      logger.error('Failed to update tray visibility:', getErrorMessage(err));
     }
   }
 
@@ -81,8 +82,8 @@ export async function handleSetPreferences(_event: IpcMainInvokeEvent | null, pr
       const { updateQuickSwitcherShortcut } = await import('../main');
       updateQuickSwitcherShortcut(prefs.keyboardShortcuts.quickSwitcher);
       logger.info(`Keyboard shortcut updated to: ${prefs.keyboardShortcuts.quickSwitcher}`);
-    } catch (err) {
-      logger.error('Failed to update keyboard shortcut:', err);
+    } catch (err: unknown) {
+      logger.error('Failed to update keyboard shortcut:', getErrorMessage(err));
     }
   }
 
@@ -140,9 +141,9 @@ async function handleBackupPreferences(): Promise<string | null> {
     logger.info('Preferences backed up to:', filePath);
 
     return filePath;
-  } catch (err) {
-    logger.error('Failed to backup preferences:', err);
-    throw new Error('Failed to backup preferences: ' + (err as Error).message);
+  } catch (err: unknown) {
+    logger.error('Failed to backup preferences:', getErrorMessage(err));
+    throw new Error('Failed to backup preferences: ' + getErrorMessage(err));
   }
 }
 
@@ -162,12 +163,11 @@ async function handleRestorePreferences(): Promise<boolean> {
       properties: ['openFile'],
     });
 
-    if (!filePaths || filePaths.length === 0) {
+    const backupPath = filePaths?.[0];
+    if (!backupPath) {
       // User cancelled
       return false;
     }
-
-    const backupPath = filePaths[0];
 
     // Read and parse backup file
     const backup = await readJson<{ version: string; timestamp: string; preferences: Preferences }>(backupPath);
@@ -193,14 +193,14 @@ async function handleRestorePreferences(): Promise<boolean> {
     try {
       const { updateTrayVisibility } = await import('../main');
       updateTrayVisibility(backup.preferences.showInMenuBar || false);
-    } catch (err) {
-      logger.error('Failed to update tray visibility after restore:', err);
+    } catch (err: unknown) {
+      logger.error('Failed to update tray visibility after restore:', getErrorMessage(err));
     }
 
     return true;
-  } catch (err) {
-    logger.error('Failed to restore preferences:', err);
-    throw new Error('Failed to restore preferences: ' + (err as Error).message);
+  } catch (err: unknown) {
+    logger.error('Failed to restore preferences:', getErrorMessage(err));
+    throw new Error('Failed to restore preferences: ' + getErrorMessage(err));
   }
 }
 

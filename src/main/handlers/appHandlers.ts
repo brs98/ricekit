@@ -8,6 +8,7 @@ import os from 'os';
 import fs from 'fs';
 import { execSync } from 'child_process';
 import type { Theme, AppInfo } from '../../shared/types';
+import { getErrorMessage } from '../../shared/errors';
 import { logger } from '../logger';
 import {
   readFile,
@@ -399,7 +400,8 @@ export async function handleSetupApp(_event: IpcMainInvokeEvent | null, appName:
     }
 
     // Define config paths and import statements for other apps
-    const appConfigs: Record<string, { configPath: string; importLine: string; section?: string }> = {
+    type AppConfigKey = 'alacritty' | 'kitty' | 'neovim' | 'starship' | 'wezterm' | 'sketchybar' | 'aerospace';
+    const appConfigs: Record<AppConfigKey, { configPath: string; importLine: string; section?: string }> = {
       alacritty: {
         configPath: path.join(homeDir, '.config', 'alacritty', 'alacritty.toml'),
         importLine: `import = ["${themeBasePath}/alacritty.toml"]`,
@@ -439,7 +441,7 @@ after-startup-command = [
       },
     };
 
-    const config = appConfigs[appName];
+    const config = appConfigs[appName as AppConfigKey];
     if (!config) {
       throw new Error(`Unsupported app: ${appName}`);
     }
@@ -573,7 +575,7 @@ export async function handleRefreshApp(_event: IpcMainInvokeEvent | null, appNam
             }
           }
         } catch (err) {
-          logger.info('Could not refresh VS Code:', err);
+          logger.info('Could not refresh VS Code:', getErrorMessage(err));
         }
         break;
 
@@ -589,7 +591,7 @@ export async function handleRefreshApp(_event: IpcMainInvokeEvent | null, appNam
             }
           }
         } catch (err) {
-          logger.info('Could not refresh Cursor:', err);
+          logger.info('Could not refresh Cursor:', getErrorMessage(err));
         }
         break;
 
@@ -619,7 +621,7 @@ export async function handleRefreshApp(_event: IpcMainInvokeEvent | null, appNam
             logger.info('WezTerm theme source not found');
           }
         } catch (err) {
-          logger.info('Could not refresh WezTerm:', err);
+          logger.info('Could not refresh WezTerm:', getErrorMessage(err));
         }
         break;
 
@@ -636,7 +638,7 @@ export async function handleRefreshApp(_event: IpcMainInvokeEvent | null, appNam
             });
             logger.info('SketchyBar theme refreshed successfully');
           } catch (err) {
-            logger.info('Could not refresh SketchyBar - it may not be running:', err);
+            logger.info('Could not refresh SketchyBar - it may not be running:', getErrorMessage(err));
           }
         } else {
           logger.info('SketchyBar binary not found');
@@ -679,7 +681,7 @@ export async function handleRefreshApp(_event: IpcMainInvokeEvent | null, appNam
             logger.info('AeroSpace borders script not found');
           }
         } catch (err) {
-          logger.info('Could not refresh AeroSpace/JankyBorders - borders may not be installed:', err);
+          logger.info('Could not refresh AeroSpace/JankyBorders - borders may not be installed:', getErrorMessage(err));
         }
         break;
 

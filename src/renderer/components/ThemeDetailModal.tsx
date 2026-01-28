@@ -194,11 +194,11 @@ export function ThemeDetailModal({
 
           <div className="flex-1 overflow-y-auto space-y-5 py-4">
             {/* Wallpaper Banner (if available) */}
-            {wallpapers.length > 0 && !wallpapersLoading && (
+            {wallpapers.length > 0 && !wallpapersLoading && wallpapers[0] && (
               <div className="-mx-6 -mt-4">
                 <button
                   className="relative w-full aspect-[21/9] overflow-hidden group cursor-pointer"
-                  onClick={() => setSelectedWallpaper(wallpapers[0])}
+                  onClick={() => setSelectedWallpaper(wallpapers[0] ?? null)}
                 >
                   <img
                     src={`local-file://${wallpapers[0]}`}

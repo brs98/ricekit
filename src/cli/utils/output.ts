@@ -86,13 +86,13 @@ export function table(
   });
 
   // Print header
-  const headerLine = headers.map((h, i) => h.padEnd(widths[i])).join('  ');
+  const headerLine = headers.map((h, i) => h.padEnd(widths[i] ?? 0)).join('  ');
   console.log(indent + chalk.bold(headerLine));
   console.log(indent + chalk.gray('─'.repeat(headerLine.length)));
 
   // Print rows
   for (const row of rows) {
-    const line = row.map((cell, i) => (cell || '').padEnd(widths[i])).join('  ');
+    const line = row.map((cell, i) => (cell || '').padEnd(widths[i] ?? 0)).join('  ');
     console.log(indent + line);
   }
 }

@@ -201,8 +201,8 @@ describe('pluginHandlers', () => {
       const presets = await handleListPresets(null, 'sketchybar');
 
       expect(presets.length).toBe(2);
-      expect(presets[0].name).toBe('minimal');
-      expect(presets[1].name).toBe('pro');
+      expect(presets[0]!.name).toBe('minimal');
+      expect(presets[1]!.name).toBe('pro');
     });
   });
 
@@ -265,7 +265,7 @@ describe('pluginHandlers', () => {
       await handleResetPluginToCustom(null, 'sketchybar');
 
       expect(handleSetPreferences).toHaveBeenCalled();
-      const setPrefsCall = vi.mocked(handleSetPreferences).mock.calls[0];
+      const setPrefsCall = vi.mocked(handleSetPreferences).mock.calls[0]!;
       const updatedPrefs = setPrefsCall[1];
       expect(updatedPrefs.pluginConfigs?.sketchybar?.mode).toBe('custom');
       expect(updatedPrefs.pluginConfigs?.sketchybar?.preset).toBeUndefined();

@@ -49,15 +49,21 @@ const ScheduleModal: React.FC<ScheduleModalProps> = ({ themes, currentSchedules,
 
   const updateSchedule = (index: number, field: keyof ScheduleEntry, value: string) => {
     const updated = [...schedules];
-    updated[index] = { ...updated[index], [field]: value };
+    const existing = updated[index];
+    if (!existing) return;
+
+    updated[index] = { ...existing, [field]: value };
     // Clear the other field when type changes
     if (field === 'type') {
+      const entry = updated[index];
+      if (!entry) return;
+
       if (value === 'theme') {
-        updated[index].wallpaperPath = undefined;
-        updated[index].themeName = themes[0]?.name || '';
+        entry.wallpaperPath = undefined;
+        entry.themeName = themes[0]?.name || '';
       } else {
-        updated[index].themeName = undefined;
-        updated[index].wallpaperPath = '';
+        entry.themeName = undefined;
+        entry.wallpaperPath = '';
       }
     }
     setSchedules(updated);

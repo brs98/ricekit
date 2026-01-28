@@ -129,9 +129,9 @@ describe('presetInstaller', () => {
 
       const presets = await listPresets('sketchybar');
       expect(presets.length).toBe(1);
-      expect(presets[0].name).toBe('custom');
-      expect(presets[0].displayName).toBe('Custom');
-      expect(presets[0].description).toContain('custom preset for sketchybar');
+      expect(presets[0]!.name).toBe('custom');
+      expect(presets[0]!.displayName).toBe('Custom');
+      expect(presets[0]!.description).toContain('custom preset for sketchybar');
     });
 
     it('should list multiple presets', async () => {

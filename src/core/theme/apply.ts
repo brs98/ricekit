@@ -386,9 +386,10 @@ export async function applyTheme(
     if (!options?.skipWallpaper) {
       try {
         const wallpapers = await listWallpapers(themeName);
-        if (wallpapers.length > 0) {
-          onLog?.(`Applying wallpaper: ${path.basename(wallpapers[0])}`);
-          await applyWallpaper(wallpapers[0]);
+        const firstWallpaper = wallpapers[0];
+        if (firstWallpaper) {
+          onLog?.(`Applying wallpaper: ${path.basename(firstWallpaper)}`);
+          await applyWallpaper(firstWallpaper);
           notifiedApps.push('wallpaper');
         }
       } catch (wpError) {

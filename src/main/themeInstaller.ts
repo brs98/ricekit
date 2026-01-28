@@ -2,6 +2,7 @@ import path from 'path';
 import { getThemesDir } from './directories';
 import { logger } from './logger';
 import type { ThemeMetadata, ThemeColors } from '../shared/types';
+import { blendColors } from '../shared/colorUtils';
 import {
   ensureDir,
   writeJson,
@@ -1033,9 +1034,9 @@ function generateIterm2Config(colors: ThemeColors): string {
   const hexToRgb = (hex: string) => {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     return result ? {
-      r: parseInt(result[1], 16) / 255,
-      g: parseInt(result[2], 16) / 255,
-      b: parseInt(result[3], 16) / 255
+      r: parseInt(result[1] ?? '0', 16) / 255,
+      g: parseInt(result[2] ?? '0', 16) / 255,
+      b: parseInt(result[3] ?? '0', 16) / 255
     } : { r: 0, g: 0, b: 0 };
   };
 
@@ -1235,13 +1236,18 @@ function generateCursorConfig(colors: ThemeColors): string {
 }
 
 function generateNeovimConfig(colors: ThemeColors): string {
+  // Calculate a subtle cursorline color by blending 5% toward the foreground
+  // This creates a barely-visible highlight that doesn't distract from content
+  const cursorLineColor = blendColors(colors.background, colors.foreground, 0.05) ?? colors.background;
+
   return `-- Neovim colorscheme configuration
 vim.cmd([[
   hi Normal guibg=${colors.background} guifg=${colors.foreground}
   hi Cursor guibg=${colors.cursor}
   hi Visual guibg=${colors.selection}
   hi LineNr guifg=${colors.brightBlack}
-  hi CursorLine guibg=${colors.selection}
+  hi CursorLine guibg=${cursorLineColor}
+  hi CursorLineNr guifg=${colors.foreground} guibg=${cursorLineColor}
   hi Comment guifg=${colors.brightBlack}
   hi String guifg=${colors.green}
   hi Function guifg=${colors.blue}

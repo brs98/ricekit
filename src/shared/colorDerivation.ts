@@ -159,8 +159,9 @@ export function deriveAllColors(
   // Derive bright colors
   for (const [brightKey, baseKey] of Object.entries(brightToBase)) {
     const derivedKey = brightKey as DerivedColorKey;
-    if (locks[derivedKey] && currentColors?.[derivedKey as keyof ThemeColors]) {
-      result[derivedKey as keyof ThemeColors] = currentColors[derivedKey as keyof ThemeColors]!;
+    const lockedValue = currentColors?.[derivedKey as keyof ThemeColors];
+    if (locks[derivedKey] && lockedValue) {
+      result[derivedKey as keyof ThemeColors] = lockedValue;
     } else {
       result[derivedKey as keyof ThemeColors] = deriveBrightColor(result[baseKey]);
     }
@@ -235,11 +236,6 @@ export function isDerivedColor(key: keyof ThemeColors): key is DerivedColorKey {
  * Get a human-readable description of how a derived color is calculated
  */
 export function getDerivationDescription(key: DerivedColorKey): string {
-  if (key.startsWith('bright')) {
-    const baseColor = brightToBase[key];
-    return `${baseColor} + 18% lightness`;
-  }
-
   switch (key) {
     case 'cursor':
       return 'Same as foreground';
@@ -249,7 +245,21 @@ export function getDerivationDescription(key: DerivedColorKey): string {
       return 'Background shifted 12% toward foreground';
     case 'accent':
       return 'Same as blue';
-    default:
-      return 'Auto-calculated';
+    case 'brightBlack':
+      return 'black + 18% lightness';
+    case 'brightRed':
+      return 'red + 18% lightness';
+    case 'brightGreen':
+      return 'green + 18% lightness';
+    case 'brightYellow':
+      return 'yellow + 18% lightness';
+    case 'brightBlue':
+      return 'blue + 18% lightness';
+    case 'brightMagenta':
+      return 'magenta + 18% lightness';
+    case 'brightCyan':
+      return 'cyan + 18% lightness';
+    case 'brightWhite':
+      return 'white + 18% lightness';
   }
 }

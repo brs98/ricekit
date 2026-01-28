@@ -24,6 +24,7 @@ import {
   getAvailableNerdFont,
   RECOMMENDED_NERD_FONT,
 } from '../utils/fontDetection';
+import { getErrorMessage } from '../../shared/errors';
 
 // Plugin definitions with installation info
 const PLUGIN_DEFINITIONS = {
@@ -210,8 +211,8 @@ export async function handleInstallPlugin(_event: unknown, appName: string): Pro
           timeout: 30000,
         });
         logger.info(`Started ${appName} service`);
-      } catch (err) {
-        logger.warn(`Could not start ${appName} service:`, err);
+      } catch (err: unknown) {
+        logger.warn(`Could not start ${appName} service:`, getErrorMessage(err));
       }
     }
 

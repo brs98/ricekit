@@ -10,6 +10,7 @@ import { exec } from 'child_process';
 import { getThemesDir } from '../directories';
 import { logger } from '../logger';
 import { readDir, existsSync, readJson } from '../utils/asyncFs';
+import { getErrorMessage } from '../../shared/errors';
 import { handleGetPreferences } from './preferencesHandlers';
 import { handleGetState } from './stateHandlers';
 
@@ -214,13 +215,13 @@ async function getUserLocation(): Promise<{ latitude: number; longitude: number 
       const { stdout } = await execAsync('which whereami');
       if (stdout.trim()) {
         const { stdout: locationData } = await execAsync('whereami -f json');
-        const location = JSON.parse(locationData);
+        const location = JSON.parse(locationData) as { latitude: number; longitude: number };
         return {
           latitude: location.latitude,
           longitude: location.longitude,
         };
       }
-    } catch (e) {
+    } catch {
       // whereami not installed, fall through to default
     }
 
@@ -231,8 +232,8 @@ async function getUserLocation(): Promise<{ latitude: number; longitude: number 
       latitude: 37.7749,
       longitude: -122.4194,
     };
-  } catch (error) {
-    logger.error('Error getting user location:', error);
+  } catch (error: unknown) {
+    logger.error('Error getting user location:', getErrorMessage(error));
     return null;
   }
 }
@@ -262,8 +263,8 @@ async function handleGetSunriseSunset(): Promise<{ sunrise: string; sunset: stri
       sunset: formatTime(times.sunset),
       location: `${location.latitude.toFixed(2)}°, ${location.longitude.toFixed(2)}°`,
     };
-  } catch (error) {
-    logger.error('Error calculating sunrise/sunset:', error);
+  } catch (error: unknown) {
+    logger.error('Error calculating sunrise/sunset:', getErrorMessage(error));
     return null;
   }
 }
@@ -302,8 +303,8 @@ async function applyDynamicWallpaper(appearance: 'light' | 'dark', themeName: st
     if (applyWallpaperHandler) {
       await applyWallpaperHandler(null, wallpaperPath);
     }
-  } catch (error) {
-    logger.error(`Error applying dynamic wallpaper:`, error);
+  } catch (error: unknown) {
+    logger.error(`Error applying dynamic wallpaper:`, getErrorMessage(error));
   }
 }
 
@@ -333,8 +334,8 @@ export async function handleAppearanceChange(): Promise<void> {
       logger.info(`Dynamic wallpaper enabled, applying ${appearance} wallpaper for current theme: ${state.currentTheme}`);
       await applyDynamicWallpaper(appearance, state.currentTheme);
     }
-  } catch (error) {
-    logger.error('Error handling appearance change:', error);
+  } catch (error: unknown) {
+    logger.error('Error handling appearance change:', getErrorMessage(error));
   }
 }
 
@@ -356,8 +357,8 @@ async function handleCheckForUpdates(): Promise<{
     try {
       const packageJson = await readJson<{ version: string }>(packageJsonPath);
       currentVersion = packageJson.version;
-    } catch (err) {
-      logger.error('Failed to read current version', err);
+    } catch (err: unknown) {
+      logger.error('Failed to read current version', getErrorMessage(err));
     }
 
     logger.info(`Checking for updates. Current version: ${currentVersion}`);
@@ -375,13 +376,13 @@ async function handleCheckForUpdates(): Promise<{
       hasUpdate: false,
       updateUrl: 'https://github.com/flowstate/flowstate/releases',
     };
-  } catch (error) {
-    logger.error('Error checking for updates', error);
+  } catch (error: unknown) {
+    logger.error('Error checking for updates', getErrorMessage(error));
     return {
       currentVersion: '0.1.0',
       latestVersion: '0.1.0',
       hasUpdate: false,
-      error: 'Failed to check for updates: ' + (error as Error).message,
+      error: 'Failed to check for updates: ' + getErrorMessage(error),
     };
   }
 }
@@ -407,8 +408,8 @@ async function handleSystemResume(): Promise<void> {
   logger.info('Checking schedule after wake from sleep');
   try {
     await checkAndApplySchedule();
-  } catch (error) {
-    logger.error('Error checking schedule after resume', error);
+  } catch (error: unknown) {
+    logger.error('Error checking schedule after resume', getErrorMessage(error));
   }
 }
 
@@ -425,14 +426,14 @@ export function startScheduler(): void {
   schedulerInterval = setInterval(async () => {
     try {
       await checkAndApplySchedule();
-    } catch (error) {
-      logger.error('Error in scheduler', error);
+    } catch (error: unknown) {
+      logger.error('Error in scheduler', getErrorMessage(error));
     }
   }, 60000); // 60000ms = 1 minute
 
   // Run immediately on start
-  checkAndApplySchedule().catch((error) => {
-    logger.error('Error in initial scheduler check', error);
+  checkAndApplySchedule().catch((error: unknown) => {
+    logger.error('Error in initial scheduler check', getErrorMessage(error));
   });
 
   // Register power monitor listener for wake-from-sleep (only once)
@@ -537,8 +538,8 @@ async function checkAndApplySchedule(): Promise<void> {
     }
 
     logger.debug('No matching schedule found for current time');
-  } catch (error) {
-    logger.error('Error checking schedule', error);
+  } catch (error: unknown) {
+    logger.error('Error checking schedule', getErrorMessage(error));
   }
 }
 
@@ -548,7 +549,9 @@ async function checkAndApplySchedule(): Promise<void> {
  */
 function isTimeInRange(currentTime: string, startTime: string, endTime: string): boolean {
   const toMinutes = (time: string): number => {
-    const [hours, minutes] = time.split(':').map(Number);
+    const parts = time.split(':').map(Number);
+    const hours = parts[0] ?? 0;
+    const minutes = parts[1] ?? 0;
     return hours * 60 + minutes;
   };
 

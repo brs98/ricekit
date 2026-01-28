@@ -77,7 +77,7 @@ const defaultColors: ThemeColors = {
 };
 
 // Preset color schemes
-const presetSchemes: { [key: string]: { name: string; colors: ThemeColors } } = {
+const presetSchemes: Record<string, { name: string; colors: ThemeColors }> = {
   tokyoNight: {
     name: 'Tokyo Night (Dark)',
     colors: defaultColors,

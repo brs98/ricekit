@@ -211,7 +211,7 @@ describe('appHandlers', () => {
 
       // Should have written new config with import at top
       expect(mockWriteFile).toHaveBeenCalled();
-      const writeCall = vi.mocked(mockWriteFile).mock.calls[0];
+      const writeCall = vi.mocked(mockWriteFile).mock.calls[0]!;
       const newContent = String(writeCall[1]);
       expect(newContent).toContain('import = ["~/Library/Application Support/Flowstate/current/theme/alacritty.toml"]');
       expect(newContent).toContain('# Existing alacritty config');
@@ -237,7 +237,7 @@ describe('appHandlers', () => {
       await handleSetupApp(null, 'kitty');
 
       expect(mockWriteFile).toHaveBeenCalled();
-      const writeCall = vi.mocked(mockWriteFile).mock.calls[0];
+      const writeCall = vi.mocked(mockWriteFile).mock.calls[0]!;
       const newContent = String(writeCall[1]);
       expect(newContent).toContain('include ~/Library/Application Support/Flowstate/current/theme/kitty.conf');
     });
@@ -260,7 +260,7 @@ describe('appHandlers', () => {
       await handleSetupApp(null, 'neovim');
 
       expect(mockWriteFile).toHaveBeenCalled();
-      const writeCall = vi.mocked(mockWriteFile).mock.calls[0];
+      const writeCall = vi.mocked(mockWriteFile).mock.calls[0]!;
       const newContent = String(writeCall[1]);
       expect(newContent).toContain('dofile(vim.fn.expand("~/Library/Application Support/Flowstate/current/theme/neovim.lua"))');
     });
@@ -363,7 +363,7 @@ describe('appHandlers', () => {
       await handleSetupApp(null, 'starship');
 
       expect(mockWriteFile).toHaveBeenCalled();
-      const writeCall = vi.mocked(mockWriteFile).mock.calls[0];
+      const writeCall = vi.mocked(mockWriteFile).mock.calls[0]!;
       const newContent = String(writeCall[1]);
       expect(newContent).toContain('"$include"');
       expect(newContent).toContain('Flowstate/current/theme/starship.toml');

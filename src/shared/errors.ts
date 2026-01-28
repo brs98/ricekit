@@ -52,7 +52,7 @@ export function parseError(error: unknown): { code: string; message: string } {
   const errorMessage = error instanceof Error ? error.message : String(error);
   const match = errorMessage.match(/^([A-Z_]+):\s*(.+)$/);
 
-  if (match) {
+  if (match && match[1] && match[2]) {
     return { code: match[1], message: match[2] };
   }
 
@@ -73,4 +73,15 @@ export function isErrorCode(error: unknown, code: ErrorCode): boolean {
 export function isCancellation(error: unknown): boolean {
   const { code } = parseError(error);
   return code === 'IMPORT_CANCELED' || code === 'EXPORT_CANCELED';
+}
+
+/**
+ * Extract a loggable error message from an unknown error
+ * Useful for catch blocks where the error type is unknown
+ */
+export function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return String(error);
 }

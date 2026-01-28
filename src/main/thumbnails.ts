@@ -3,6 +3,7 @@ import * as crypto from 'crypto';
 import sharp from 'sharp';
 import { app } from 'electron';
 import { logger } from './logger';
+import { getErrorMessage } from '../shared/errors';
 import { existsSync, ensureDir, readDir, stat, unlink } from './utils/asyncFs';
 
 const THUMBNAIL_WIDTH = 400;
@@ -67,7 +68,7 @@ export async function generateThumbnail(imagePath: string): Promise<string> {
     logger.info(`[Thumbnail] Generated thumbnail: ${path.basename(thumbnailPath)}`);
     return thumbnailPath;
   } catch (error) {
-    logger.error(`[Thumbnail] Error generating thumbnail for ${imagePath}:`, error);
+    logger.error(`[Thumbnail] Error generating thumbnail for ${imagePath}:`, getErrorMessage(error));
     // Return original path as fallback
     return imagePath;
   }
@@ -124,7 +125,7 @@ export async function clearOldThumbnails(): Promise<void> {
       logger.info(`[Thumbnail] Cleared ${deletedCount} old thumbnails from cache`);
     }
   } catch (error) {
-    logger.error('[Thumbnail] Error clearing old thumbnails:', error);
+    logger.error('[Thumbnail] Error clearing old thumbnails:', getErrorMessage(error));
   }
 }
 
@@ -140,7 +141,7 @@ export async function clearAllThumbnails(): Promise<void> {
 
     logger.info(`[Thumbnail] Cleared ${files.length} thumbnails from cache`);
   } catch (error) {
-    logger.error('[Thumbnail] Error clearing thumbnails:', error);
+    logger.error('[Thumbnail] Error clearing thumbnails:', getErrorMessage(error));
   }
 }
 
@@ -163,7 +164,7 @@ export async function getThumbnailCacheStats(): Promise<{ count: number; sizeByt
       sizeBytes: totalSize,
     };
   } catch (error) {
-    logger.error('[Thumbnail] Error getting cache stats:', error);
+    logger.error('[Thumbnail] Error getting cache stats:', getErrorMessage(error));
     return { count: 0, sizeBytes: 0 };
   }
 }

@@ -61,15 +61,41 @@ export function createConfigCommand(): Command {
         const keys = key.split('.');
         const prefs = await getPreferences();
 
-        // Build update object
-        let current = prefs as unknown as Record<string, unknown>;
-        for (let i = 0; i < keys.length - 1; i++) {
-          if (typeof current[keys[i]] !== 'object') {
-            current[keys[i]] = {};
-          }
-          current = current[keys[i]] as Record<string, unknown>;
+        // Type guard for nested objects
+        function isRecord(value: unknown): value is Record<string, unknown> {
+          return typeof value === 'object' && value !== null;
         }
-        current[keys[keys.length - 1]] = parsedValue;
+
+        // Type-safe nested value setter
+        function setNestedValue(
+          obj: Record<string, unknown>,
+          keyPath: string[],
+          value: unknown
+        ): void {
+          let current = obj;
+          for (let i = 0; i < keyPath.length - 1; i++) {
+            const k = keyPath[i];
+            if (k === undefined) continue;
+            if (!isRecord(current[k])) {
+              current[k] = {};
+            }
+            const next = current[k];
+            if (isRecord(next)) {
+              current = next;
+            }
+          }
+          const finalKey = keyPath[keyPath.length - 1];
+          if (finalKey !== undefined) {
+            current[finalKey] = value;
+          }
+        }
+
+        // Safely convert prefs to mutable record for updates
+        const mutablePrefs: Record<string, unknown> = { ...prefs };
+        setNestedValue(mutablePrefs, keys, parsedValue);
+
+        // Copy updated values back to prefs object
+        Object.assign(prefs, mutablePrefs);
 
         await updatePreferences(prefs);
 

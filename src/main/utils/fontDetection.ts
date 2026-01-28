@@ -1,5 +1,6 @@
 import { execSync } from 'child_process';
 import { logger } from '../logger';
+import { getErrorMessage } from '../../shared/errors';
 
 // Common Nerd Fonts that work well with sketchybar
 export const SUPPORTED_NERD_FONTS = [
@@ -48,7 +49,7 @@ function getInstalledFonts(): string[] {
       .map((line) => line.trim())
       .filter(Boolean);
   } catch (error) {
-    logger.warn('Failed to get font list via fc-list:', error);
+    logger.warn('Failed to get font list via fc-list:', getErrorMessage(error));
     return [];
   }
 }

@@ -214,7 +214,7 @@ export async function importTheme(
 
     // Find the theme directory (should be a single directory inside)
     const extractedItems = await readDir(tmpDir);
-    const directories = [];
+    const directories: string[] = [];
     for (const item of extractedItems) {
       if (item.startsWith('.')) continue; // Skip hidden files
       const itemPath = path.join(tmpDir, item);
@@ -231,6 +231,10 @@ export async function importTheme(
 
     // Use the first directory as the theme
     const themeName = directories[0];
+    if (!themeName) {
+      await rmdir(tmpDir);
+      return err(new Error('Invalid archive: no directory found'));
+    }
     const extractedThemeDir = path.join(tmpDir, themeName);
 
     // Validate theme.json exists
@@ -241,7 +245,7 @@ export async function importTheme(
     }
 
     // Determine destination path
-    let destThemeName = themeName;
+    let destThemeName: string = themeName;
     let destThemeDir = path.join(customThemesDir, destThemeName);
 
     // Handle name conflicts

@@ -7,6 +7,7 @@ import { getPreferencesPath } from '../directories';
 import type { Preferences } from '../../shared/types';
 import { logger } from '../logger';
 import { readJson, writeJson } from '../utils/asyncFs';
+import { getErrorMessage } from '../../shared/errors';
 
 /**
  * Get the logging directory path
@@ -41,8 +42,8 @@ async function handleSetDebugEnabled(_event: IpcMainInvokeEvent, enabled: boolea
     const prefs = await readJson<Preferences>(prefsPath);
     prefs.debugLogging = enabled;
     await writeJson(prefsPath, prefs);
-  } catch (err) {
-    logger.error('Failed to update debug logging preference', err);
+  } catch (err: unknown) {
+    logger.error('Failed to update debug logging preference', getErrorMessage(err));
   }
 }
 

@@ -12,6 +12,7 @@ import {
 import type { State, UIState } from '../../shared/types';
 import { logger } from '../logger';
 import { readJson, writeJson, existsSync, unlink } from '../utils/asyncFs';
+import { getErrorMessage } from '../../shared/errors';
 
 /**
  * Get current application state
@@ -36,8 +37,8 @@ async function handleSaveUIState(_event: IpcMainInvokeEvent, uiState: UIState): 
     };
     await writeJson(uiStatePath, stateToSave);
     logger.debug('UI state saved for crash recovery', stateToSave);
-  } catch (error) {
-    logger.error('Failed to save UI state', error);
+  } catch (error: unknown) {
+    logger.error('Failed to save UI state', getErrorMessage(error));
     // Don't throw - we don't want UI state saving to break the app
   }
 }
@@ -68,8 +69,8 @@ async function handleGetUIState(): Promise<UIState | null> {
 
     logger.debug('UI state restored from crash recovery', uiState);
     return uiState;
-  } catch (error) {
-    logger.error('Failed to load UI state', error);
+  } catch (error: unknown) {
+    logger.error('Failed to load UI state', getErrorMessage(error));
     return null;
   }
 }
