@@ -3,7 +3,7 @@
  * Automatically calculates derived colors from base colors using OKLCH color space
  */
 
-import { ThemeColors, DerivedColorKey, ColorLockState } from './types';
+import { ThemeColors, DerivedColorKey, ColorLockState, typedEntries } from './types';
 import { adjustLightness, blendColors, hexToOklch } from './colorUtils';
 
 // Re-export types for convenience
@@ -160,13 +160,12 @@ export function deriveAllColors(
   }
 
   // Derive bright colors
-  for (const [brightKey, baseKey] of Object.entries(brightToBase)) {
-    const derivedKey = brightKey as DerivedColorKey;
-    const lockedValue = currentColors?.[derivedKey as keyof ThemeColors];
-    if (locks[derivedKey] && lockedValue) {
-      result[derivedKey as keyof ThemeColors] = lockedValue;
+  for (const [brightKey, baseKey] of typedEntries(brightToBase)) {
+    const lockedValue = currentColors?.[brightKey];
+    if (locks[brightKey] && lockedValue) {
+      result[brightKey] = lockedValue;
     } else {
-      result[derivedKey as keyof ThemeColors] = deriveBrightColor(result[baseKey]);
+      result[brightKey] = deriveBrightColor(result[baseKey]);
     }
   }
 

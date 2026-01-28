@@ -270,6 +270,20 @@ interface SystemProfilerData {
   SPDisplaysDataType?: SystemProfilerGPU[];
 }
 
+/**
+ * Type guard for SystemProfilerData
+ * Validates the basic structure from system_profiler output
+ */
+function isSystemProfilerData(data: unknown): data is SystemProfilerData {
+  if (typeof data !== 'object' || data === null) return false;
+  const obj = data as Record<string, unknown>;
+  // SPDisplaysDataType is optional but must be an array if present
+  if ('SPDisplaysDataType' in obj && !Array.isArray(obj.SPDisplaysDataType)) {
+    return false;
+  }
+  return true;
+}
+
 async function handleGetDisplays(): Promise<DisplayInfo[]> {
   logger.info('Getting connected displays');
 
@@ -278,7 +292,11 @@ async function handleGetDisplays(): Promise<DisplayInfo[]> {
 
     // Use system_profiler to get display information
     const { stdout } = await execAsync('system_profiler SPDisplaysDataType -json');
-    const data: SystemProfilerData = JSON.parse(stdout);
+    const parsed: unknown = JSON.parse(stdout);
+    if (!isSystemProfilerData(parsed)) {
+      throw new Error('Invalid system_profiler output format');
+    }
+    const data = parsed;
 
     const displays: DisplayInfo[] = [];
 

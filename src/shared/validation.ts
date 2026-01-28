@@ -123,3 +123,21 @@ export function isScheduleEntry(data: unknown): data is ScheduleEntry {
 
   return false;
 }
+
+/**
+ * Type for geolocation coordinates
+ */
+export interface GeoLocation {
+  latitude: number;
+  longitude: number;
+}
+
+/**
+ * Type guard for GeoLocation (from whereami CLI or similar)
+ */
+export function isGeoLocation(data: unknown): data is GeoLocation {
+  if (typeof data !== 'object' || data === null) return false;
+  const obj = data as Record<string, unknown>;
+
+  return typeof obj.latitude === 'number' && typeof obj.longitude === 'number';
+}

@@ -25,14 +25,14 @@ import { Input } from '@/renderer/components/ui/input';
 
 // Schedule Modal component for managing theme/wallpaper schedules
 interface ScheduleModalProps {
-  themes: Theme[];
-  currentSchedules: ScheduleEntry[];
+  themes: readonly Theme[];
+  currentSchedules: readonly ScheduleEntry[];
   onClose: () => void;
   onSave: (schedules: ScheduleEntry[]) => void;
 }
 
-const ScheduleModal: React.FC<ScheduleModalProps> = ({ themes, currentSchedules, onClose, onSave }) => {
-  const [schedules, setSchedules] = useState<ScheduleEntry[]>(currentSchedules);
+function ScheduleModal({ themes, currentSchedules, onClose, onSave }: ScheduleModalProps) {
+  const [schedules, setSchedules] = useState<ScheduleEntry[]>([...currentSchedules]);
 
   const addSchedule = () => {
     const newEntry: ScheduleEntry = {

@@ -6,6 +6,13 @@ import { getErrorMessage } from '../shared/errors';
 import { typedKeys } from '../shared/types';
 
 /**
+ * Type guard for Record<string, unknown> - validates parsed JSON is an object
+ */
+function isPlainObject(data: unknown): data is Record<string, unknown> {
+  return typeof data === 'object' && data !== null && !Array.isArray(data);
+}
+
+/**
  * Get the Flowstate application data directory
  */
 export function getAppDataDir(): string {
@@ -199,7 +206,12 @@ export function ensurePreferences(): void {
   // If file exists, validate it's valid JSON and merge with defaults
   try {
     const content = fs.readFileSync(prefsPath, 'utf-8');
-    const existingPrefs = JSON.parse(content); // This will throw if JSON is invalid
+    const parsed: unknown = JSON.parse(content);
+
+    if (!isPlainObject(parsed)) {
+      throw new Error('Preferences file does not contain a valid JSON object');
+    }
+    const existingPrefs = parsed;
 
     // Run migrations first
     const { migrated: migratedPrefs, didMigrate } = migratePreferences(existingPrefs);

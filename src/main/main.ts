@@ -1,12 +1,13 @@
 import { app, BrowserWindow, nativeTheme, Tray, Menu, nativeImage, globalShortcut, protocol, net, screen } from 'electron';
 import path from 'path';
-import fs from 'fs';
 import { initializeApp, initializeAppAfterThemes, getPreferencesPath, getStatePath } from './directories';
 import { installBundledThemes } from './themeInstaller';
 import { installBundledPresets } from './presetInstaller';
 import { setupIpcHandlers, handleAppearanceChange, startScheduler, stopScheduler } from './ipcHandlers';
 import { logger } from './logger';
 import { getErrorMessage } from '../shared/errors';
+import { readJsonSync } from '../core/utils/fs';
+import { isPreferences, isState } from '../shared/validation';
 import type { Preferences, State } from '../shared/types';
 
 let mainWindow: BrowserWindow | null = null;
@@ -56,12 +57,12 @@ function updateTrayMenu() {
   try {
     // Read preferences to get recent themes
     const prefsPath = getPreferencesPath();
-    const prefs = JSON.parse(fs.readFileSync(prefsPath, 'utf-8')) as Preferences;
+    const prefs = readJsonSync<Preferences>(prefsPath, isPreferences);
     const recentThemes = prefs.recentThemes || [];
 
     // Read current state
     const statePath = getStatePath();
-    const state = JSON.parse(fs.readFileSync(statePath, 'utf-8')) as State;
+    const state = readJsonSync<State>(statePath, isState);
     const currentTheme = state.currentTheme || '';
 
     // Build menu items
@@ -231,7 +232,7 @@ function createWindow() {
   // Set initial window title based on current theme
   try {
     const statePath = getStatePath();
-    const state = JSON.parse(fs.readFileSync(statePath, 'utf-8')) as State;
+    const state = readJsonSync<State>(statePath, isState);
     const currentTheme = state.currentTheme || 'tokyo-night';
     logger.info(`Setting window title to: Flowstate - ${currentTheme}`);
     mainWindow.setTitle(`Flowstate - ${currentTheme}`);
@@ -257,7 +258,7 @@ function createWindow() {
   mainWindow.webContents.once('did-finish-load', () => {
     try {
       const statePath = getStatePath();
-      const state = JSON.parse(fs.readFileSync(statePath, 'utf-8')) as State;
+      const state = readJsonSync<State>(statePath, isState);
       const currentTheme = state.currentTheme || 'tokyo-night';
       mainWindow?.setTitle(`Flowstate - ${currentTheme}`);
       logger.info(`Window title set after load: Flowstate - ${currentTheme}`);
@@ -414,7 +415,7 @@ if (!gotTheLock) {
     // Load preferences to check if debug logging is enabled
     try {
       const prefsPath = getPreferencesPath();
-      const prefs = JSON.parse(fs.readFileSync(prefsPath, 'utf-8')) as Preferences;
+      const prefs = readJsonSync<Preferences>(prefsPath, isPreferences);
       if (prefs.debugLogging === true) {
         logger.setDebugEnabled(true);
         logger.debug('Debug logging enabled from preferences');
@@ -450,7 +451,7 @@ if (!gotTheLock) {
   // Create menu bar tray icon only if enabled in preferences
   try {
     const prefsPath = getPreferencesPath();
-    const prefs = JSON.parse(fs.readFileSync(prefsPath, 'utf-8')) as Preferences;
+    const prefs = readJsonSync<Preferences>(prefsPath, isPreferences);
     if (prefs.showInMenuBar !== false) {
       // Default to true if not set
       createTray();
@@ -473,7 +474,7 @@ if (!gotTheLock) {
   // Register global keyboard shortcut for quick switcher from preferences
   try {
     const prefsPath = getPreferencesPath();
-    const prefs = JSON.parse(fs.readFileSync(prefsPath, 'utf-8')) as Preferences;
+    const prefs = readJsonSync<Preferences>(prefsPath, isPreferences);
     const shortcut = prefs.keyboardShortcuts?.quickSwitcher || 'Cmd+Shift+T';
     const accelerator = shortcut.replace(/Cmd/g, 'CommandOrControl');
 

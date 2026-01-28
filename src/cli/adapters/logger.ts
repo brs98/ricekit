@@ -9,10 +9,10 @@ import chalk from 'chalk';
  * Console logger for CLI context
  */
 export class CliLogger implements LoggerService {
-  private debugEnabled = false;
+  #debugEnabled = false;
 
   debug(message: string, data?: unknown): void {
-    if (this.debugEnabled) {
+    if (this.#debugEnabled) {
       console.log(chalk.gray(`[DEBUG] ${message}`), data ?? '');
     }
   }
@@ -30,7 +30,7 @@ export class CliLogger implements LoggerService {
     if (error) {
       if (error instanceof Error) {
         console.error(chalk.red(`  ${error.message}`));
-        if (this.debugEnabled && error.stack) {
+        if (this.#debugEnabled && error.stack) {
           console.error(chalk.gray(error.stack));
         }
       } else {
@@ -40,11 +40,11 @@ export class CliLogger implements LoggerService {
   }
 
   setDebugEnabled(enabled: boolean): void {
-    this.debugEnabled = enabled;
+    this.#debugEnabled = enabled;
   }
 
   isDebugEnabled(): boolean {
-    return this.debugEnabled;
+    return this.#debugEnabled;
   }
 }
 

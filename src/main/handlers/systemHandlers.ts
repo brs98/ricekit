@@ -13,6 +13,7 @@ import { readDir, existsSync, readJson } from '../utils/asyncFs';
 import { getErrorMessage } from '../../shared/errors';
 import { handleGetPreferences } from './preferencesHandlers';
 import { handleGetState } from './stateHandlers';
+import { isGeoLocation, type GeoLocation } from '../../shared/validation';
 
 // Options for apply handlers when called from scheduler
 export interface ApplyOptions {
@@ -215,11 +216,14 @@ async function getUserLocation(): Promise<{ latitude: number; longitude: number 
       const { stdout } = await execAsync('which whereami');
       if (stdout.trim()) {
         const { stdout: locationData } = await execAsync('whereami -f json');
-        const location = JSON.parse(locationData) as { latitude: number; longitude: number };
-        return {
-          latitude: location.latitude,
-          longitude: location.longitude,
-        };
+        const parsed: unknown = JSON.parse(locationData);
+        if (isGeoLocation(parsed)) {
+          return {
+            latitude: parsed.latitude,
+            longitude: parsed.longitude,
+          };
+        }
+        logger.warn('Invalid location data from whereami');
       }
     } catch {
       // whereami not installed, fall through to default

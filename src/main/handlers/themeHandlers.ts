@@ -44,6 +44,7 @@ import {
 import { handleListWallpapers, handleApplyWallpaper } from './wallpaperHandlers';
 import type { ApplyOptions } from './systemHandlers';
 import { handleGetPreferences, handleSetPreferences } from './preferencesHandlers';
+import { isEditorSettings } from '../../shared/validation';
 
 /**
  * Theme name mapping for VS Code and Cursor
@@ -376,7 +377,12 @@ async function updateEditorSettings(
       const settingsContent = await readFile(settingsPath);
       // Handle empty file or invalid JSON
       if (settingsContent.trim()) {
-        settings = JSON.parse(settingsContent) as Record<string, unknown>;
+        const parsed: unknown = JSON.parse(settingsContent);
+        if (isEditorSettings(parsed)) {
+          settings = parsed;
+        } else {
+          logger.warn(`${editorName} settings.json is not a valid object, starting with empty object`);
+        }
       }
     } catch (parseError: unknown) {
       logger.warn(`Failed to parse ${editorName} settings.json, starting with empty object:`, getErrorMessage(parseError));

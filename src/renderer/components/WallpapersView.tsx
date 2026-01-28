@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -44,13 +44,13 @@ interface WallpaperPreviewModalProps {
   selectedDisplay: number | null;
 }
 
-const WallpaperPreviewModal: React.FC<WallpaperPreviewModalProps> = ({
+function WallpaperPreviewModal({
   wallpaperPath,
   onClose,
   onApply,
   displays,
   selectedDisplay,
-}) => {
+}: WallpaperPreviewModalProps) {
   const handleApply = async () => {
     await onApply(wallpaperPath, selectedDisplay || undefined);
     onClose();
@@ -97,7 +97,7 @@ interface WallpaperItem {
   thumbnail: string;
 }
 
-export const WallpapersView: React.FC = () => {
+export function WallpapersView() {
   const [wallpapers, setWallpapers] = useState<WallpaperItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
