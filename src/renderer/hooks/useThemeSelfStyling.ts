@@ -40,7 +40,7 @@ export function useThemeSelfStyling(): {
       // Apply the theme colors to CSS variables
       applyThemeColors(theme.metadata.colors, theme.isLight);
       console.log(`Applied self-theming from: ${theme.name} (${theme.isLight ? 'light' : 'dark'})`);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to apply theme self-styling:', error);
     }
   }, []);

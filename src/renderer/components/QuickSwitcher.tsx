@@ -59,7 +59,7 @@ export function QuickSwitcher() {
         setPreferences(prefsData);
         setState(stateData);
         setIsLoading(false);
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Failed to load data for quick switcher:', error);
         setIsLoading(false);
       }
@@ -183,7 +183,7 @@ export function QuickSwitcher() {
       // Update the app's own UI with the new theme colors
       emitThemeApplied();
       window.electronAPI.closeQuickSwitcher();
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to apply theme:', error);
     }
   }

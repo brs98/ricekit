@@ -389,7 +389,7 @@ async function handleAddWallpapers(_event: IpcMainInvokeEvent, themeName: string
         await copyFile(sourcePath, destPath);
         added.push(destPath);
         logger.info(`Added wallpaper: ${destPath}`);
-      } catch (err) {
+      } catch (err: unknown) {
         const errorMsg = `Failed to copy ${sourcePath}: ${err instanceof Error ? err.message : String(err)}`;
         errors.push(errorMsg);
         logger.error(errorMsg);

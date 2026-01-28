@@ -62,7 +62,7 @@ function App() {
       if (!prefs.onboardingCompleted) {
         setShowOnboarding(true);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to check onboarding status:', error);
     }
   }
@@ -80,7 +80,7 @@ function App() {
         if (savedState.editorTheme) setEditorTheme(savedState.editorTheme as Theme);
         console.log('UI state restored successfully');
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to restore UI state:', error);
     } finally {
       // Mark as restored regardless of whether we found saved state

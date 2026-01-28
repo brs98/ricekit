@@ -266,7 +266,7 @@ export async function importTheme(
     await rmdir(tmpDir);
 
     return ok({ name: destThemeName, path: destThemeDir });
-  } catch (error) {
+  } catch (error: unknown) {
     // Clean up temp directory on error
     if (existsSync(tmpDir)) {
       await rmdir(tmpDir);
@@ -323,7 +323,7 @@ export async function importThemeFromUrl(
     await rmdir(tmpDir);
 
     return result;
-  } catch (error) {
+  } catch (error: unknown) {
     if (existsSync(tmpDir)) {
       await rmdir(tmpDir);
     }

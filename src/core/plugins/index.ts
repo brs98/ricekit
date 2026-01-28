@@ -188,7 +188,7 @@ export async function installPlugin(
         stdio: 'pipe',
         timeout: 300000, // 5 minutes
       });
-    } catch (depErr) {
+    } catch (depErr: unknown) {
       // Dependency might already be installed
       const message = depErr instanceof Error ? depErr.message : String(depErr);
       if (!message.includes('already installed')) {
@@ -213,7 +213,7 @@ export async function installPlugin(
 
     onLog?.(`Successfully installed ${plugin.displayName}`);
     return ok(undefined);
-  } catch (installErr) {
+  } catch (installErr: unknown) {
     const message = installErr instanceof Error ? installErr.message : String(installErr);
     return err(new Error(`Failed to install ${plugin.displayName}: ${message}`));
   }

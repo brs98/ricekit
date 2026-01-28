@@ -744,11 +744,15 @@ export function SettingsView() {
               >
                 {checkingUpdates ? 'Checking...' : 'Check for Updates'}
               </Button>
-              {updateInfo?.hasUpdate && updateInfo.updateUrl && (
-                <Button onClick={() => window.electronAPI.openExternal(updateInfo.updateUrl!)}>
-                  Download Update
-                </Button>
-              )}
+              {(() => {
+                const url = updateInfo?.updateUrl;
+                if (!updateInfo?.hasUpdate || !url) return null;
+                return (
+                  <Button onClick={() => window.electronAPI.openExternal(url)}>
+                    Download Update
+                  </Button>
+                );
+              })()}
             </div>
           </SettingItem>
 

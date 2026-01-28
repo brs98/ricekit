@@ -87,7 +87,7 @@ async function loadTheme(themePath: string, themeName: string, isCustom: boolean
       isCustom,
       isLight,
     };
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error(`Error loading theme ${themeName}:`, getErrorMessage(error));
     return null;
   }
@@ -195,7 +195,7 @@ async function notifyTerminalsToReload(themePath: string): Promise<void> {
   try {
     const themeData = await readJson<ThemeMetadata>(themeJsonPath);
     themeColors = themeData.colors;
-  } catch (err) {
+  } catch (err: unknown) {
     logger.error('Failed to read theme colors:', getErrorMessage(err));
   }
 
@@ -244,7 +244,7 @@ async function notifyTerminalsToReload(themePath: string): Promise<void> {
         });
       }
     }
-  } catch (err) {
+  } catch (err: unknown) {
     logger.info('Could not notify Kitty:', getErrorMessage(err));
   }
 
@@ -270,7 +270,7 @@ async function notifyTerminalsToReload(themePath: string): Promise<void> {
         }
       });
     }
-  } catch (err) {
+  } catch (err: unknown) {
     logger.info('Could not notify iTerm2:', getErrorMessage(err));
   }
 
@@ -290,7 +290,7 @@ async function notifyTerminalsToReload(themePath: string): Promise<void> {
       await copyFile(weztermThemeSrc, weztermThemeDest);
       logger.info('✓ WezTerm theme file updated - will auto-reload');
     }
-  } catch (err) {
+  } catch (err: unknown) {
     logger.info('Could not notify WezTerm:', getErrorMessage(err));
   }
 
@@ -378,7 +378,7 @@ async function updateEditorSettings(
       if (settingsContent.trim()) {
         settings = JSON.parse(settingsContent) as Record<string, unknown>;
       }
-    } catch (parseError) {
+    } catch (parseError: unknown) {
       logger.warn(`Failed to parse ${editorName} settings.json, starting with empty object:`, getErrorMessage(parseError));
       settings = {};
     }
@@ -392,7 +392,7 @@ async function updateEditorSettings(
     // Write back the settings file with formatting
     await writeJson(settingsPath, settings);
     logger.info(`✓ ${editorName} theme updated to: ${editorThemeName}`);
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error(`Failed to update ${editorName} settings:`, getErrorMessage(error));
     // Don't throw - this is a non-critical error
   }
@@ -428,7 +428,7 @@ async function refreshActiveThemeApps(themeName: string, themePath: string): Pro
   let prefs: Preferences;
   try {
     prefs = await readJson<Preferences>(prefsPath);
-  } catch (err) {
+  } catch (err: unknown) {
     logger.error('Failed to read preferences for theme refresh:', getErrorMessage(err));
     prefs = getDefaultPreferences();
   }
@@ -439,7 +439,7 @@ async function refreshActiveThemeApps(themeName: string, themePath: string): Pro
     refreshTrayMenu();
     updateWindowTitle(themeName);
     notifyRendererThemeChanged(themeName);
-  } catch (err) {
+  } catch (err: unknown) {
     logger.error('Failed to update UI after theme update:', getErrorMessage(err));
   }
 
@@ -448,7 +448,7 @@ async function refreshActiveThemeApps(themeName: string, themePath: string): Pro
     if (prefs.enabledApps && prefs.enabledApps.includes('vscode')) {
       await updateVSCodeSettings(themeName, themePath);
     }
-  } catch (err) {
+  } catch (err: unknown) {
     logger.error('Failed to update VS Code settings:', getErrorMessage(err));
   }
 
@@ -457,14 +457,14 @@ async function refreshActiveThemeApps(themeName: string, themePath: string): Pro
     if (prefs.enabledApps && prefs.enabledApps.includes('cursor')) {
       await updateCursorSettings(themeName, themePath);
     }
-  } catch (err) {
+  } catch (err: unknown) {
     logger.error('Failed to update Cursor settings:', getErrorMessage(err));
   }
 
   // Notify terminals to reload
   try {
     await notifyTerminalsToReload(themePath);
-  } catch (err) {
+  } catch (err: unknown) {
     logger.error('Failed to notify terminals:', getErrorMessage(err));
   }
 
@@ -473,7 +473,7 @@ async function refreshActiveThemeApps(themeName: string, themePath: string): Pro
     if (prefs.hookScript && prefs.hookScript.trim() !== '') {
       await executeHookScript(themeName, prefs.hookScript);
     }
-  } catch (err) {
+  } catch (err: unknown) {
     logger.error('Failed to execute hook script:', getErrorMessage(err));
   }
 
@@ -492,7 +492,7 @@ async function refreshActiveThemeApps(themeName: string, themePath: string): Pro
         logger.info('AeroSpace/JankyBorders theme applied');
       }
     }
-  } catch (err) {
+  } catch (err: unknown) {
     logger.error('Failed to apply AeroSpace/JankyBorders:', getErrorMessage(err));
   }
 
@@ -651,7 +651,7 @@ export async function handleApplyTheme(_event: IpcMainInvokeEvent | null, name: 
             },
           });
         }
-      } catch (err) {
+      } catch (err: unknown) {
         logger.error('Failed to disable scheduling after manual apply:', getErrorMessage(err));
       }
     }
@@ -677,7 +677,7 @@ export async function handleApplyTheme(_event: IpcMainInvokeEvent | null, name: 
       refreshTrayMenu();
       updateWindowTitle(name);
       notifyRendererThemeChanged(name);
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('Failed to update UI after theme change:', getErrorMessage(err));
     }
 
@@ -688,7 +688,7 @@ export async function handleApplyTheme(_event: IpcMainInvokeEvent | null, name: 
       } else {
         logger.info('VS Code integration disabled in preferences');
       }
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('Failed to update VS Code settings:', getErrorMessage(err));
     }
 
@@ -699,14 +699,14 @@ export async function handleApplyTheme(_event: IpcMainInvokeEvent | null, name: 
       } else {
         logger.info('Cursor integration disabled in preferences');
       }
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('Failed to update Cursor settings:', getErrorMessage(err));
     }
 
     // Notify terminal applications to reload themes
     try {
       await notifyTerminalsToReload(theme.path);
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('Failed to notify terminals:', getErrorMessage(err));
     }
 
@@ -717,7 +717,7 @@ export async function handleApplyTheme(_event: IpcMainInvokeEvent | null, name: 
       } else {
         logger.info('No hook script configured');
       }
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('Failed to execute hook script:', getErrorMessage(err));
       // Don't throw - hook script failure shouldn't block theme application
     }
@@ -738,7 +738,7 @@ export async function handleApplyTheme(_event: IpcMainInvokeEvent | null, name: 
           logger.info('AeroSpace/JankyBorders theme applied');
         }
       }
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('Failed to apply AeroSpace/JankyBorders:', getErrorMessage(err));
       // Don't throw - borders failure shouldn't block theme application
     }
@@ -755,7 +755,7 @@ export async function handleApplyTheme(_event: IpcMainInvokeEvent | null, name: 
       } else {
         logger.info('No wallpapers found in theme, skipping automatic wallpaper');
       }
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('Failed to apply automatic wallpaper:', getErrorMessage(err));
       // Don't throw - wallpaper failure shouldn't block theme application
     }
@@ -903,7 +903,7 @@ async function handleUpdateTheme(_event: IpcMainInvokeEvent, name: string, data:
       logger.info('Updated theme is currently active, refreshing all apps...');
       await refreshActiveThemeApps(name, themeDir);
     }
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('Error updating theme:', getErrorMessage(error));
     throw error;
   }
@@ -948,7 +948,7 @@ async function handleDeleteTheme(_event: IpcMainInvokeEvent, name: string): Prom
       });
       notification.show();
     }
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('Error deleting theme:', getErrorMessage(error));
     throw error;
   }
@@ -1026,7 +1026,7 @@ async function handleDuplicateTheme(_event: IpcMainInvokeEvent, sourceThemeName:
       });
       notification.show();
     }
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('Error duplicating theme:', getErrorMessage(error));
     throw error;
   }
@@ -1084,9 +1084,12 @@ async function handleExportTheme(_event: IpcMainInvokeEvent, name: string, expor
       exportPath += '.flowstate';
     }
 
+    // Capture final path before entering callback (TypeScript can't track narrowing across async closures)
+    const finalExportPath = exportPath;
+
     // Create a zip archive
     await new Promise<void>((resolve, reject) => {
-      const output = fs.createWriteStream(exportPath!);
+      const output = fs.createWriteStream(finalExportPath);
       const archive = archiver('zip', {
         zlib: { level: 9 }, // Maximum compression
       });
@@ -1110,7 +1113,7 @@ async function handleExportTheme(_event: IpcMainInvokeEvent, name: string, expor
 
     logger.info(`Successfully exported theme "${name}" to ${exportPath}`);
     return exportPath;
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('Failed to export theme:', getErrorMessage(error));
     throw error;
   }
@@ -1232,14 +1235,14 @@ async function handleImportTheme(_event: IpcMainInvokeEvent, importPath?: string
       }
 
       logger.info(`Successfully imported theme: ${themeName}`);
-    } catch (extractError) {
+    } catch (extractError: unknown) {
       // Clean up temp directory on error
       if (existsSync(tmpDir)) {
         await rmdir(tmpDir);
       }
       throw extractError;
     }
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('Failed to import theme:', getErrorMessage(error));
     throw error;
   }
@@ -1264,7 +1267,7 @@ async function handleImportThemeFromUrl(_event: IpcMainInvokeEvent, url: string)
     let parsedUrl: URL;
     try {
       parsedUrl = new URL(url);
-    } catch (error) {
+    } catch (error: unknown) {
       throw new Error('Invalid URL format');
     }
 
@@ -1373,7 +1376,7 @@ async function handleImportThemeFromUrl(_event: IpcMainInvokeEvent, url: string)
       await rmdir(tmpDir);
 
       logger.info(`Successfully imported theme from URL: ${url}`);
-    } catch (downloadError) {
+    } catch (downloadError: unknown) {
       // Clean up temp directory on error
       if (existsSync(tmpDir)) {
         await rmdir(tmpDir);

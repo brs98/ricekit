@@ -67,7 +67,7 @@ export async function generateThumbnail(imagePath: string): Promise<string> {
 
     logger.info(`[Thumbnail] Generated thumbnail: ${path.basename(thumbnailPath)}`);
     return thumbnailPath;
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error(`[Thumbnail] Error generating thumbnail for ${imagePath}:`, getErrorMessage(error));
     // Return original path as fallback
     return imagePath;
@@ -124,7 +124,7 @@ export async function clearOldThumbnails(): Promise<void> {
     if (deletedCount > 0) {
       logger.info(`[Thumbnail] Cleared ${deletedCount} old thumbnails from cache`);
     }
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('[Thumbnail] Error clearing old thumbnails:', getErrorMessage(error));
   }
 }
@@ -140,7 +140,7 @@ export async function clearAllThumbnails(): Promise<void> {
     await Promise.all(files.map((file) => unlink(path.join(cacheDir, file))));
 
     logger.info(`[Thumbnail] Cleared ${files.length} thumbnails from cache`);
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('[Thumbnail] Error clearing thumbnails:', getErrorMessage(error));
   }
 }
@@ -163,7 +163,7 @@ export async function getThumbnailCacheStats(): Promise<{ count: number; sizeByt
       count: files.length,
       sizeBytes: totalSize,
     };
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('[Thumbnail] Error getting cache stats:', getErrorMessage(error));
     return { count: 0, sizeBytes: 0 };
   }

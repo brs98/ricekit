@@ -574,7 +574,7 @@ export async function handleRefreshApp(_event: IpcMainInvokeEvent | null, appNam
               logger.info('VS Code theme settings refreshed');
             }
           }
-        } catch (err) {
+        } catch (err: unknown) {
           logger.info('Could not refresh VS Code:', getErrorMessage(err));
         }
         break;
@@ -590,7 +590,7 @@ export async function handleRefreshApp(_event: IpcMainInvokeEvent | null, appNam
               logger.info('Cursor theme settings refreshed');
             }
           }
-        } catch (err) {
+        } catch (err: unknown) {
           logger.info('Could not refresh Cursor:', getErrorMessage(err));
         }
         break;
@@ -620,7 +620,7 @@ export async function handleRefreshApp(_event: IpcMainInvokeEvent | null, appNam
           } else {
             logger.info('WezTerm theme source not found');
           }
-        } catch (err) {
+        } catch (err: unknown) {
           logger.info('Could not refresh WezTerm:', getErrorMessage(err));
         }
         break;
@@ -637,7 +637,7 @@ export async function handleRefreshApp(_event: IpcMainInvokeEvent | null, appNam
               timeout: 5000,
             });
             logger.info('SketchyBar theme refreshed successfully');
-          } catch (err) {
+          } catch (err: unknown) {
             logger.info('Could not refresh SketchyBar - it may not be running:', getErrorMessage(err));
           }
         } else {
@@ -680,7 +680,7 @@ export async function handleRefreshApp(_event: IpcMainInvokeEvent | null, appNam
           } else {
             logger.info('AeroSpace borders script not found');
           }
-        } catch (err) {
+        } catch (err: unknown) {
           logger.info('Could not refresh AeroSpace/JankyBorders - borders may not be installed:', getErrorMessage(err));
         }
         break;

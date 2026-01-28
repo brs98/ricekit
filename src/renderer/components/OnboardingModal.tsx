@@ -160,7 +160,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
         .filter(app => app.isInstalled && !app.isConfigured)
         .map(app => app.name);
       setSelectedApps(installedApps);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to load onboarding data:', error);
     }
   }
@@ -197,7 +197,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
       for (const appName of selectedApps) {
         try {
           await window.electronAPI.setupApp(appName);
-        } catch (error) {
+        } catch (error: unknown) {
           console.error(`Failed to setup ${appName}:`, error);
         }
       }
@@ -213,7 +213,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
       setTimeout(() => {
         onComplete();
       }, 2000); // Show completion message for 2 seconds
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to complete onboarding:', error);
     }
   }

@@ -217,7 +217,7 @@ export function ensurePreferences(): void {
       fs.writeFileSync(prefsPath, JSON.stringify(mergedPrefs, null, 2));
       logger.info(`Updated preferences file: ${prefsPath}`);
     }
-  } catch (error) {
+  } catch (error: unknown) {
     // File exists but contains invalid JSON - log error and recreate with defaults
     logger.error(`Corrupted preferences file detected: ${prefsPath}`);
     logger.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
@@ -227,7 +227,7 @@ export function ensurePreferences(): void {
       const backupPath = `${prefsPath}.corrupted.${Date.now()}.backup`;
       fs.copyFileSync(prefsPath, backupPath);
       logger.info(`Backed up corrupted file to: ${backupPath}`);
-    } catch (backupError) {
+    } catch (backupError: unknown) {
       logger.error('Failed to backup corrupted file:', getErrorMessage(backupError));
     }
 

@@ -392,7 +392,7 @@ export async function applyTheme(
           await applyWallpaper(firstWallpaper);
           notifiedApps.push('wallpaper');
         }
-      } catch (wpError) {
+      } catch (wpError: unknown) {
         onLog?.(`Warning: Could not apply wallpaper: ${wpError instanceof Error ? wpError.message : String(wpError)}`);
         // Don't fail theme application if wallpaper fails
       }
@@ -405,7 +405,7 @@ export async function applyTheme(
       currentTheme: themeName,
       notifiedApps,
     });
-  } catch (error) {
+  } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     return err(new Error(`Failed to apply theme: ${message}`));
   }

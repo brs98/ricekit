@@ -540,7 +540,7 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
       setHasChanges(true);
       setSelectedPreset('');
 
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error extracting colors from image:', error);
       alert('Failed to extract colors from image. Please try a different image.');
     } finally {
@@ -706,7 +706,7 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
       }
       setHasChanges(false);
       if (onSave) onSave();
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to save theme:', error);
       alert('Failed to save theme. Please try again.');
     } finally {
@@ -731,7 +731,7 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
       setShowSaveAsDialog(false);
       setNewThemeName('');
       if (onSave) onSave();
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to save theme:', error);
       alert('Failed to save theme. Please try again.');
     } finally {

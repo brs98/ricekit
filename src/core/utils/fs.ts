@@ -12,22 +12,63 @@
  */
 
 import fs from 'fs/promises';
-import { existsSync, constants } from 'fs';
+import { existsSync, constants, readFileSync } from 'fs';
 import path from 'path';
 
 // Re-export existsSync for convenience (acceptable to keep sync)
 export { existsSync };
 
 /**
+ * Type guard function signature for use with readJson
+ */
+export type TypeGuard<T> = (data: unknown) => data is T;
+
+/**
  * Read and parse a JSON file
  *
- * Note: This function uses a type assertion for the parsed result.
- * For critical data, consider using type guards from '@shared/validation'
- * to validate the structure at runtime.
+ * When a validator is provided, the parsed data is validated at runtime
+ * and a descriptive error is thrown if validation fails.
+ *
+ * @param filePath - Path to the JSON file
+ * @param validator - Optional type guard to validate the parsed data
+ * @throws Error if file cannot be read, parsed, or fails validation
  */
-export async function readJson<T = unknown>(filePath: string): Promise<T> {
+export async function readJson<T = unknown>(
+  filePath: string,
+  validator?: TypeGuard<T>
+): Promise<T> {
   const content = await fs.readFile(filePath, 'utf-8');
-  return JSON.parse(content) as T;
+  const parsed: unknown = JSON.parse(content);
+
+  if (validator && !validator(parsed)) {
+    throw new Error(`Invalid data structure in ${filePath}`);
+  }
+
+  return parsed as T;
+}
+
+/**
+ * Read and parse a JSON file synchronously
+ *
+ * When a validator is provided, the parsed data is validated at runtime
+ * and a descriptive error is thrown if validation fails.
+ *
+ * @param filePath - Path to the JSON file
+ * @param validator - Optional type guard to validate the parsed data
+ * @throws Error if file cannot be read, parsed, or fails validation
+ */
+export function readJsonSync<T = unknown>(
+  filePath: string,
+  validator?: TypeGuard<T>
+): T {
+  const content = readFileSync(filePath, 'utf-8');
+  const parsed: unknown = JSON.parse(content);
+
+  if (validator && !validator(parsed)) {
+    throw new Error(`Invalid data structure in ${filePath}`);
+  }
+
+  return parsed as T;
 }
 
 /**

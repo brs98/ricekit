@@ -186,7 +186,7 @@ after-startup-command = [
       await navigator.clipboard.writeText(getImportStatement());
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to copy:', error);
     }
   };
@@ -196,7 +196,7 @@ after-startup-command = [
       setSetupInProgress(true);
       await window.electronAPI.setupApp(app.name);
       onSetupComplete();
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Setup failed:', error);
       alert('Automatic setup failed. Please follow manual instructions.');
     } finally {

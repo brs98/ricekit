@@ -2,12 +2,14 @@ import fs from 'fs';
 import path from 'path';
 import { app } from 'electron';
 
-export enum LogLevel {
-  DEBUG = 'DEBUG',
-  INFO = 'INFO',
-  WARN = 'WARN',
-  ERROR = 'ERROR'
-}
+export const LogLevel = {
+  DEBUG: 'DEBUG',
+  INFO: 'INFO',
+  WARN: 'WARN',
+  ERROR: 'ERROR',
+} as const;
+
+export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
 
 class Logger {
   #logDir: string;
@@ -61,7 +63,7 @@ class Logger {
           fs.renameSync(currentLog, nextLog);
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to rotate logs:', error);
     }
   }
@@ -118,7 +120,7 @@ class Logger {
 
       // Check if we need to rotate after writing
       this.#rotateLogsIfNeeded();
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to write log:', error);
     }
   }
@@ -183,7 +185,7 @@ class Logger {
       }
 
       this.info('Logs cleared');
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to clear logs:', error);
     }
   }

@@ -49,7 +49,7 @@ function getInstalledFonts(): string[] {
       .split('\n')
       .map((line) => line.trim())
       .filter(Boolean);
-  } catch (error) {
+  } catch (error: unknown) {
     logger.warn('Failed to get font list via fc-list:', getErrorMessage(error));
     return [];
   }
@@ -123,7 +123,7 @@ export async function installNerdFont(
 
     logger.info(`Successfully installed ${fontName}`);
     return { success: true };
-  } catch (error) {
+  } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     logger.error(`Failed to install ${fontName}:`, message);
     return { success: false, error: message };
