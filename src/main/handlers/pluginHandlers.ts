@@ -26,6 +26,18 @@ import {
 } from '../utils/fontDetection';
 import { getErrorMessage } from '../../shared/errors';
 
+/** Shape for plugin definition entries */
+interface PluginDefinition {
+  displayName: string;
+  binaryPaths: readonly string[];
+  configDir: string;
+  mainConfigFile: string;
+  installCommand: string;
+  brewPackage: string;
+  dependencies: readonly string[];
+  serviceCommand: string;
+}
+
 // Plugin definitions with installation info
 const PLUGIN_DEFINITIONS = {
   sketchybar: {
@@ -35,7 +47,7 @@ const PLUGIN_DEFINITIONS = {
     mainConfigFile: 'sketchybarrc',
     installCommand: 'brew install FelixKratz/formulae/sketchybar',
     brewPackage: 'FelixKratz/formulae/sketchybar',
-    dependencies: [] as string[],
+    dependencies: [],
     serviceCommand: 'brew services start sketchybar',
   },
   aerospace: {
@@ -59,7 +71,7 @@ const PLUGIN_DEFINITIONS = {
     mainConfigFile: 'starship.toml',
     installCommand: 'brew install starship',
     brewPackage: 'starship',
-    dependencies: [] as string[],
+    dependencies: [],
     serviceCommand: '',
   },
   tmux: {
@@ -69,7 +81,7 @@ const PLUGIN_DEFINITIONS = {
     mainConfigFile: '.tmux.conf',
     installCommand: 'brew install tmux',
     brewPackage: 'tmux',
-    dependencies: [] as string[],
+    dependencies: [],
     serviceCommand: '',
   },
   bat: {
@@ -79,7 +91,7 @@ const PLUGIN_DEFINITIONS = {
     mainConfigFile: 'config',
     installCommand: 'brew install bat',
     brewPackage: 'bat',
-    dependencies: [] as string[],
+    dependencies: [],
     serviceCommand: '',
   },
   delta: {
@@ -89,10 +101,10 @@ const PLUGIN_DEFINITIONS = {
     mainConfigFile: '.gitconfig',
     installCommand: 'brew install git-delta',
     brewPackage: 'git-delta',
-    dependencies: [] as string[],
+    dependencies: [],
     serviceCommand: '',
   },
-} as const;
+} as const satisfies Record<string, PluginDefinition>;
 
 type PluginName = keyof typeof PLUGIN_DEFINITIONS;
 
@@ -241,7 +253,7 @@ export async function handleInstallPlugin(_event: unknown, appName: string): Pro
  * Get overrides file info for a plugin (tool-specific format)
  */
 function getOverridesInfo(
-  appName: string,
+  appName: PluginName,
   displayName: string
 ): { path: string; content: string } | null {
   const homeDir = os.homedir();
@@ -284,9 +296,10 @@ function getOverridesInfo(
     case 'aerospace':
       // aerospace uses TOML, overrides would need manual editing
       return null;
-    default:
-      return null;
   }
+  // Exhaustive check: if a new plugin is added without handling overrides, this will error
+  const _exhaustive: never = appName;
+  throw new Error(`Unhandled plugin in getOverridesInfo: ${_exhaustive}`);
 }
 
 /**

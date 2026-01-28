@@ -22,15 +22,18 @@ export type BaseColorKey =
   | 'cyan'
   | 'white';
 
-// Configuration for derivation amounts
+// Configuration for derivation amounts (readonly to prevent accidental mutation)
 const DERIVATION_CONFIG = {
   brightLightnessBoost: 0.18,  // +18% lightness for bright variants
   selectionBlendFactor: 0.30,  // 30% accent blended into background
   borderShiftFactor: 0.12,     // 12% shift toward foreground
-};
+} as const;
+
+// Bright color keys that map to base colors
+type BrightColorKey = 'brightBlack' | 'brightRed' | 'brightGreen' | 'brightYellow' | 'brightBlue' | 'brightMagenta' | 'brightCyan' | 'brightWhite';
 
 // Mapping from bright colors to their base color
-const brightToBase: Record<string, BaseColorKey> = {
+const brightToBase = {
   brightBlack: 'black',
   brightRed: 'red',
   brightGreen: 'green',
@@ -39,7 +42,7 @@ const brightToBase: Record<string, BaseColorKey> = {
   brightMagenta: 'magenta',
   brightCyan: 'cyan',
   brightWhite: 'white',
-};
+} as const satisfies Record<BrightColorKey, BaseColorKey>;
 
 /**
  * Get the default lock state (all unlocked)

@@ -5,6 +5,18 @@
  * When renaming the app, update these values and package.json.
  */
 
+/** App configuration shape for type validation */
+interface AppConfigShape {
+  name: string;
+  cliName: string;
+  dataDirName: string;
+  appId: string;
+  defaultTheme: string;
+  logFileName: string;
+  repoOwner: string;
+  repoName: string;
+}
+
 export const APP_CONFIG = {
   /** Display name shown in UI, menus, and notifications */
   name: 'Flowstate',
@@ -27,14 +39,14 @@ export const APP_CONFIG = {
   /** GitHub repository for updates */
   repoOwner: 'your-org',
   repoName: 'flowstate',
-} as const;
+} as const satisfies AppConfigShape;
 
 /** Exit codes for CLI */
 export const EXIT_CODES = {
   SUCCESS: 0,
   ERROR: 1,
   INVALID_ARGS: 2,
-} as const;
+} as const satisfies Record<string, number>;
 
 /** CLI output formats */
 export type OutputFormat = 'human' | 'json';

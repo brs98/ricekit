@@ -6,13 +6,13 @@ import { ThemeColors } from './types';
 import { isValidHexColor } from './colorUtils';
 
 // All valid color keys in ThemeColors
-const VALID_COLOR_KEYS: (keyof ThemeColors)[] = [
+const VALID_COLOR_KEYS = [
   'background', 'foreground', 'cursor', 'selection',
   'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white',
   'brightBlack', 'brightRed', 'brightGreen', 'brightYellow',
   'brightBlue', 'brightMagenta', 'brightCyan', 'brightWhite',
   'accent', 'border',
-];
+] as const satisfies readonly (keyof ThemeColors)[];
 
 export interface ValidationResult {
   isValid: boolean;

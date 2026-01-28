@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { logger } from './logger';
 import { getErrorMessage } from '../shared/errors';
+import { typedKeys } from '../shared/types';
 
 /**
  * Get the Flowstate application data directory
@@ -91,11 +92,11 @@ export function ensureDirectories(): void {
 /**
  * Get default preferences object
  */
-export function getDefaultPreferences() {
+export function getDefaultPreferences(): import('../shared/types').Preferences {
   return {
-    enabledApps: [] as string[],
-    favorites: [] as string[],
-    recentThemes: [] as string[],
+    enabledApps: [],
+    favorites: [],
+    recentThemes: [],
     keyboardShortcuts: {
       quickSwitcher: 'Cmd+Shift+T',
     },
@@ -112,16 +113,9 @@ export function getDefaultPreferences() {
     },
     schedule: {
       enabled: false,
-      schedules: [] as Array<{
-        timeStart: string;
-        timeEnd: string;
-        name?: string;
-        type: 'theme' | 'wallpaper';
-        themeName?: string;
-        wallpaperPath?: string;
-      }>,
+      schedules: [],
     },
-    pluginConfigs: {} as Record<string, import('../shared/types').PluginConfig>,
+    pluginConfigs: {},
   };
 }
 
@@ -214,8 +208,7 @@ export function ensurePreferences(): void {
     const mergedPrefs = { ...defaultPreferences, ...migratedPrefs };
 
     // Check if any new fields were added
-    type PreferenceKey = keyof typeof defaultPreferences;
-    const hasNewFields = (Object.keys(defaultPreferences) as PreferenceKey[]).some(
+    const hasNewFields = typedKeys(defaultPreferences).some(
       key => !(key in migratedPrefs)
     );
 

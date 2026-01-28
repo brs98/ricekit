@@ -5,10 +5,10 @@
  * like JSON parsing, form input validation, and dictionary access.
  */
 
-import type { Preferences, State, ThemeMetadata, UIState, PluginConfig, SortMode } from './types';
+import type { Preferences, State, ThemeMetadata, UIState, PluginConfig, SortMode, ScheduleEntry } from './types';
 
 // Valid sort mode values
-const SORT_MODES = ['default', 'name-asc', 'name-desc', 'recent'] as const;
+const SORT_MODES = ['default', 'name-asc', 'name-desc', 'recent'] as const satisfies readonly SortMode[];
 
 /**
  * Type guard for SortMode
@@ -100,4 +100,26 @@ export function isPluginConfig(data: unknown): data is PluginConfig {
  */
 export function isEditorSettings(data: unknown): data is Record<string, unknown> {
   return typeof data === 'object' && data !== null && !Array.isArray(data);
+}
+
+/**
+ * Type guard for ScheduleEntry discriminated union
+ * Validates that type-specific required fields are present
+ */
+export function isScheduleEntry(data: unknown): data is ScheduleEntry {
+  if (typeof data !== 'object' || data === null) return false;
+  const obj = data as Record<string, unknown>;
+
+  // Required fields for all schedule entries
+  if (typeof obj.timeStart !== 'string') return false;
+  if (typeof obj.timeEnd !== 'string') return false;
+
+  // Discriminated union validation
+  if (obj.type === 'theme') {
+    return typeof obj.themeName === 'string';
+  } else if (obj.type === 'wallpaper') {
+    return typeof obj.wallpaperPath === 'string';
+  }
+
+  return false;
 }

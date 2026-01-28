@@ -16,6 +16,7 @@ import {
   copyFile,
 } from '../utils/fs';
 import { APP_CONFIG } from '../../shared/constants';
+import { typedKeys } from '../../shared/types';
 
 const homeDir = os.homedir();
 const themeBasePath = `~/Library/Application Support/${APP_CONFIG.dataDirName}/current/theme`;
@@ -84,7 +85,7 @@ export async function setupApp(
       ));
     }
 
-    const supportedApps = (Object.keys(APP_CONFIGS) as AppConfigKey[]).join(', ');
+    const supportedApps = typedKeys(APP_CONFIGS).join(', ');
     return err(new Error(`Unsupported app: ${appName}. Supported: ${supportedApps}`));
   }
 
@@ -126,5 +127,5 @@ type AppConfigKey = keyof typeof APP_CONFIGS;
  * Get list of apps that can be set up
  */
 export function getSetupableApps(): AppConfigKey[] {
-  return Object.keys(APP_CONFIGS) as AppConfigKey[];
+  return typedKeys(APP_CONFIGS);
 }

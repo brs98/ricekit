@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Theme, ThemeMetadata, ThemeColors, ColorLockState, DerivedColorKey, StrictOmit } from '../../shared/types';
+import { Theme, ThemeMetadata, ThemeColors, ColorLockState, DerivedColorKey, StrictOmit, typedKeys } from '../../shared/types';
 import {
   isValidHexColor,
   toHex,
@@ -436,7 +436,7 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
 
     // Determine which colors were explicitly provided vs which need derivation
     const newLocks: ColorLockState = { ...currentLocks };
-    const providedColorKeys = Object.keys(pasteValidation.validColors) as (keyof ThemeColors)[];
+    const providedColorKeys = typedKeys(pasteValidation.validColors);
 
     // Lock colors that were explicitly provided, unlock ones that weren't
     for (const key of providedColorKeys) {

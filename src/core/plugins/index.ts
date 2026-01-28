@@ -11,6 +11,7 @@ import type { Result } from '../interfaces';
 import { ok, err } from '../interfaces';
 import { existsSync } from '../utils/fs';
 import type { PluginStatus as BasePluginStatus } from '../../shared/types';
+import { typedKeys } from '../../shared/types';
 
 const homeDir = os.homedir();
 
@@ -144,7 +145,7 @@ export function getPluginStatus(name: string): PluginStatus | null {
  * List all plugins with their status
  */
 export function listPlugins(): PluginStatus[] {
-  return (Object.keys(PLUGIN_DEFINITIONS) as PluginName[])
+  return typedKeys(PLUGIN_DEFINITIONS)
     .map((name) => getPluginStatus(name))
     .filter((status): status is PluginStatus => status !== null);
 }
@@ -158,7 +159,7 @@ export async function installPlugin(
 ): Promise<Result<void, Error>> {
   const plugin = PLUGIN_DEFINITIONS[name as PluginName];
   if (!plugin) {
-    return err(new Error(`Unknown plugin: ${name}. Available: ${(Object.keys(PLUGIN_DEFINITIONS) as PluginName[]).join(', ')}`));
+    return err(new Error(`Unknown plugin: ${name}. Available: ${typedKeys(PLUGIN_DEFINITIONS).join(', ')}`));
   }
 
   // Check if already installed
@@ -222,5 +223,5 @@ export async function installPlugin(
  * Get list of available plugins
  */
 export function getAvailablePlugins(): PluginName[] {
-  return Object.keys(PLUGIN_DEFINITIONS) as PluginName[];
+  return typedKeys(PLUGIN_DEFINITIONS);
 }

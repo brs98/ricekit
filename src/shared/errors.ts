@@ -29,7 +29,7 @@ export const ErrorCodes = {
   SYMLINK_ERROR: 'SYMLINK_ERROR',
   HOOK_ERROR: 'HOOK_ERROR',
   UNEXPECTED_ERROR: 'UNEXPECTED_ERROR',
-} as const;
+} as const satisfies Record<string, string>;
 
 export type ErrorCode = keyof typeof ErrorCodes;
 

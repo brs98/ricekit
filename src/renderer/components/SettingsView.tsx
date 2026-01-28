@@ -35,36 +35,49 @@ const ScheduleModal: React.FC<ScheduleModalProps> = ({ themes, currentSchedules,
   const [schedules, setSchedules] = useState<ScheduleEntry[]>(currentSchedules);
 
   const addSchedule = () => {
-    setSchedules([
-      ...schedules,
-      {
-        timeStart: '09:00',
-        timeEnd: '17:00',
-        type: 'theme',
-        themeName: themes[0]?.name || '',
-        name: 'New Schedule',
-      },
-    ]);
+    const newEntry: ScheduleEntry = {
+      timeStart: '09:00',
+      timeEnd: '17:00',
+      type: 'theme',
+      themeName: themes[0]?.name || '',
+      name: 'New Schedule',
+    };
+    setSchedules([...schedules, newEntry]);
   };
 
-  const updateSchedule = (index: number, field: keyof ScheduleEntry, value: string) => {
+  const updateSchedule = (index: number, field: string, value: string) => {
     const updated = [...schedules];
     const existing = updated[index];
     if (!existing) return;
 
-    updated[index] = { ...existing, [field]: value };
-    // Clear the other field when type changes
+    // Handle type change specially - need to create a new entry with correct shape
     if (field === 'type') {
-      const entry = updated[index];
-      if (!entry) return;
-
       if (value === 'theme') {
-        entry.wallpaperPath = undefined;
-        entry.themeName = themes[0]?.name || '';
+        const newEntry: ScheduleEntry = {
+          timeStart: existing.timeStart,
+          timeEnd: existing.timeEnd,
+          name: existing.name,
+          type: 'theme',
+          themeName: themes[0]?.name || '',
+        };
+        updated[index] = newEntry;
       } else {
-        entry.themeName = undefined;
-        entry.wallpaperPath = '';
+        const newEntry: ScheduleEntry = {
+          timeStart: existing.timeStart,
+          timeEnd: existing.timeEnd,
+          name: existing.name,
+          type: 'wallpaper',
+          wallpaperPath: '',
+        };
+        updated[index] = newEntry;
       }
+    } else if (field === 'themeName' && existing.type === 'theme') {
+      updated[index] = { ...existing, themeName: value };
+    } else if (field === 'wallpaperPath' && existing.type === 'wallpaper') {
+      updated[index] = { ...existing, wallpaperPath: value };
+    } else if (field === 'name' || field === 'timeStart' || field === 'timeEnd') {
+      // Common fields can be updated directly
+      updated[index] = { ...existing, [field]: value };
     }
     setSchedules(updated);
   };
@@ -149,7 +162,7 @@ const ScheduleModal: React.FC<ScheduleModalProps> = ({ themes, currentSchedules,
                   <Label className="text-xs">{schedule.type === 'theme' ? 'Theme' : 'Wallpaper Path'}</Label>
                   {schedule.type === 'theme' ? (
                     <Select
-                      value={schedule.themeName || ''}
+                      value={schedule.themeName}
                       onValueChange={(value) => updateSchedule(index, 'themeName', value)}
                     >
                       <SelectTrigger>
@@ -166,7 +179,7 @@ const ScheduleModal: React.FC<ScheduleModalProps> = ({ themes, currentSchedules,
                   ) : (
                     <Input
                       placeholder="/path/to/wallpaper.jpg"
-                      value={schedule.wallpaperPath || ''}
+                      value={schedule.wallpaperPath}
                       onChange={(e) => updateSchedule(index, 'wallpaperPath', e.target.value)}
                     />
                   )}

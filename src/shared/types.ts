@@ -4,6 +4,22 @@
  */
 export type StrictOmit<T, K extends keyof T> = Omit<T, K>;
 
+/**
+ * Type-safe Object.keys that preserves key types.
+ * Use when you control the object and know it won't have extra keys at runtime.
+ */
+export function typedKeys<T extends object>(obj: T): (keyof T)[] {
+  return Object.keys(obj) as (keyof T)[];
+}
+
+/**
+ * Type-safe Object.entries that preserves key and value types.
+ * Use when you control the object and know it won't have extra keys at runtime.
+ */
+export function typedEntries<T extends object>(obj: T): [keyof T, T[keyof T]][] {
+  return Object.entries(obj) as [keyof T, T[keyof T]][];
+}
+
 // Theme metadata structure
 export interface ThemeColors {
   background: string;
@@ -119,14 +135,24 @@ export interface FontStatus {
 }
 
 // Schedule entry for unified theme/wallpaper scheduling
-export interface ScheduleEntry {
+// Uses discriminated union to ensure type-correct property requirements
+interface BaseScheduleEntry {
   timeStart: string;           // Time in HH:MM format (24-hour)
   timeEnd: string;             // Time in HH:MM format (24-hour)
   name?: string;               // Optional display name for the schedule
-  type: 'theme' | 'wallpaper'; // What to apply
-  themeName?: string;          // Theme name (when type === 'theme')
-  wallpaperPath?: string;      // Full path to wallpaper (when type === 'wallpaper')
 }
+
+interface ThemeScheduleEntry extends BaseScheduleEntry {
+  type: 'theme';
+  themeName: string;           // Required when type === 'theme'
+}
+
+interface WallpaperScheduleEntry extends BaseScheduleEntry {
+  type: 'wallpaper';
+  wallpaperPath: string;       // Required when type === 'wallpaper'
+}
+
+export type ScheduleEntry = ThemeScheduleEntry | WallpaperScheduleEntry;
 
 // Preferences structure
 export interface Preferences {
