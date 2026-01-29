@@ -42,7 +42,7 @@ const APP_CONFIGS = {
     importLine: `"$include" = '${themeBasePath}/starship.toml'`,
   },
   wezterm: {
-    configPath: path.join(homeDir, '.config', 'wezterm', 'wezterm.lua'),
+    configPath: path.join(homeDir, '.wezterm.lua'),
     importLine: `-- Flowstate WezTerm integration
 local flowstate_colors = wezterm.home_dir .. "/Library/Application Support/${APP_CONFIG.dataDirName}/wezterm-colors.lua"
 wezterm.add_to_config_reload_watch_list(flowstate_colors)

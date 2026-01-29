@@ -1340,7 +1340,7 @@ return {
   cursor_bg = "${colors.cursor}",
   cursor_fg = "${colors.background}",
   cursor_border = "${colors.cursor}",
-  selection_bg = "${colors.selection}",
+  selection_bg = "${colors.brightBlack}",
   selection_fg = "${colors.foreground}",
   scrollbar_thumb = "${colors.brightBlack}",
   split = "${colors.border}",

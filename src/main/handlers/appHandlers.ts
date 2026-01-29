@@ -86,7 +86,7 @@ export async function handleDetectApps(): Promise<AppInfo[]> {
       displayName: 'WezTerm',
       category: 'terminal',
       paths: ['/Applications/WezTerm.app', path.join(process.env.HOME || '', 'Applications', 'WezTerm.app')],
-      configPath: path.join(process.env.HOME || '', '.config', 'wezterm', 'wezterm.lua'),
+      configPath: path.join(process.env.HOME || '', '.wezterm.lua'),
     },
 
     // Editors
@@ -419,7 +419,7 @@ export async function handleSetupApp(_event: IpcMainInvokeEvent | null, appName:
         importLine: `"$include" = '${themeBasePath}/starship.toml'`,
       },
       wezterm: {
-        configPath: path.join(homeDir, '.config', 'wezterm', 'wezterm.lua'),
+        configPath: path.join(homeDir, '.wezterm.lua'),
         importLine: `-- Flowstate WezTerm integration
 local flowstate_colors = wezterm.home_dir .. "/Library/Application Support/Flowstate/wezterm-colors.lua"
 wezterm.add_to_config_reload_watch_list(flowstate_colors)

@@ -60,7 +60,7 @@ const APP_DEFINITIONS: readonly AppDefinition[] = [
     displayName: 'WezTerm',
     category: 'terminal',
     paths: ['/Applications/WezTerm.app', path.join(os.homedir(), 'Applications', 'WezTerm.app')],
-    configPath: path.join(os.homedir(), '.config', 'wezterm', 'wezterm.lua'),
+    configPath: path.join(os.homedir(), '.wezterm.lua'),
   },
 
   // Editors
