@@ -192,7 +192,7 @@ export function ThemeDetailModal({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto space-y-5 py-4">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden space-y-5 py-4">
             {/* Wallpaper Banner (if available) */}
             {wallpapers.length > 0 && !wallpapersLoading && wallpapers[0] && (
               <div className="-mx-6 -mt-4">

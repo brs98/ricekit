@@ -88,7 +88,7 @@ function ScheduleModal({ themes, currentSchedules, onClose, onSave }: ScheduleMo
 
   return (
     <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-auto">
+      <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Schedule Manager</DialogTitle>
           <DialogDescription>
