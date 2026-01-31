@@ -806,9 +806,10 @@ export async function handleApplyTheme(_event: IpcMainInvokeEvent | null, name: 
 async function handleCreateTheme(
   _event: IpcMainInvokeEvent,
   data: ThemeMetadata,
-  sourceImageDataUrl?: string
+  sourceImageDataUrl?: string,
+  isLight?: boolean
 ): Promise<void> {
-  logger.info(`Creating theme: ${data.name}`);
+  logger.info(`Creating theme: ${data.name} (isLight: ${isLight ?? false})`);
 
   ensureDirectories();
   const customThemesDir = getCustomThemesDir();
@@ -828,6 +829,13 @@ async function handleCreateTheme(
 
   // Generate all config files (this also creates the wallpapers directory)
   await generateThemeConfigFiles(themeDir, data);
+
+  // Create light.mode marker file for light themes
+  if (isLight) {
+    const lightModeMarkerPath = path.join(themeDir, 'light.mode');
+    await writeFile(lightModeMarkerPath, '');
+    logger.info(`Created light.mode marker file for theme: ${data.name}`);
+  }
 
   // Save source image as wallpaper if provided
   logger.info(`Source image data URL provided: ${sourceImageDataUrl ? 'yes' : 'no'}`);

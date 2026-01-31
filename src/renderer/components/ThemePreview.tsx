@@ -16,8 +16,10 @@ interface ThemePreviewProps {
   imageDataUrl?: string;
   /** Suggested name (e.g., from filename) */
   suggestedName?: string;
-  /** Called when user clicks "Use Theme" with the final theme name */
-  onUseTheme: (metadata: ThemeMetadata) => void;
+  /** Whether this is a light theme */
+  isLight?: boolean;
+  /** Called when user clicks "Use Theme" with the final theme name and isLight flag */
+  onUseTheme: (metadata: ThemeMetadata, isLight?: boolean) => void;
   /** Called when user clicks "Customize" to enter edit mode */
   onCustomize: (colors: ThemeColors, imageDataUrl?: string, themeName?: string) => void;
   /** Called when user regenerates theme with new background anchor */
@@ -30,6 +32,7 @@ export function ThemePreview({
   colors: initialColors,
   imageDataUrl,
   suggestedName = 'My Theme',
+  isLight = false,
   onUseTheme,
   onCustomize,
   onRegenerateTheme,
@@ -54,7 +57,7 @@ export function ThemePreview({
         colors,
         colorLocks: getDefaultLockState(), // All derived colors will auto-calculate
       };
-      await onUseTheme(metadata);
+      await onUseTheme(metadata, isLight);
     } finally {
       setSaving(false);
     }
@@ -90,21 +93,24 @@ export function ThemePreview({
     const hex = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
 
     // Use the picked color as background anchor and regenerate theme
+    // For light themes, the picked color becomes background and white
+    // For dark themes, the picked color becomes background and black
     const newColors = deriveAllColors(
       {
         ...colors,
         background: hex,
-        // Adjust black to be similar to background for dark themes
-        black: hex,
+        // Adjust the matching terminal color based on theme type
+        ...(isLight ? { white: hex } : { black: hex }),
       },
       getDefaultLockState(),
-      colors
+      colors,
+      isLight
     );
 
     setColors(newColors);
     setShowImagePicker(false);
     onRegenerateTheme?.(newColors);
-  }, [colors, onRegenerateTheme]);
+  }, [colors, isLight, onRegenerateTheme]);
 
   const handleImageLoad = useCallback(() => {
     const canvas = canvasRef.current;

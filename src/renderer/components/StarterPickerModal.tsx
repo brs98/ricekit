@@ -24,6 +24,7 @@ export interface ImageThemeResult {
   colors: ThemeColors;
   imageDataUrl: string;
   suggestedName: string;
+  isLight: boolean;
 }
 
 interface StarterPickerModalProps {
@@ -82,6 +83,7 @@ export function StarterPickerModal({ open, onOpenChange, onSelect }: StarterPick
   const [selectedType, setSelectedType] = useState<StarterType>('preset');
   const [selectedPreset, setSelectedPreset] = useState<string>(presetOptions[0]?.key ?? 'tokyoNight');
   const [extracting, setExtracting] = useState(false);
+  const [extractionMode, setExtractionMode] = useState<'dark' | 'light'>('dark');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleContinue = () => {
@@ -128,23 +130,44 @@ export function StarterPickerModal({ open, onOpenChange, onSelect }: StarterPick
         reader.readAsDataURL(file);
       });
 
-      // Build base colors from palette
+      // Build base colors from palette based on extraction mode
       const baseColors: Partial<ThemeColors> = {};
+      const isLight = extractionMode === 'light';
 
-      if (palette.DarkVibrant) {
-        baseColors.background = palette.DarkVibrant.hex;
-        baseColors.black = palette.DarkVibrant.hex;
-      } else if (palette.DarkMuted) {
-        baseColors.background = palette.DarkMuted.hex;
-        baseColors.black = palette.DarkMuted.hex;
-      }
+      if (isLight) {
+        // Light mode: use light colors for background, dark for foreground
+        if (palette.LightVibrant) {
+          baseColors.background = palette.LightVibrant.hex;
+          baseColors.white = palette.LightVibrant.hex;
+        } else if (palette.LightMuted) {
+          baseColors.background = palette.LightMuted.hex;
+          baseColors.white = palette.LightMuted.hex;
+        }
 
-      if (palette.LightVibrant) {
-        baseColors.foreground = palette.LightVibrant.hex;
-        baseColors.white = palette.LightVibrant.hex;
-      } else if (palette.LightMuted) {
-        baseColors.foreground = palette.LightMuted.hex;
-        baseColors.white = palette.LightMuted.hex;
+        if (palette.DarkVibrant) {
+          baseColors.foreground = palette.DarkVibrant.hex;
+          baseColors.black = palette.DarkVibrant.hex;
+        } else if (palette.DarkMuted) {
+          baseColors.foreground = palette.DarkMuted.hex;
+          baseColors.black = palette.DarkMuted.hex;
+        }
+      } else {
+        // Dark mode: use dark colors for background, light for foreground (existing logic)
+        if (palette.DarkVibrant) {
+          baseColors.background = palette.DarkVibrant.hex;
+          baseColors.black = palette.DarkVibrant.hex;
+        } else if (palette.DarkMuted) {
+          baseColors.background = palette.DarkMuted.hex;
+          baseColors.black = palette.DarkMuted.hex;
+        }
+
+        if (palette.LightVibrant) {
+          baseColors.foreground = palette.LightVibrant.hex;
+          baseColors.white = palette.LightVibrant.hex;
+        } else if (palette.LightMuted) {
+          baseColors.foreground = palette.LightMuted.hex;
+          baseColors.white = palette.LightMuted.hex;
+        }
       }
 
       // Use vibrant colors for ANSI colors
@@ -173,7 +196,7 @@ export function StarterPickerModal({ open, onOpenChange, onSelect }: StarterPick
       }
 
       // Derive all colors (bright variants, selection, border, etc.)
-      const fullColors = deriveAllColors(baseColors, getDefaultLockState());
+      const fullColors = deriveAllColors(baseColors, getDefaultLockState(), undefined, isLight);
 
       // Generate suggested name from filename
       const suggestedName = file.name
@@ -185,6 +208,7 @@ export function StarterPickerModal({ open, onOpenChange, onSelect }: StarterPick
         colors: fullColors,
         imageDataUrl,
         suggestedName: suggestedName || 'Image Theme',
+        isLight,
       };
 
       onSelect('image', undefined, result);
@@ -253,7 +277,36 @@ export function StarterPickerModal({ open, onOpenChange, onSelect }: StarterPick
             selected={selectedType === 'image'}
             onClick={() => setSelectedType('image')}
             disabled={extracting}
-          />
+          >
+            {selectedType === 'image' && (
+              <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                <button
+                  type="button"
+                  className={`flex-1 px-3 py-1.5 text-sm rounded-md border transition-colors ${
+                    extractionMode === 'dark'
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border hover:border-primary/50'
+                  }`}
+                  onClick={() => setExtractionMode('dark')}
+                  disabled={extracting}
+                >
+                  Dark
+                </button>
+                <button
+                  type="button"
+                  className={`flex-1 px-3 py-1.5 text-sm rounded-md border transition-colors ${
+                    extractionMode === 'light'
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border hover:border-primary/50'
+                  }`}
+                  onClick={() => setExtractionMode('light')}
+                  disabled={extracting}
+                >
+                  Light
+                </button>
+              </div>
+            )}
+          </StarterOption>
 
           <StarterOption
             icon={<FileCode size={20} />}

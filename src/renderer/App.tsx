@@ -49,6 +49,7 @@ function App() {
   const [previewColors, setPreviewColors] = useState<ThemeColors | undefined>(undefined);
   const [previewImageDataUrl, setPreviewImageDataUrl] = useState<string | undefined>(undefined);
   const [previewSuggestedName, setPreviewSuggestedName] = useState<string | undefined>(undefined);
+  const [previewIsLight, setPreviewIsLight] = useState<boolean>(false);
 
   // Apply the current theme's colors to the app's own UI
   useThemeSelfStyling();
@@ -113,6 +114,7 @@ function App() {
       setPreviewColors(imageResult.colors);
       setPreviewImageDataUrl(imageResult.imageDataUrl);
       setPreviewSuggestedName(imageResult.suggestedName);
+      setPreviewIsLight(imageResult.isLight);
       setEditorMode('preview');
     } else {
       setEditorMode('creating');
@@ -121,9 +123,9 @@ function App() {
   }
 
   // Handle "Use Theme" from preview - save and return to grid
-  async function handlePreviewUseTheme(metadata: ThemeMetadata) {
+  async function handlePreviewUseTheme(metadata: ThemeMetadata, isLight?: boolean) {
     try {
-      await window.electronAPI.createTheme(metadata, previewImageDataUrl);
+      await window.electronAPI.createTheme(metadata, previewImageDataUrl, isLight);
       handleEditorBack();
       // Optionally apply the theme immediately
       const themeDirName = metadata.name.toLowerCase().replace(/[^a-z0-9-]/g, '-');
@@ -153,6 +155,7 @@ function App() {
     setPreviewColors(undefined);
     setPreviewImageDataUrl(undefined);
     setPreviewSuggestedName(undefined);
+    setPreviewIsLight(false);
   }
 
   // Save UI state whenever it changes (for crash recovery)
@@ -450,6 +453,7 @@ function App() {
                   colors={previewColors}
                   imageDataUrl={previewImageDataUrl}
                   suggestedName={previewSuggestedName}
+                  isLight={previewIsLight}
                   onUseTheme={handlePreviewUseTheme}
                   onCustomize={handlePreviewCustomize}
                   onBack={handleEditorBack}

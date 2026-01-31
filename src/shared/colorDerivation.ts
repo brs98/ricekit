@@ -65,10 +65,15 @@ export function getDefaultLockState(): ColorLockState {
 }
 
 /**
- * Derive a bright color from its base by increasing lightness in OKLCH space
+ * Derive a bright color from its base by adjusting lightness in OKLCH space.
+ * For dark themes: increase lightness (+18%)
+ * For light themes: decrease lightness (-18%) for better contrast
  */
-export function deriveBrightColor(baseHex: string): string {
-  const result = adjustLightness(baseHex, DERIVATION_CONFIG.brightLightnessBoost);
+export function deriveBrightColor(baseHex: string, isLight = false): string {
+  const adjustment = isLight
+    ? -DERIVATION_CONFIG.brightLightnessBoost
+    : DERIVATION_CONFIG.brightLightnessBoost;
+  const result = adjustLightness(baseHex, adjustment);
   return result || baseHex;
 }
 
@@ -118,12 +123,14 @@ export function isLightTheme(background: string, foreground: string): boolean {
  * @param baseColors - Partial theme colors containing at least the 10 base colors
  * @param locks - Which derived colors are locked (won't be recalculated)
  * @param currentColors - Current full color set (used to preserve locked colors)
+ * @param isLight - Whether this is a light theme (affects bright color derivation)
  * @returns Complete ThemeColors with all 22 colors
  */
 export function deriveAllColors(
   baseColors: Partial<ThemeColors>,
   locks: ColorLockState,
-  currentColors?: Partial<ThemeColors>
+  currentColors?: Partial<ThemeColors>,
+  isLight = false
 ): ThemeColors {
   // Start with base colors (use defaults if not provided)
   const result: ThemeColors = {
@@ -165,7 +172,7 @@ export function deriveAllColors(
     if (locks[brightKey] && lockedValue) {
       result[brightKey] = lockedValue;
     } else {
-      result[brightKey] = deriveBrightColor(result[baseKey]);
+      result[brightKey] = deriveBrightColor(result[baseKey], isLight);
     }
   }
 
@@ -236,8 +243,12 @@ export function isDerivedColor(key: keyof ThemeColors): key is DerivedColorKey {
 
 /**
  * Get a human-readable description of how a derived color is calculated
+ * @param key - The derived color key
+ * @param isLight - Whether this is a light theme (affects bright color description)
  */
-export function getDerivationDescription(key: DerivedColorKey): string {
+export function getDerivationDescription(key: DerivedColorKey, isLight = false): string {
+  const lightnessOp = isLight ? '-' : '+';
+
   switch (key) {
     case 'cursor':
       return 'Same as foreground';
@@ -248,21 +259,21 @@ export function getDerivationDescription(key: DerivedColorKey): string {
     case 'accent':
       return 'Same as blue';
     case 'brightBlack':
-      return 'black + 18% lightness';
+      return `black ${lightnessOp} 18% lightness`;
     case 'brightRed':
-      return 'red + 18% lightness';
+      return `red ${lightnessOp} 18% lightness`;
     case 'brightGreen':
-      return 'green + 18% lightness';
+      return `green ${lightnessOp} 18% lightness`;
     case 'brightYellow':
-      return 'yellow + 18% lightness';
+      return `yellow ${lightnessOp} 18% lightness`;
     case 'brightBlue':
-      return 'blue + 18% lightness';
+      return `blue ${lightnessOp} 18% lightness`;
     case 'brightMagenta':
-      return 'magenta + 18% lightness';
+      return `magenta ${lightnessOp} 18% lightness`;
     case 'brightCyan':
-      return 'cyan + 18% lightness';
+      return `cyan ${lightnessOp} 18% lightness`;
     case 'brightWhite':
-      return 'white + 18% lightness';
+      return `white ${lightnessOp} 18% lightness`;
     default: {
       // Exhaustive check: if a new DerivedColorKey is added, this will error
       const _exhaustive: never = key;
