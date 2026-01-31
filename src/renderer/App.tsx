@@ -2,12 +2,13 @@ import { useState, useEffect, lazy, Suspense } from 'react';
 import { Toaster } from 'sonner';
 import './App.css';
 import { ThemeGrid } from './components/ThemeGrid';
-import type { Theme, SortMode, FilterMode } from '../shared/types';
+import type { Theme, ThemeColors, ThemeMetadata, SortMode, FilterMode } from '../shared/types';
 import { isSortMode } from '../shared/validation';
-import { StarterPickerModal, type StarterType } from './components/StarterPickerModal';
+import { StarterPickerModal, type StarterType, type ImageThemeResult } from './components/StarterPickerModal';
 
 // Lazy load heavy components for better initial bundle size
 const ThemeEditor = lazy(() => import('./components/ThemeEditor').then(m => ({ default: m.ThemeEditor })));
+const ThemePreview = lazy(() => import('./components/ThemePreview').then(m => ({ default: m.ThemePreview })));
 const ApplicationsView = lazy(() => import('./components/ApplicationsView').then(m => ({ default: m.ApplicationsView })));
 const WallpapersView = lazy(() => import('./components/WallpapersView').then(m => ({ default: m.WallpapersView })));
 const SettingsView = lazy(() => import('./components/SettingsView').then(m => ({ default: m.SettingsView })));
@@ -39,11 +40,15 @@ function App() {
   const [importUrl, setImportUrl] = useState('');
   const [importing, setImporting] = useState(false);
   const [stateRestored, setStateRestored] = useState(false);
-  // Editor mode: 'off' = showing grid, 'editing' = editing existing theme, 'creating' = creating new theme
-  const [editorMode, setEditorMode] = useState<'off' | 'editing' | 'creating'>('off');
+  // Editor mode: 'off' = showing grid, 'editing' = editing existing theme, 'creating' = creating new theme, 'preview' = preview auto-generated theme
+  const [editorMode, setEditorMode] = useState<'off' | 'editing' | 'creating' | 'preview'>('off');
   const [showStarterModal, setShowStarterModal] = useState(false);
   const [editorStarterType, setEditorStarterType] = useState<StarterType>('blank');
   const [editorPresetKey, setEditorPresetKey] = useState<string | undefined>(undefined);
+  // For preview mode: auto-generated theme colors and source image
+  const [previewColors, setPreviewColors] = useState<ThemeColors | undefined>(undefined);
+  const [previewImageDataUrl, setPreviewImageDataUrl] = useState<string | undefined>(undefined);
+  const [previewSuggestedName, setPreviewSuggestedName] = useState<string | undefined>(undefined);
 
   // Apply the current theme's colors to the app's own UI
   useThemeSelfStyling();
@@ -98,12 +103,43 @@ function App() {
     setShowOnboarding(false);
   }
 
-  function handleStarterSelect(starterType: StarterType, presetKey?: string) {
+  function handleStarterSelect(starterType: StarterType, presetKey?: string, imageResult?: ImageThemeResult) {
     setEditorStarterType(starterType);
     setEditorPresetKey(presetKey);
     setEditorTheme(undefined); // Clear any existing theme being edited
-    setEditorMode('creating');
+
+    // If we got an image result, go to preview mode instead of editor
+    if (starterType === 'image' && imageResult) {
+      setPreviewColors(imageResult.colors);
+      setPreviewImageDataUrl(imageResult.imageDataUrl);
+      setPreviewSuggestedName(imageResult.suggestedName);
+      setEditorMode('preview');
+    } else {
+      setEditorMode('creating');
+    }
     setShowStarterModal(false);
+  }
+
+  // Handle "Use Theme" from preview - save and return to grid
+  async function handlePreviewUseTheme(metadata: ThemeMetadata) {
+    try {
+      await window.electronAPI.createTheme(metadata);
+      handleEditorBack();
+      // Optionally apply the theme immediately
+      const themeDirName = metadata.name.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+      await window.electronAPI.applyTheme(themeDirName);
+    } catch (error: unknown) {
+      console.error('Failed to create theme:', error);
+      alert('Failed to save theme. Please try again.');
+    }
+  }
+
+  // Handle "Customize" from preview - go to editor with the colors
+  function handlePreviewCustomize(colors: ThemeColors, imageDataUrl?: string) {
+    // Set up state to pass colors to editor
+    setPreviewColors(colors);
+    setPreviewImageDataUrl(imageDataUrl);
+    setEditorMode('creating');
   }
 
   function handleEditorBack() {
@@ -111,6 +147,9 @@ function App() {
     setEditorTheme(undefined);
     setEditorStarterType('blank');
     setEditorPresetKey(undefined);
+    setPreviewColors(undefined);
+    setPreviewImageDataUrl(undefined);
+    setPreviewSuggestedName(undefined);
   }
 
   // Save UI state whenever it changes (for crash recovery)
@@ -284,7 +323,7 @@ function App() {
       </div>
       <div className="main-content">
         <div className="content-header">
-          {/* Editor mode header with back button */}
+          {/* Editor/Preview mode header with back button */}
           {activeView === 'themes' && editorMode !== 'off' ? (
             <div className="flex items-center gap-3">
               <button
@@ -295,7 +334,11 @@ function App() {
                 <ArrowLeft size={20} />
               </button>
               <h2 className="text-2xl font-bold tracking-tight">
-                {editorMode === 'creating' ? 'New Theme' : `Edit: ${editorTheme?.metadata.name ?? 'Theme'}`}
+                {editorMode === 'preview'
+                  ? 'Preview Theme'
+                  : editorMode === 'creating'
+                    ? 'New Theme'
+                    : `Edit: ${editorTheme?.metadata.name ?? 'Theme'}`}
               </h2>
             </div>
           ) : (
@@ -399,13 +442,24 @@ function App() {
             )}
             {/* Lazy-loaded views wrapped in Suspense */}
             <Suspense fallback={<div className="view-loading">Loading view...</div>}>
-              {activeView === 'themes' && editorMode !== 'off' && (
+              {activeView === 'themes' && editorMode === 'preview' && previewColors && (
+                <ThemePreview
+                  colors={previewColors}
+                  imageDataUrl={previewImageDataUrl}
+                  suggestedName={previewSuggestedName}
+                  onUseTheme={handlePreviewUseTheme}
+                  onCustomize={handlePreviewCustomize}
+                  onBack={handleEditorBack}
+                />
+              )}
+              {activeView === 'themes' && (editorMode === 'creating' || editorMode === 'editing') && (
                 <ThemeEditor
                   initialTheme={editorTheme?.metadata}
                   sourceTheme={editorTheme}
                   mode={editorMode === 'creating' ? 'create' : 'edit'}
                   starterType={editorStarterType}
                   presetKey={editorPresetKey}
+                  initialColors={previewColors}
                   onSave={handleEditorBack}
                   onSaveAndApply={handleEditorBack}
                   onBack={handleEditorBack}

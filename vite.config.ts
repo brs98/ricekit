@@ -16,6 +16,10 @@ export default defineConfig({
       '@shared': path.resolve(__dirname, './src/shared'),
     },
   },
+  optimizeDeps: {
+    // Pre-bundle node-vibrant for reliable dynamic imports
+    include: ['node-vibrant/browser'],
+  },
   server: {
     port: 5173,
   },

@@ -1,38 +1,17 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Theme, ThemeMetadata, ThemeColors, ColorLockState, DerivedColorKey, StrictOmit, typedKeys } from '../../shared/types';
+import { type Theme, type ThemeMetadata, type ThemeColors, type ColorLockState, type DerivedColorKey, type StrictOmit, typedKeys } from '../../shared/types';
+import { toHex } from '../../shared/colorUtils';
 import {
-  isValidHexColor,
-  toHex,
-  detectColorFormat
-} from '../../shared/colorUtils';
-import {
-  BaseColorKey,
   deriveAllColors,
   getDefaultLockState,
-  getDerivationDescription,
   isBaseColor,
+  isDerivedColor,
 } from '../../shared/colorDerivation';
-import { validateColorJson, ValidationResult } from '../../shared/themeColorValidator';
-// node-vibrant is dynamically imported when needed (in handleImageSelected)
-import { Check, AlertTriangle, X, Lock, Unlock, ChevronRight } from 'lucide-react';
+import { validateColorJson, type ValidationResult } from '../../shared/themeColorValidator';
+import { Check, AlertTriangle, X, ChevronRight } from 'lucide-react';
 import { Button } from '@/renderer/components/ui/button';
 import { Input } from '@/renderer/components/ui/input';
 import { Label } from '@/renderer/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/renderer/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/renderer/components/ui/dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -43,15 +22,31 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/renderer/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/renderer/components/ui/dialog';
+
+// Import shared preview components
+import { TerminalPreview } from './previews/TerminalPreview';
+import { CodePreview } from './previews/CodePreview';
+import { ColorSwatches } from './previews/ColorSwatches';
+import { ColorEditorPanel } from './ColorEditorPanel';
 
 type StarterType = 'preset' | 'image' | 'blank';
 
 interface ThemeEditorProps {
   initialTheme?: ThemeMetadata;
-  sourceTheme?: Theme;  // Optional: full theme object to check if built-in
+  sourceTheme?: Theme;
   mode: 'edit' | 'create';
   starterType?: StarterType;
   presetKey?: string;
+  /** Optional colors to start with (e.g., from preview customize flow) */
+  initialColors?: ThemeColors;
   onSave?: () => void;
   onSaveAndApply?: () => void;
   onBack?: () => void;
@@ -230,136 +225,21 @@ const defaultMetadata: ThemeMetadata = {
   colors: defaultColors,
 };
 
-const formatColorName = (key: string): string => {
-  return key
-    .replace(/([A-Z])/g, ' $1')
-    .replace(/^./, (str) => str.toUpperCase())
-    .trim();
-};
-
-interface ColorInputProps {
-  colorKey: keyof ThemeColors;
-  colorValue: string;
-  isSelected: boolean;
-  error?: string;
-  onColorChange: (colorKey: keyof ThemeColors, value: string) => void;
-  onFocus: (colorKey: keyof ThemeColors) => void;
-}
-
-function ColorInput({ colorKey, colorValue, isSelected, error, onColorChange, onFocus }: ColorInputProps) {
-  const hasError = Boolean(error);
-
-  return (
-    <div className="space-y-1">
-      <div className="flex items-center gap-2">
-        <Label className="w-24 text-xs shrink-0">{formatColorName(colorKey)}</Label>
-        <div className="flex items-center gap-2 flex-1">
-          <input
-            type="color"
-            value={isValidHexColor(colorValue) ? colorValue : '#000000'}
-            onChange={(e) => onColorChange(colorKey, e.target.value)}
-            className="w-8 h-8 rounded-[4px] border border-border cursor-pointer"
-            onClick={() => onFocus(colorKey)}
-            disabled={!isValidHexColor(colorValue)}
-          />
-          <Input
-            type="text"
-            value={colorValue}
-            onChange={(e) => onColorChange(colorKey, e.target.value)}
-            className={`flex-1 font-mono text-xs h-8 ${isSelected ? 'ring-2 ring-primary' : ''} ${hasError ? 'border-destructive' : ''}`}
-            onFocus={() => onFocus(colorKey)}
-            placeholder="#FF5733"
-          />
-        </div>
-      </div>
-      {error && (
-        <p className="text-xs text-destructive pl-24">{error}</p>
-      )}
-    </div>
-  );
-}
-
-// Component for derived colors with lock/unlock toggle
-interface DerivedColorInputProps {
-  colorKey: DerivedColorKey;
-  colorValue: string;
-  isLocked: boolean;
-  isSelected: boolean;
-  error?: string;
-  onColorChange: (colorKey: DerivedColorKey, value: string) => void;
-  onToggleLock: (colorKey: DerivedColorKey) => void;
-  onFocus: (colorKey: keyof ThemeColors) => void;
-}
-
-function DerivedColorInput({
-  colorKey,
-  colorValue,
-  isLocked,
-  isSelected,
-  error,
-  onColorChange,
-  onToggleLock,
-  onFocus,
-}: DerivedColorInputProps) {
-  const hasError = Boolean(error);
-  const derivationHint = getDerivationDescription(colorKey);
-
-  return (
-    <div className="space-y-1">
-      <div className="flex items-center gap-2">
-        <Label className="w-24 text-xs shrink-0">{formatColorName(colorKey)}</Label>
-        <div className="flex items-center gap-2 flex-1">
-          <button
-            type="button"
-            onClick={() => onToggleLock(colorKey)}
-            className={`w-8 h-8 rounded-[4px] border flex items-center justify-center text-sm transition-colors ${
-              isLocked
-                ? 'border-primary bg-primary/10 text-primary'
-                : 'border-border text-muted-foreground hover:border-primary/50'
-            }`}
-            title={isLocked ? 'Locked (manual override) - click to auto-calculate' : 'Auto-calculated - click to lock'}
-          >
-            {isLocked ? <Lock size={14} /> : <Unlock size={14} />}
-          </button>
-          <input
-            type="color"
-            value={isValidHexColor(colorValue) ? colorValue : '#000000'}
-            onChange={(e) => {
-              if (!isLocked) onToggleLock(colorKey); // Auto-lock when manually changing
-              onColorChange(colorKey, e.target.value);
-            }}
-            className="w-8 h-8 rounded-[4px] border border-border cursor-pointer"
-            onClick={() => onFocus(colorKey)}
-            disabled={!isValidHexColor(colorValue)}
-          />
-          <Input
-            type="text"
-            value={colorValue}
-            onChange={(e) => {
-              if (!isLocked) onToggleLock(colorKey); // Auto-lock when manually changing
-              onColorChange(colorKey, e.target.value);
-            }}
-            className={`flex-1 font-mono text-xs h-8 ${isSelected ? 'ring-2 ring-primary' : ''} ${hasError ? 'border-destructive' : ''} ${!isLocked ? 'text-muted-foreground' : ''}`}
-            onFocus={() => onFocus(colorKey)}
-            placeholder="#FF5733"
-            readOnly={!isLocked}
-          />
-        </div>
-      </div>
-      {!isLocked && (
-        <p className="text-[10px] text-muted-foreground pl-24">{derivationHint}</p>
-      )}
-      {error && (
-        <p className="text-xs text-destructive pl-24">{error}</p>
-      )}
-    </div>
-  );
-}
-
-export function ThemeEditor({ initialTheme, sourceTheme, mode, starterType, presetKey, onSave, onSaveAndApply, onBack }: ThemeEditorProps) {
-  // Initialize metadata based on mode and starter type
+export function ThemeEditor({
+  initialTheme,
+  sourceTheme,
+  mode,
+  starterType,
+  presetKey,
+  initialColors,
+  onSave,
+  onSaveAndApply,
+  onBack,
+}: ThemeEditorProps) {
+  // Initialize metadata based on mode, starter type, and initial colors
   const getInitialMetadata = (): ThemeMetadata => {
     if (initialTheme) return initialTheme;
+    if (initialColors) return { name: 'New Theme', colors: initialColors };
     if (mode === 'create' && starterType === 'preset' && presetKey && presetSchemes[presetKey]) {
       return { name: 'New Theme', colors: { ...presetSchemes[presetKey].colors } };
     }
@@ -367,21 +247,11 @@ export function ThemeEditor({ initialTheme, sourceTheme, mode, starterType, pres
   };
 
   const [metadata, setMetadata] = useState<ThemeMetadata>(getInitialMetadata);
-  const [selectedColor, setSelectedColor] = useState<keyof ThemeColors | null>(null);
   const [saving, setSaving] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [showSaveAsDialog, setShowSaveAsDialog] = useState(false);
   const [newThemeName, setNewThemeName] = useState('');
   const [hasChanges, setHasChanges] = useState(false);
-  const [selectedPreset, setSelectedPreset] = useState<string>(presetKey || '');
-  // Track whether we should auto-trigger image import on mount
-  const [shouldTriggerImageImport, setShouldTriggerImageImport] = useState(mode === 'create' && starterType === 'image');
-  const [colorErrors, setColorErrors] = useState<{ [key in keyof ThemeColors]?: string }>({});
-  const [extractingColors, setExtractingColors] = useState(false);
-  // Use lazy initializer to avoid calling getDefaultLockState() on every render
-  const [colorLocks, setColorLocks] = useState<ColorLockState>(() =>
-    initialTheme?.colorLocks || getDefaultLockState()
-  );
   const [pasteInput, setPasteInput] = useState('');
   const [pasteValidation, setPasteValidation] = useState<ValidationResult>({
     isValid: false,
@@ -390,9 +260,16 @@ export function ThemeEditor({ initialTheme, sourceTheme, mode, starterType, pres
     message: '',
     status: 'empty',
   });
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Refs to track latest values for stable callbacks (avoids recreating callbacks on every state change)
+  // Color editor panel state
+  const [selectedColorKey, setSelectedColorKey] = useState<keyof ThemeColors | null>(null);
+
+  // Lock state for derived colors (true = manually set, false = auto-calculated)
+  const [colorLocks, setColorLocks] = useState<ColorLockState>(() =>
+    initialTheme?.colorLocks || getDefaultLockState()
+  );
+
+  // Refs to track latest values for stable callbacks
   const metadataRef = useRef(metadata);
   const colorLocksRef = useRef(colorLocks);
 
@@ -409,7 +286,6 @@ export function ThemeEditor({ initialTheme, sourceTheme, mode, starterType, pres
   useEffect(() => {
     if (initialTheme) {
       setMetadata(initialTheme);
-      // If theme has lock state, use it; otherwise for existing themes, lock all (preserve existing colors)
       if (initialTheme.colorLocks) {
         setColorLocks(initialTheme.colorLocks);
       } else if (sourceTheme) {
@@ -435,43 +311,27 @@ export function ThemeEditor({ initialTheme, sourceTheme, mode, starterType, pres
     }
   }, [initialTheme, sourceTheme]);
 
-  // Auto-trigger image import when starterType is 'image'
-  useEffect(() => {
-    if (shouldTriggerImageImport && fileInputRef.current) {
-      // Small delay to ensure the component is fully mounted
-      const timer = setTimeout(() => {
-        fileInputRef.current?.click();
-        setShouldTriggerImageImport(false);
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [shouldTriggerImageImport]);
-
   // Validate paste input as it changes
   useEffect(() => {
     setPasteValidation(validateColorJson(pasteInput));
   }, [pasteInput]);
 
   // Apply pasted colors to the theme
-  // Uses refs for stable callback - only depends on pasteValidation which triggers UI updates
   const handleApplyPastedColors = useCallback(() => {
     if (!pasteValidation.isValid) return;
 
     const currentMetadata = metadataRef.current;
     const currentLocks = colorLocksRef.current;
 
-    // Determine which colors were explicitly provided vs which need derivation
     const newLocks: ColorLockState = { ...currentLocks };
     const providedColorKeys = typedKeys(pasteValidation.validColors);
 
-    // Lock colors that were explicitly provided, unlock ones that weren't
     for (const key of providedColorKeys) {
       if (key in newLocks) {
         (newLocks as Record<string, boolean>)[key] = true;
       }
     }
 
-    // Apply valid colors and derive the rest
     const newColors = deriveAllColors(
       { ...currentMetadata.colors, ...pasteValidation.validColors },
       newLocks,
@@ -484,224 +344,66 @@ export function ThemeEditor({ initialTheme, sourceTheme, mode, starterType, pres
     setPasteInput('');
   }, [pasteValidation]);
 
-  const applyPreset = (presetKey: string) => {
-    if (presetKey && presetSchemes[presetKey]) {
-      const preset = presetSchemes[presetKey];
-      setMetadata({
-        ...metadata,
-        colors: { ...preset.colors },
-      });
-      setSelectedPreset(presetKey);
-      setHasChanges(true);
-    }
-  };
-
-  const handleImageImport = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleImageSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    setExtractingColors(true);
-    try {
-      // Dynamically import node-vibrant only when color extraction is triggered
-      const { Vibrant } = await import('node-vibrant/browser');
-      const imageUrl = URL.createObjectURL(file);
-      const palette = await Vibrant.from(imageUrl).getPalette();
-      URL.revokeObjectURL(imageUrl);
-
-      const extractedColors: Partial<ThemeColors> = {};
-
-      if (palette.DarkVibrant) {
-        extractedColors.background = palette.DarkVibrant.hex;
-        extractedColors.black = palette.DarkVibrant.hex;
-      }
-
-      if (palette.LightVibrant) {
-        extractedColors.foreground = palette.LightVibrant.hex;
-        extractedColors.white = palette.LightVibrant.hex;
-        extractedColors.cursor = palette.LightVibrant.hex;
-      }
-
-      if (palette.Vibrant) {
-        extractedColors.accent = palette.Vibrant.hex;
-        extractedColors.blue = palette.Vibrant.hex;
-      }
-
-      if (palette.Muted) {
-        extractedColors.selection = palette.Muted.hex;
-        extractedColors.border = palette.Muted.hex;
-        extractedColors.brightBlack = palette.Muted.hex;
-      }
-
-      if (palette.DarkMuted) {
-        extractedColors.brightBlack = palette.DarkMuted.hex;
-      }
-
-      if (palette.LightMuted) {
-        extractedColors.brightWhite = palette.LightMuted.hex;
-      }
-
-      extractedColors.red = palette.Vibrant?.hex || '#ff5555';
-      extractedColors.brightRed = palette.Vibrant?.hex || '#ff6e6e';
-      extractedColors.green = palette.Muted?.hex || '#50fa7b';
-      extractedColors.brightGreen = palette.LightMuted?.hex || '#69ff94';
-      extractedColors.yellow = palette.LightVibrant?.hex || '#f1fa8c';
-      extractedColors.brightYellow = palette.LightVibrant?.hex || '#ffffa5';
-      extractedColors.magenta = palette.Vibrant?.hex || '#ff79c6';
-      extractedColors.brightMagenta = palette.Vibrant?.hex || '#ff92df';
-      extractedColors.cyan = palette.LightVibrant?.hex || '#8be9fd';
-      extractedColors.brightCyan = palette.LightVibrant?.hex || '#a4ffff';
-      extractedColors.brightBlue = palette.Vibrant?.hex || '#bd93f9';
-
-      setMetadata({
-        ...metadata,
-        colors: {
-          ...metadata.colors,
-          ...extractedColors,
-        },
-      });
-      setHasChanges(true);
-      setSelectedPreset('');
-
-    } catch (error: unknown) {
-      console.error('Error extracting colors from image:', error);
-      alert('Failed to extract colors from image. Please try a different image.');
-    } finally {
-      setExtractingColors(false);
-      if (event.target) {
-        event.target.value = '';
-      }
-    }
-  };
-
-  // Toggle lock state for a derived color
-  // Uses refs for stable callback - no dependencies needed
-  const toggleLock = useCallback((colorKey: DerivedColorKey) => {
-    const currentLocks = colorLocksRef.current;
-    const currentMetadata = metadataRef.current;
-
-    const newLocked = !currentLocks[colorKey];
-    const newLocks = { ...currentLocks, [colorKey]: newLocked };
-    setColorLocks(newLocks);
-
-    // If unlocking, recalculate this color from base colors
-    if (!newLocked) {
-      const recalculated = deriveAllColors(currentMetadata.colors, newLocks, currentMetadata.colors);
-      setMetadata({
-        ...currentMetadata,
-        colors: recalculated,
-        colorLocks: newLocks,
-      });
-    } else {
-      setMetadata({
-        ...currentMetadata,
-        colorLocks: newLocks,
-      });
-    }
-    setHasChanges(true);
+  // Handle color click from preview components
+  const handleColorClick = useCallback((colorKey: keyof ThemeColors) => {
+    setSelectedColorKey(colorKey);
   }, []);
 
-  // Update a derived color (only when locked)
-  // Uses refs for stable callback - no dependencies needed
-  const updateDerivedColor = useCallback((colorKey: DerivedColorKey, value: string) => {
-    const format = detectColorFormat(value);
-    let hexValue = value;
-    let errorMessage = '';
-
-    if (value.trim() === '') {
-      errorMessage = 'Color cannot be empty';
-    } else if (format === 'invalid') {
-      errorMessage = 'Invalid color format. Use hex (#FF5733), RGB (255, 87, 51), or HSL (360, 100%, 50%)';
-    } else {
-      const convertedHex = toHex(value);
-      if (convertedHex) {
-        hexValue = convertedHex;
-      } else {
-        errorMessage = 'Failed to convert color to hex format';
-      }
-    }
-
-    const currentMetadata = metadataRef.current;
-    setMetadata({
-      ...currentMetadata,
-      colors: {
-        ...currentMetadata.colors,
-        [colorKey]: hexValue,
-      },
-    });
-    setHasChanges(true);
-
-    if (errorMessage) {
-      setColorErrors(prev => ({ ...prev, [colorKey]: errorMessage }));
-    } else {
-      setColorErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[colorKey];
-        return newErrors;
-      });
-    }
-  }, []);
-
-  // Update a base color and recalculate derived colors
-  // Uses refs for stable callback - no dependencies needed
-  const updateColor = useCallback((colorKey: keyof ThemeColors, value: string) => {
-    const format = detectColorFormat(value);
-    let hexValue = value;
-    let errorMessage = '';
-
-    if (value.trim() === '') {
-      errorMessage = 'Color cannot be empty';
-    } else if (format === 'invalid') {
-      errorMessage = 'Invalid color format. Use hex (#FF5733), RGB (255, 87, 51), or HSL (360, 100%, 50%)';
-    } else {
-      const convertedHex = toHex(value);
-      if (convertedHex) {
-        hexValue = convertedHex;
-      } else {
-        errorMessage = 'Failed to convert color to hex format';
-      }
-    }
+  // Handle color change from ColorEditorPanel
+  const handleColorChange = useCallback((colorKey: keyof ThemeColors, value: string) => {
+    const convertedHex = toHex(value);
+    if (!convertedHex) return;
 
     const currentMetadata = metadataRef.current;
     const currentLocks = colorLocksRef.current;
+
+    // If editing a derived color, auto-lock it (unlink from base)
+    let newLocks = currentLocks;
+    if (isDerivedColor(colorKey) && !currentLocks[colorKey as DerivedColorKey]) {
+      newLocks = { ...currentLocks, [colorKey]: true };
+      setColorLocks(newLocks);
+    }
 
     // Update the color
     const newBaseColors = {
       ...currentMetadata.colors,
-      [colorKey]: hexValue,
+      [colorKey]: convertedHex,
     };
 
     // If this is a base color, recalculate derived colors
     if (isBaseColor(colorKey)) {
-      const recalculated = deriveAllColors(newBaseColors, currentLocks, currentMetadata.colors);
+      const recalculated = deriveAllColors(newBaseColors, newLocks, currentMetadata.colors);
       setMetadata({
         ...currentMetadata,
         colors: recalculated,
-        colorLocks: currentLocks,
+        colorLocks: newLocks,
       });
     } else {
       setMetadata({
         ...currentMetadata,
         colors: newBaseColors,
+        colorLocks: newLocks,
       });
     }
     setHasChanges(true);
+  }, []);
 
-    if (errorMessage) {
-      setColorErrors(prev => ({
-        ...prev,
-        [colorKey]: errorMessage
-      }));
-    } else {
-      setColorErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[colorKey];
-        return newErrors;
-      });
-    }
+  // Reset derived color to auto-calculated
+  const handleResetToAuto = useCallback((colorKey: DerivedColorKey) => {
+    const currentMetadata = metadataRef.current;
+    const currentLocks = colorLocksRef.current;
+
+    const newLocks = { ...currentLocks, [colorKey]: false };
+    setColorLocks(newLocks);
+
+    // Recalculate the color
+    const recalculated = deriveAllColors(currentMetadata.colors, newLocks, currentMetadata.colors);
+    setMetadata({
+      ...currentMetadata,
+      colors: recalculated,
+      colorLocks: newLocks,
+    });
+    setHasChanges(true);
   }, []);
 
   const updateMetadataField = (field: keyof StrictOmit<ThemeMetadata, 'colors'>, value: string) => {
@@ -713,11 +415,6 @@ export function ThemeEditor({ initialTheme, sourceTheme, mode, starterType, pres
   };
 
   const handleSave = async (andApply = false) => {
-    if (Object.keys(colorErrors).length > 0) {
-      alert('Please fix all color validation errors before saving.');
-      return;
-    }
-
     if (sourceTheme && !sourceTheme.isCustom) {
       setShowSaveAsDialog(true);
       return;
@@ -733,7 +430,6 @@ export function ThemeEditor({ initialTheme, sourceTheme, mode, starterType, pres
       } else {
         await window.electronAPI.createTheme(metadata);
         if (andApply) {
-          // Get the theme name that will be used (based on the slug generation)
           const themeDirName = metadata.name.toLowerCase().replace(/[^a-z0-9-]/g, '-');
           await window.electronAPI.applyTheme(themeDirName);
         }
@@ -801,388 +497,122 @@ export function ThemeEditor({ initialTheme, sourceTheme, mode, starterType, pres
     }
   };
 
-  // Base colors - the 10 colors users need to define
-  const baseColorKeys: BaseColorKey[] = [
-    'background', 'foreground',
-    'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white',
-  ];
-
-  // Derived colors - auto-calculated from base colors
-  const derivedColorKeys: DerivedColorKey[] = [
-    'accent', 'cursor', 'selection', 'border',
-    'brightBlack', 'brightRed', 'brightGreen', 'brightYellow',
-    'brightBlue', 'brightMagenta', 'brightCyan', 'brightWhite',
-  ];
-
-  // For preview palette display
-  const mainColorKeys: (keyof ThemeColors)[] = [
-    'background', 'foreground', 'cursor', 'selection', 'accent', 'border',
-  ];
-
-  const ansiColorKeys: (keyof ThemeColors)[] = [
-    'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white',
-  ];
-
-  const brightColorKeys: (keyof ThemeColors)[] = [
-    'brightBlack', 'brightRed', 'brightGreen', 'brightYellow',
-    'brightBlue', 'brightMagenta', 'brightCyan', 'brightWhite',
-  ];
-
   return (
-    <div className="theme-editor">
-      <div className="theme-editor-sidebar">
-        <div className="space-y-5">
-          {/* Start From Section - Collapsible */}
-          <details open className="editor-section">
-            <summary className="editor-section-header">
-              <ChevronRight size={14} className="editor-section-chevron" />
-              <span>Start From</span>
-            </summary>
-            <div className="editor-section-content space-y-4">
-              {/* Preset */}
-              <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground">Preset</Label>
-                <Select value={selectedPreset} onValueChange={applyPreset}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a preset..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(presetSchemes).map(([key, preset]) => (
-                      <SelectItem key={key} value={key}>
-                        {preset.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+    <div className="theme-editor-simplified">
+      {/* Main preview area */}
+      <div className="theme-editor-main">
+        {/* Theme Name */}
+        <div className="mb-6">
+          <Label htmlFor="theme-name" className="text-sm font-medium">Theme Name</Label>
+          <Input
+            id="theme-name"
+            value={metadata.name}
+            onChange={(e) => updateMetadataField('name', e.target.value)}
+            placeholder="My Custom Theme"
+            className="mt-2 text-base max-w-md"
+          />
+        </div>
 
-              {/* Image Import */}
-              <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground">Extract from Image</Label>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageSelected}
-                  className="hidden"
-                />
-                <Button
-                  variant="secondary"
-                  onClick={handleImageImport}
-                  disabled={extractingColors}
-                  className="w-full"
-                  size="sm"
-                >
-                  {extractingColors ? 'Extracting...' : 'Choose Image'}
-                </Button>
-              </div>
-            </div>
-          </details>
-
-          {/* Advanced Section - Collapsed by default */}
-          <details className="editor-section">
-            <summary className="editor-section-header">
-              <ChevronRight size={14} className="editor-section-chevron" />
-              <span>Advanced</span>
-              <span className="text-[10px] text-muted-foreground ml-auto">JSON import</span>
-            </summary>
-            <div className="editor-section-content space-y-3">
-              <textarea
-                placeholder='{"background": "#1a1b26", ...}'
-                className="w-full h-20 font-mono text-xs rounded-md border border-input bg-transparent px-3 py-2 placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none"
-                value={pasteInput}
-                onChange={(e) => setPasteInput(e.target.value)}
-              />
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 min-h-[20px]">
-                  {pasteValidation.status === 'valid' && (
-                    <span className="text-green-500 text-xs flex items-center gap-1">
-                      <Check size={12} /> {pasteValidation.message}
-                    </span>
-                  )}
-                  {pasteValidation.status === 'warning' && (
-                    <span className="text-yellow-500 text-xs flex items-center gap-1">
-                      <AlertTriangle size={12} /> {pasteValidation.message}
-                    </span>
-                  )}
-                  {pasteValidation.status === 'error' && (
-                    <span className="text-red-500 text-xs flex items-center gap-1">
-                      <X size={12} /> {pasteValidation.message}
-                    </span>
-                  )}
-                </div>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={handleApplyPastedColors}
-                  disabled={!pasteValidation.isValid}
-                >
-                  Apply
-                </Button>
-              </div>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <span>Copy example:</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-5 px-1.5 text-[10px]"
-                  onClick={() => {
-                    const baseExample = JSON.stringify({
-                      background: "#1a1b26",
-                      foreground: "#c0caf5",
-                      black: "#15161e",
-                      red: "#f7768e",
-                      green: "#9ece6a",
-                      yellow: "#e0af68",
-                      blue: "#7aa2f7",
-                      magenta: "#bb9af7",
-                      cyan: "#7dcfff",
-                      white: "#a9b1d6"
-                    }, null, 2);
-                    navigator.clipboard.writeText(baseExample);
-                  }}
-                >
-                  Base
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-5 px-1.5 text-[10px]"
-                  onClick={() => {
-                    const fullExample = JSON.stringify({
-                      background: "#1a1b26",
-                      foreground: "#c0caf5",
-                      cursor: "#c0caf5",
-                      selection: "#33467c",
-                      black: "#15161e",
-                      red: "#f7768e",
-                      green: "#9ece6a",
-                      yellow: "#e0af68",
-                      blue: "#7aa2f7",
-                      magenta: "#bb9af7",
-                      cyan: "#7dcfff",
-                      white: "#a9b1d6",
-                      brightBlack: "#414868",
-                      brightRed: "#f7768e",
-                      brightGreen: "#9ece6a",
-                      brightYellow: "#e0af68",
-                      brightBlue: "#7aa2f7",
-                      brightMagenta: "#bb9af7",
-                      brightCyan: "#7dcfff",
-                      brightWhite: "#c0caf5",
-                      accent: "#7aa2f7",
-                      border: "#414868"
-                    }, null, 2);
-                    navigator.clipboard.writeText(fullExample);
-                  }}
-                >
-                  Full
-                </Button>
-              </div>
-            </div>
-          </details>
-
-          {/* Theme Name Section */}
-          <div className="space-y-2">
-            <Label htmlFor="theme-name" className="text-sm font-medium">Theme Name</Label>
-            <Input
-              id="theme-name"
-              value={metadata.name}
-              onChange={(e) => updateMetadataField('name', e.target.value)}
-              placeholder="My Custom Theme"
-              className="text-base"
+        {/* Preview Panels */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <div className="space-y-3">
+            <h3 className="text-sm font-medium text-muted-foreground">Terminal Preview</h3>
+            <TerminalPreview
+              colors={metadata.colors}
+              onClick={handleColorClick}
             />
           </div>
-
-          {/* Base Colors Section - Collapsible */}
-          <details open className="editor-section">
-            <summary className="editor-section-header">
-              <ChevronRight size={14} className="editor-section-chevron" />
-              <span>Base Colors</span>
-              <span className="text-[10px] text-muted-foreground ml-auto">10 colors</span>
-            </summary>
-            <div className="editor-section-content space-y-2">
-              <p className="text-xs text-muted-foreground">
-                Define these - the rest will be auto-calculated
-              </p>
-              {baseColorKeys.map((key) => (
-                <ColorInput
-                  key={key}
-                  colorKey={key}
-                  colorValue={metadata.colors[key]}
-                  isSelected={selectedColor === key}
-                  error={colorErrors[key]}
-                  onColorChange={updateColor}
-                  onFocus={setSelectedColor}
-                />
-              ))}
-            </div>
-          </details>
-
-          {/* Derived Colors Section - Collapsible */}
-          <details className="editor-section">
-            <summary className="editor-section-header">
-              <ChevronRight size={14} className="editor-section-chevron" />
-              <span>Derived Colors</span>
-              <span className="text-[10px] text-muted-foreground ml-auto">12 colors</span>
-            </summary>
-            <div className="editor-section-content space-y-2">
-              <p className="text-xs text-muted-foreground">
-                Auto-calculated. Click lock to override.
-              </p>
-              {derivedColorKeys.map((key) => (
-                <DerivedColorInput
-                  key={key}
-                  colorKey={key}
-                  colorValue={metadata.colors[key]}
-                  isLocked={colorLocks[key] || false}
-                  isSelected={selectedColor === key}
-                  error={colorErrors[key]}
-                  onColorChange={updateDerivedColor}
-                  onToggleLock={toggleLock}
-                  onFocus={setSelectedColor}
-                />
-              ))}
-            </div>
-          </details>
-
-          {/* Actions */}
-          <div className="flex gap-2 pt-4 border-t border-border">
-            <Button variant="outline" onClick={handleCancel}>
-              Cancel
-            </Button>
-            <Button variant="secondary" onClick={() => handleSave(false)} disabled={saving}>
-              {saving ? 'Saving...' : 'Save'}
-            </Button>
-            <Button onClick={() => handleSave(true)} disabled={saving}>
-              {saving ? 'Saving...' : 'Save & Apply'}
-            </Button>
+          <div className="space-y-3">
+            <h3 className="text-sm font-medium text-muted-foreground">Code Preview</h3>
+            <CodePreview
+              colors={metadata.colors}
+              onClick={handleColorClick}
+            />
           </div>
+        </div>
+
+        {/* Color Swatches */}
+        <div className="mb-6">
+          <h3 className="text-sm font-medium text-muted-foreground mb-3">Color Palette</h3>
+          <p className="text-xs text-muted-foreground mb-3">
+            Click any color to edit it
+          </p>
+          <ColorSwatches
+            colors={metadata.colors}
+            onClick={handleColorClick}
+            showLabels
+          />
+        </div>
+
+        {/* Advanced Section - JSON Import */}
+        <details className="editor-section mb-6">
+          <summary className="editor-section-header">
+            <ChevronRight size={14} className="editor-section-chevron" />
+            <span>Advanced</span>
+            <span className="text-[10px] text-muted-foreground ml-auto">JSON import</span>
+          </summary>
+          <div className="editor-section-content space-y-3">
+            <textarea
+              placeholder='{"background": "#1a1b26", ...}'
+              className="w-full h-20 font-mono text-xs rounded-md border border-input bg-transparent px-3 py-2 placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none"
+              value={pasteInput}
+              onChange={(e) => setPasteInput(e.target.value)}
+            />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 min-h-[20px]">
+                {pasteValidation.status === 'valid' && (
+                  <span className="text-green-500 text-xs flex items-center gap-1">
+                    <Check size={12} /> {pasteValidation.message}
+                  </span>
+                )}
+                {pasteValidation.status === 'warning' && (
+                  <span className="text-yellow-500 text-xs flex items-center gap-1">
+                    <AlertTriangle size={12} /> {pasteValidation.message}
+                  </span>
+                )}
+                {pasteValidation.status === 'error' && (
+                  <span className="text-red-500 text-xs flex items-center gap-1">
+                    <X size={12} /> {pasteValidation.message}
+                  </span>
+                )}
+              </div>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleApplyPastedColors}
+                disabled={!pasteValidation.isValid}
+              >
+                Apply
+              </Button>
+            </div>
+          </div>
+        </details>
+
+        {/* Actions */}
+        <div className="flex gap-2 pt-4 border-t border-border">
+          <Button variant="outline" onClick={handleCancel}>
+            Cancel
+          </Button>
+          <Button variant="secondary" onClick={() => handleSave(false)} disabled={saving}>
+            {saving ? 'Saving...' : 'Save'}
+          </Button>
+          <Button onClick={() => handleSave(true)} disabled={saving}>
+            {saving ? 'Saving...' : 'Save & Apply'}
+          </Button>
         </div>
       </div>
 
-      <div className="theme-editor-preview">
-        <h3 className="text-lg font-semibold mb-4">Live Preview</h3>
-
-        <div className="space-y-6">
-          {/* Terminal Preview */}
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium">Terminal Preview</h4>
-            <div
-              className="rounded-[10px] p-4 font-mono text-sm border"
-              style={{
-                backgroundColor: metadata.colors.background,
-                color: metadata.colors.foreground,
-                borderColor: metadata.colors.border,
-              }}
-            >
-              <div>
-                <span style={{ color: metadata.colors.green }}>➜</span>
-                <span style={{ color: metadata.colors.cyan }}> ~/projects</span>
-                <span style={{ color: metadata.colors.blue }}> git:(</span>
-                <span style={{ color: metadata.colors.red }}>main</span>
-                <span style={{ color: metadata.colors.blue }}>)</span>
-                <span> $ ls -la</span>
-              </div>
-              <div style={{ color: metadata.colors.blue }}>
-                drwxr-xr-x  10 user  staff   320 Dec  6 10:00 .
-              </div>
-              <div style={{ color: metadata.colors.green }}>
-                -rw-r--r--   1 user  staff   150 Dec  6 10:00 README.md
-              </div>
-              <div style={{ color: metadata.colors.cyan }}>
-                drwxr-xr-x   8 user  staff   256 Dec  6 09:30 src
-              </div>
-              <div>
-                <span style={{ color: metadata.colors.green }}>➜</span>
-                <span style={{ color: metadata.colors.cyan }}> ~/projects</span>
-                <span> $ </span>
-                <span
-                  className="inline-block w-2 h-4 animate-pulse"
-                  style={{ backgroundColor: metadata.colors.cursor }}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Code Preview */}
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium">Code Preview</h4>
-            <div
-              className="rounded-[10px] p-4 font-mono text-sm border"
-              style={{
-                backgroundColor: metadata.colors.background,
-                color: metadata.colors.foreground,
-                borderColor: metadata.colors.border,
-              }}
-            >
-              <pre className="whitespace-pre-wrap">
-                <span style={{ color: metadata.colors.magenta }}>import</span>
-                {' { useState } '}
-                <span style={{ color: metadata.colors.magenta }}>from</span>
-                {' '}
-                <span style={{ color: metadata.colors.green }}>&apos;react&apos;</span>;
-                {'\n\n'}
-                <span style={{ color: metadata.colors.magenta }}>function</span>
-                {' '}
-                <span style={{ color: metadata.colors.yellow }}>App</span>
-                {'() {\n  '}
-                <span style={{ color: metadata.colors.magenta }}>const</span>
-                {' [count, setCount] = '}
-                <span style={{ color: metadata.colors.cyan }}>useState</span>
-                {'('}
-                <span style={{ color: metadata.colors.red }}>0</span>
-                {');\n  '}
-                <span style={{ color: metadata.colors.magenta }}>return</span>
-                {' <div>Count: {'}
-                <span style={{ color: metadata.colors.red }}>count</span>
-                {'}</div>;\n}'}
-              </pre>
-            </div>
-          </div>
-
-          {/* Color Palette */}
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium">Color Palette</h4>
-            <div className="space-y-2">
-              <div className="flex gap-2 flex-wrap">
-                {mainColorKeys.map((key) => (
-                  <div key={key} className="text-center">
-                    <div
-                      className="w-10 h-10 rounded-[6px] border border-border/50"
-                      style={{ backgroundColor: metadata.colors[key] }}
-                      title={formatColorName(key)}
-                    />
-                    <div className="text-[10px] text-muted-foreground mt-1 truncate w-10">
-                      {formatColorName(key).split(' ')[0]}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="flex gap-1">
-                {ansiColorKeys.map((key) => (
-                  <div
-                    key={key}
-                    className="w-6 h-6 rounded-[4px] border border-border/30"
-                    style={{ backgroundColor: metadata.colors[key] }}
-                    title={formatColorName(key)}
-                  />
-                ))}
-              </div>
-              <div className="flex gap-1">
-                {brightColorKeys.map((key) => (
-                  <div
-                    key={key}
-                    className="w-6 h-6 rounded-[4px] border border-border/30"
-                    style={{ backgroundColor: metadata.colors[key] }}
-                    title={formatColorName(key)}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Color Editor Panel (slides in from right) */}
+      {selectedColorKey && (
+        <ColorEditorPanel
+          colorKey={selectedColorKey}
+          colorValue={metadata.colors[selectedColorKey]}
+          isAutoLinked={isDerivedColor(selectedColorKey) && !colorLocks[selectedColorKey as DerivedColorKey]}
+          onColorChange={handleColorChange}
+          onResetToAuto={isDerivedColor(selectedColorKey) ? handleResetToAuto : undefined}
+          onClose={() => setSelectedColorKey(null)}
+        />
+      )}
 
       {/* Cancel Confirmation Dialog */}
       <AlertDialog open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>

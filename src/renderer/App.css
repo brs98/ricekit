@@ -720,6 +720,22 @@ body {
   overflow: hidden;
 }
 
+/* Simplified Theme Editor (new click-to-edit version) */
+.theme-editor-simplified {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+}
+
+.theme-editor-main {
+  height: 100%;
+  overflow-y: auto;
+  padding-right: 16px;
+  /* Leave space for color panel when open */
+  transition: padding-right 200ms ease;
+}
+
+/* Legacy sidebar styles (kept for backward compatibility) */
 .theme-editor-sidebar {
   flex: 0 0 380px;
   overflow-y: auto;
@@ -2497,4 +2513,266 @@ body {
   font-size: 11px;
   color: rgb(var(--muted-foreground));
   margin: 0;
+}
+
+/* ============================================
+   Theme Preview Component Styles
+   ============================================ */
+
+.theme-preview-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 24px;
+}
+
+.theme-preview-content {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 16px;
+}
+
+.theme-preview-panels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.theme-preview-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgb(var(--border));
+  background: rgb(var(--background));
+}
+
+/* Image Picker Overlay */
+.image-picker-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgb(var(--foreground) / 0.7);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  animation: fadeIn 150ms ease;
+}
+
+.image-picker-content {
+  background: rgb(var(--card));
+  border-radius: 16px;
+  padding: 24px;
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 20px 60px rgb(var(--foreground) / 0.3);
+}
+
+.image-picker-header {
+  text-align: center;
+}
+
+.image-picker-canvas-container {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(var(--muted));
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.image-picker-canvas {
+  max-width: 100%;
+  max-height: 60vh;
+  cursor: crosshair;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgb(var(--foreground) / 0.15);
+}
+
+.image-picker-footer {
+  display: flex;
+  justify-content: center;
+}
+
+/* ============================================
+   Color Editor Panel Styles
+   ============================================ */
+
+.color-editor-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  width: 320px;
+  background: rgb(var(--card));
+  border-left: 1px solid rgb(var(--border));
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  z-index: 50;
+  animation: slideInFromRight 200ms ease;
+  box-shadow: -4px 0 20px rgb(var(--foreground) / 0.1);
+}
+
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.color-editor-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.color-editor-swatch {
+  width: 100%;
+  height: 80px;
+  border-radius: 10px;
+  border: 1px solid rgb(var(--border));
+  transition: background-color 100ms ease;
+}
+
+.color-editor-sliders {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.slider-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.slider-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgb(var(--muted-foreground));
+}
+
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.slider {
+  flex: 1;
+  height: 8px;
+  border-radius: 4px;
+  appearance: none;
+  background: rgb(var(--muted));
+  cursor: pointer;
+}
+
+.slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgb(var(--background));
+  border: 2px solid rgb(var(--primary));
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgb(var(--foreground) / 0.15);
+  transition: transform 100ms ease;
+}
+
+.slider::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+}
+
+.slider::-webkit-slider-thumb:active {
+  transform: scale(0.95);
+}
+
+.slider-hue {
+  background: linear-gradient(to right,
+    hsl(0, 100%, 50%),
+    hsl(60, 100%, 50%),
+    hsl(120, 100%, 50%),
+    hsl(180, 100%, 50%),
+    hsl(240, 100%, 50%),
+    hsl(300, 100%, 50%),
+    hsl(360, 100%, 50%)
+  );
+}
+
+.slider-value {
+  font-size: 12px;
+  font-family: 'SF Mono', Monaco, monospace;
+  color: rgb(var(--muted-foreground));
+  min-width: 40px;
+  text-align: right;
+}
+
+.hex-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: rgb(var(--muted) / 0.5);
+  border: 1px solid rgb(var(--border));
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+
+.hex-toggle:hover {
+  background: rgb(var(--muted));
+}
+
+.hex-input-container {
+  animation: fadeIn 150ms ease;
+}
+
+.color-editor-hint {
+  padding: 10px 12px;
+  background: rgb(var(--primary) / 0.05);
+  border-radius: 8px;
+  border: 1px solid rgb(var(--primary) / 0.1);
+}
+
+/* ============================================
+   Clickable Preview Styles
+   ============================================ */
+
+.terminal-preview[role="button"],
+.code-preview[role="button"] {
+  cursor: pointer;
+  transition: box-shadow 200ms ease, transform 200ms ease;
+}
+
+.terminal-preview[role="button"]:hover,
+.code-preview[role="button"]:hover {
+  box-shadow: 0 4px 16px rgb(var(--foreground) / 0.1);
+}
+
+.terminal-preview[role="button"]:focus,
+.code-preview[role="button"]:focus {
+  outline: 2px solid rgb(var(--primary));
+  outline-offset: 2px;
+}
+
+/* Color swatch hover effects in previews */
+.color-swatches [role="button"] {
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+.color-swatches [role="button"]:focus {
+  outline: 2px solid rgb(var(--primary));
+  outline-offset: 2px;
 }
