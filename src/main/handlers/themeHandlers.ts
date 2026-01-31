@@ -147,7 +147,8 @@ async function handleListThemes(): Promise<Theme[]> {
  */
 export async function handleGetTheme(_event: IpcMainInvokeEvent | null, name: string): Promise<Theme | null> {
   const themes = await handleListThemes();
-  return themes.find((t) => t.name === name) || null;
+  // Support lookup by either directory name (Theme.name) or display name (metadata.name)
+  return themes.find((t) => t.name === name || t.metadata.name === name) || null;
 }
 
 /**
