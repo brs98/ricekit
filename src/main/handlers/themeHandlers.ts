@@ -250,26 +250,31 @@ async function notifyTerminalsToReload(themePath: string): Promise<void> {
   }
 
   // 2. Notify iTerm2 using AppleScript
+  // Note: iTerm2 AppleScript only works when the app is running
   try {
     const iterm2ConfigPath = path.join(themePath, 'iterm2.itermcolors');
     if (existsSync(iterm2ConfigPath)) {
-      // AppleScript to reload iTerm2 profile
-      const appleScript = `
-        tell application "iTerm2"
-          tell current session of current window
-            set foreground color to {0, 0, 0}
-            set background color to {65535, 65535, 65535}
-          end tell
-        end tell
-      `;
+      // First check if iTerm2 is running to avoid noisy errors
+      let iterm2Running = false;
+      try {
+        execSync('pgrep -x iTerm2', { stdio: 'pipe' });
+        iterm2Running = true;
+      } catch {
+        // iTerm2 not running - skip silently
+      }
 
-      exec(`osascript -e '${appleScript}'`, (error, _stdout, _stderr) => {
-        if (error) {
-          logger.info('iTerm2 not available or not running:', error.message);
-        } else {
-          logger.info('✓ iTerm2 reloaded (profile refresh triggered)');
-        }
-      });
+      if (iterm2Running) {
+        // AppleScript to reload iTerm2 profile
+        const appleScriptCommand = `osascript -e 'tell application "iTerm2"' -e 'tell current session of current window' -e 'set foreground color to {0, 0, 0}' -e 'set background color to {65535, 65535, 65535}' -e 'end tell' -e 'end tell'`;
+
+        exec(appleScriptCommand, (error, _stdout, _stderr) => {
+          if (error) {
+            logger.info('iTerm2 notification failed:', error.message);
+          } else {
+            logger.info('✓ iTerm2 reloaded (profile refresh triggered)');
+          }
+        });
+      }
     }
   } catch (err: unknown) {
     logger.info('Could not notify iTerm2:', getErrorMessage(err));

@@ -2,10 +2,14 @@
  * App setup operations
  *
  * Configure applications for Flowstate integration.
+ * - No config exists → Create minimal working config from template
+ * - Config exists with Flowstate → Return 'already_setup'
+ * - Config exists without Flowstate → Return snippet for clipboard
  */
 
 import path from 'path';
 import os from 'os';
+import fs from 'fs';
 import type { Result } from '../interfaces';
 import { ok, err } from '../interfaces';
 import {
@@ -13,13 +17,23 @@ import {
   readFile,
   writeFile,
   ensureDir,
-  copyFile,
 } from '../utils/fs';
 import { APP_CONFIG } from '../../shared/constants';
 import { typedKeys } from '../../shared/types';
+import { getSnippet, hasSnippet, type AppSnippet } from './snippets';
 
 const homeDir = os.homedir();
-const themeBasePath = `~/Library/Application Support/${APP_CONFIG.dataDirName}/current/theme`;
+
+/**
+ * Result of app setup operation
+ */
+export interface SetupResult {
+  action: 'created' | 'clipboard' | 'already_setup' | 'special';
+  configPath?: string;
+  snippet?: string;
+  instructions?: string;
+  message: string;
+}
 
 /**
  * App configuration definitions
@@ -27,101 +41,186 @@ const themeBasePath = `~/Library/Application Support/${APP_CONFIG.dataDirName}/c
 const APP_CONFIGS = {
   alacritty: {
     configPath: path.join(homeDir, '.config', 'alacritty', 'alacritty.toml'),
-    importLine: `import = ["${themeBasePath}/alacritty.toml"]`,
+    templateFile: 'alacritty.toml',
   },
   kitty: {
     configPath: path.join(homeDir, '.config', 'kitty', 'kitty.conf'),
-    importLine: `include ${themeBasePath}/kitty.conf`,
+    templateFile: 'kitty.conf',
   },
   neovim: {
     configPath: path.join(homeDir, '.config', 'nvim', 'init.lua'),
-    importLine: `dofile(vim.fn.expand("${themeBasePath}/neovim.lua"))`,
+    templateFile: 'neovim-init.lua',
   },
   starship: {
     configPath: path.join(homeDir, '.config', 'starship.toml'),
-    importLine: `"$include" = '${themeBasePath}/starship.toml'`,
+    templateFile: 'starship.toml',
   },
   wezterm: {
-    configPath: path.join(homeDir, '.wezterm.lua'),
-    importLine: `-- Flowstate WezTerm integration
-local flowstate_colors = wezterm.home_dir .. "/Library/Application Support/${APP_CONFIG.dataDirName}/wezterm-colors.lua"
-wezterm.add_to_config_reload_watch_list(flowstate_colors)
-config.colors = dofile(flowstate_colors)`,
+    configPath: path.join(homeDir, '.config', 'wezterm', 'wezterm.lua'),
+    templateFile: 'wezterm.lua',
   },
   sketchybar: {
     configPath: path.join(homeDir, '.config', 'sketchybar', 'sketchybarrc'),
-    importLine: `# Flowstate SketchyBar integration
-source "$HOME/Library/Application Support/${APP_CONFIG.dataDirName}/current/theme/sketchybar-colors.sh"`,
+    templateFile: 'sketchybarrc',
   },
   aerospace: {
     configPath: path.join(homeDir, '.config', 'aerospace', 'aerospace.toml'),
-    importLine: `# Flowstate AeroSpace/JankyBorders integration
-# Note: JankyBorders must be installed for border colors to work
-# Install with: brew install FelixKratz/formulae/borders
-after-startup-command = [
-  'exec-and-forget source "$HOME/Library/Application Support/${APP_CONFIG.dataDirName}/current/theme/aerospace-borders.sh"'
-]`,
+    templateFile: 'aerospace.toml',
   },
-} as const satisfies Record<string, { readonly configPath: string; readonly importLine: string }>;
+} as const satisfies Record<string, { readonly configPath: string; readonly templateFile: string }>;
+
+type AppConfigKey = keyof typeof APP_CONFIGS;
+
+/**
+ * Detection patterns for Flowstate integration
+ */
+const FLOWSTATE_PATTERNS = [
+  APP_CONFIG.dataDirName,  // 'Flowstate'
+  'flowstate',
+  'wezterm-colors.lua',
+] as const;
+
+/**
+ * Check if content already has Flowstate integration
+ */
+export function hasFlowstateIntegration(content: string): boolean {
+  const lowerContent = content.toLowerCase();
+  return FLOWSTATE_PATTERNS.some(pattern => lowerContent.includes(pattern.toLowerCase()));
+}
+
+/**
+ * Get template content for an app
+ * Templates are bundled in src/templates/ for development
+ * and resources/templates/ for production builds
+ */
+export async function getTemplate(appName: string): Promise<string | null> {
+  const config = APP_CONFIGS[appName.toLowerCase() as AppConfigKey];
+  if (!config) return null;
+
+  // Build list of paths to try
+  // In CLI context, __dirname is dist/cli/core/apps
+  // In main context, __dirname is dist/main/core/apps
+  const templatePaths: string[] = [
+    // Development CLI: dist/cli/core/apps -> src/templates (4 levels up + src/templates)
+    path.join(__dirname, '..', '..', '..', '..', 'src', 'templates', config.templateFile),
+    // Development: relative to dist (compiled output)
+    path.join(__dirname, '..', '..', 'templates', config.templateFile),
+  ];
+
+  // Electron production: in app resources
+  // process.resourcesPath only exists in Electron
+  const resourcesPath = (process as NodeJS.Process & { resourcesPath?: string }).resourcesPath;
+  if (resourcesPath) {
+    templatePaths.unshift(path.join(resourcesPath, 'templates', config.templateFile));
+  }
+
+  for (const templatePath of templatePaths) {
+    if (existsSync(templatePath)) {
+      return readFile(templatePath);
+    }
+  }
+
+  // Fallback: try sync read for bundled templates
+  try {
+    const fallbackPath = path.join(__dirname, '../../templates', config.templateFile);
+    if (fs.existsSync(fallbackPath)) {
+      return fs.readFileSync(fallbackPath, 'utf-8');
+    }
+  } catch {
+    // Ignore errors
+  }
+
+  return null;
+}
 
 /**
  * Setup an application for theming
+ *
+ * Returns a SetupResult with the action taken:
+ * - 'created': Created new config from template
+ * - 'clipboard': Existing config, snippet ready for clipboard
+ * - 'already_setup': Config already has Flowstate integration
+ * - 'special': App requires special handling (VS Code, Cursor, Slack)
  */
 export async function setupApp(
   appName: string
-): Promise<Result<{ configPath: string; backupPath?: string }, Error>> {
-  const config = APP_CONFIGS[appName.toLowerCase()];
+): Promise<Result<SetupResult, Error>> {
+  const normalizedName = appName.toLowerCase();
 
+  // Handle special apps that need different treatment
+  if (normalizedName === 'vscode' || normalizedName === 'cursor') {
+    return ok({
+      action: 'special',
+      message: `${appName} integration is automatic. Apply a theme and ${appName} settings will be updated.`,
+    });
+  }
+
+  if (normalizedName === 'slack') {
+    return ok({
+      action: 'special',
+      message: 'Slack requires manual setup. Apply a theme, then copy the contents of slack-theme.txt to Slack Preferences > Themes > Custom theme.',
+    });
+  }
+
+  // Check if app is supported
+  const config = APP_CONFIGS[normalizedName as AppConfigKey];
   if (!config) {
-    // Check if it's a special app that needs different handling
-    if (appName === 'vscode' || appName === 'cursor') {
-      return err(new Error(
-        `${appName} integration is automatic. Just apply a theme and ${appName} settings will be updated.`
-      ));
-    }
-    if (appName === 'slack') {
-      return err(new Error(
-        'Slack requires manual setup. Apply a theme, then copy the contents of slack-theme.txt to Slack Preferences → Themes → Custom theme.'
-      ));
-    }
-
     const supportedApps = typedKeys(APP_CONFIGS).join(', ');
     return err(new Error(`Unsupported app: ${appName}. Supported: ${supportedApps}`));
   }
 
-  const { configPath, importLine } = config;
+  const { configPath } = config;
   const configDir = path.dirname(configPath);
 
-  // Create config directory if it doesn't exist
+  // Check if config already exists
+  if (existsSync(configPath)) {
+    const content = await readFile(configPath);
+
+    // Check if already has Flowstate integration
+    if (hasFlowstateIntegration(content)) {
+      return ok({
+        action: 'already_setup',
+        configPath,
+        message: `${appName} is already configured with Flowstate integration.`,
+      });
+    }
+
+    // Config exists but no Flowstate - return snippet for clipboard
+    const snippetInfo = getSnippet(normalizedName);
+    if (snippetInfo) {
+      return ok({
+        action: 'clipboard',
+        configPath,
+        snippet: snippetInfo.snippet,
+        instructions: snippetInfo.instructions,
+        message: `${appName} config exists. Add the integration snippet to your config.`,
+      });
+    }
+
+    // Fallback error if no snippet defined
+    return err(new Error(`No integration snippet defined for ${appName}`));
+  }
+
+  // No config exists - create from template
+  const template = await getTemplate(normalizedName);
+  if (!template) {
+    return err(new Error(`Template not found for ${appName}. Please create the config manually.`));
+  }
+
+  // Ensure config directory exists
   if (!existsSync(configDir)) {
     await ensureDir(configDir);
   }
 
-  // Read existing config or create empty
-  let configContent = '';
-  let backupPath: string | undefined;
+  // Write template to config path
+  await writeFile(configPath, template);
 
-  if (existsSync(configPath)) {
-    configContent = await readFile(configPath);
-
-    // Check if import already exists
-    if (configContent.includes(importLine) || configContent.includes(`${APP_CONFIG.dataDirName}/current/theme`)) {
-      return err(new Error(`Flowstate integration already exists in ${configPath}`));
-    }
-
-    // Create backup
-    backupPath = `${configPath}.flowstate-backup`;
-    await copyFile(configPath, backupPath);
-  }
-
-  // Add import statement at the top of the file
-  const newContent = importLine + '\n\n' + configContent;
-  await writeFile(configPath, newContent);
-
-  return ok({ configPath, backupPath });
+  return ok({
+    action: 'created',
+    configPath,
+    message: `Created ${appName} config at ${configPath}`,
+  });
 }
-
-type AppConfigKey = keyof typeof APP_CONFIGS;
 
 /**
  * Get list of apps that can be set up
@@ -129,3 +228,21 @@ type AppConfigKey = keyof typeof APP_CONFIGS;
 export function getSetupableApps(): AppConfigKey[] {
   return typedKeys(APP_CONFIGS);
 }
+
+/**
+ * Get the config path for an app
+ */
+export function getAppConfigPath(appName: string): string | undefined {
+  const config = APP_CONFIGS[appName.toLowerCase() as AppConfigKey];
+  return config?.configPath;
+}
+
+/**
+ * Check if an app supports clipboard snippet workflow
+ */
+export function supportsClipboardSetup(appName: string): boolean {
+  return hasSnippet(appName);
+}
+
+// Re-export snippet utilities
+export { getSnippet, hasSnippet, type AppSnippet };

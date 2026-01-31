@@ -7,8 +7,9 @@ import os from 'os';
 import type { AppInfo } from '../../shared/types';
 import { existsSync } from '../utils/fs';
 
-// Re-export setup functions
+// Re-export setup functions and types
 export * from './setup';
+export type { SetupResult } from './setup';
 
 /** App category types matching AppInfo */
 type AppCategory = 'terminal' | 'editor' | 'cli' | 'launcher' | 'system' | 'communication' | 'tiling';

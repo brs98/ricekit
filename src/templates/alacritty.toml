@@ -1,0 +1,5 @@
+import = ["~/Library/Application Support/Flowstate/current/theme/alacritty.toml"]
+
+# Add your customizations below
+[window]
+padding = { x = 8, y = 8 }

@@ -222,6 +222,14 @@ async function executeHookScript(
 }
 
 /**
+ * Check if an app is enabled for auto-refresh
+ * Empty enabledApps means no apps are enabled (explicit opt-in required)
+ */
+function isAppEnabled(prefs: Preferences | null, appName: string): boolean {
+  return prefs?.enabledApps?.includes(appName) ?? false;
+}
+
+/**
  * Notify terminals and apps to reload themes
  */
 export async function notifyApps(
@@ -251,37 +259,40 @@ export async function notifyApps(
     // Continue with defaults
   }
 
-  // Notify Kitty
-  if (themeColors && existsSync(path.join(themePath, 'kitty.conf'))) {
-    if (await notifyKitty(themeColors, onLog)) {
-      notifiedApps.push('kitty');
+  // Notify Kitty (only if enabled)
+  if (isAppEnabled(prefs, 'kitty')) {
+    if (themeColors && existsSync(path.join(themePath, 'kitty.conf'))) {
+      if (await notifyKitty(themeColors, onLog)) {
+        notifiedApps.push('kitty');
+      }
     }
   }
 
-  // Notify WezTerm
-  if (await notifyWezTerm(themePath, onLog)) {
-    notifiedApps.push('wezterm');
+  // Notify WezTerm (only if enabled)
+  if (isAppEnabled(prefs, 'wezterm')) {
+    if (await notifyWezTerm(themePath, onLog)) {
+      notifiedApps.push('wezterm');
+    }
   }
 
   // Small delay for symlink to be visible
   await new Promise((resolve) => setTimeout(resolve, 100));
 
-  // Reload SketchyBar
-  if (await notifySketchyBar(onLog)) {
-    notifiedApps.push('sketchybar');
+  // Reload SketchyBar (only if enabled)
+  if (isAppEnabled(prefs, 'sketchybar')) {
+    if (await notifySketchyBar(onLog)) {
+      notifiedApps.push('sketchybar');
+    }
   }
 
-  // Apply AeroSpace/JankyBorders
-  const isAerospaceEnabled = !prefs?.enabledApps ||
-    prefs.enabledApps.length === 0 ||
-    prefs.enabledApps.includes('aerospace');
-  if (isAerospaceEnabled) {
+  // Apply AeroSpace/JankyBorders (only if enabled)
+  if (isAppEnabled(prefs, 'aerospace')) {
     if (await notifyAeroSpace(themePath, onLog)) {
       notifiedApps.push('aerospace');
     }
   }
 
-  // Execute hook script
+  // Execute hook script (always runs if configured, not dependent on enabledApps)
   if (prefs?.hookScript && prefs.hookScript.trim() !== '') {
     if (await executeHookScript(themeName, prefs.hookScript, onLog)) {
       notifiedApps.push('hook');

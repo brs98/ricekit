@@ -2,7 +2,7 @@
  * Application IPC Handlers
  * Handles application detection, setup, and refresh
  */
-import { ipcMain, Notification, shell, IpcMainInvokeEvent } from 'electron';
+import { ipcMain, Notification, shell, clipboard, IpcMainInvokeEvent } from 'electron';
 import path from 'path';
 import os from 'os';
 import fs from 'fs';
@@ -19,6 +19,7 @@ import {
 } from '../utils/asyncFs';
 import { handleGetPreferences, handleSetPreferences } from './preferencesHandlers';
 import { handleGetState } from './stateHandlers';
+import { setupApp as coreSetupApp, type SetupResult } from '../../core/apps/setup';
 
 // Forward declarations - will be set to avoid circular deps
 let getThemeHandler: ((event: IpcMainInvokeEvent | null, name: string) => Promise<Theme | null>) | null = null;
@@ -308,13 +309,15 @@ async function setupEditorApp(appName: string, displayName: string, settingsPath
 
 /**
  * Setup an application for theming
- * Automatically configures the app's config file to import Flowstate themes
+ * Uses the refactored setup logic that:
+ * - Creates config from template if none exists
+ * - Copies snippet to clipboard if config exists
+ * - Returns already_setup if integration exists
  */
-export async function handleSetupApp(_event: IpcMainInvokeEvent | null, appName: string): Promise<void> {
+export async function handleSetupApp(_event: IpcMainInvokeEvent | null, appName: string): Promise<SetupResult> {
   logger.info(`Setting up app: ${appName}`);
 
   const homeDir = os.homedir();
-  const themeBasePath = '~/Library/Application Support/Flowstate/current/theme';
 
   try {
     // Handle Cursor and VS Code specially - they don't support file imports
@@ -338,7 +341,11 @@ export async function handleSetupApp(_event: IpcMainInvokeEvent | null, appName:
         });
         notification.show();
       }
-      return;
+
+      return {
+        action: 'special',
+        message: 'Cursor has been configured. Themes will be applied automatically when you switch themes.',
+      };
     }
 
     if (appName === 'vscode') {
@@ -354,7 +361,11 @@ export async function handleSetupApp(_event: IpcMainInvokeEvent | null, appName:
         });
         notification.show();
       }
-      return;
+
+      return {
+        action: 'special',
+        message: 'VS Code has been configured. Themes will be applied automatically when you switch themes.',
+      };
     }
 
     // Handle Slack specially - it requires manual theme application
@@ -378,7 +389,7 @@ export async function handleSetupApp(_event: IpcMainInvokeEvent | null, appName:
         if (Notification.isSupported()) {
           const notification = new Notification({
             title: 'Slack Theme Setup',
-            body: 'Theme file opened. Copy the theme string and paste it in Slack Preferences → Themes → Custom theme',
+            body: 'Theme file opened. Copy the theme string and paste it in Slack Preferences > Themes > Custom theme',
             silent: false,
           });
           notification.show();
@@ -396,110 +407,96 @@ export async function handleSetupApp(_event: IpcMainInvokeEvent | null, appName:
         prefs.enabledApps.push('slack');
         await handleSetPreferences(null, prefs);
       }
-      return;
+
+      return {
+        action: 'special',
+        message: 'Slack requires manual setup. Copy the theme string from the opened file to Slack Preferences > Themes > Custom theme.',
+      };
     }
 
-    // Define config paths and import statements for other apps
-    type AppConfigKey = 'alacritty' | 'kitty' | 'neovim' | 'starship' | 'wezterm' | 'sketchybar' | 'aerospace';
-    const appConfigs: Record<AppConfigKey, { configPath: string; importLine: string; section?: string }> = {
-      alacritty: {
-        configPath: path.join(homeDir, '.config', 'alacritty', 'alacritty.toml'),
-        importLine: `import = ["${themeBasePath}/alacritty.toml"]`,
-      },
-      kitty: {
-        configPath: path.join(homeDir, '.config', 'kitty', 'kitty.conf'),
-        importLine: `include ${themeBasePath}/kitty.conf`,
-      },
-      neovim: {
-        configPath: path.join(homeDir, '.config', 'nvim', 'init.lua'),
-        importLine: `dofile(vim.fn.expand("${themeBasePath}/neovim.lua"))`,
-      },
-      starship: {
-        configPath: path.join(homeDir, '.config', 'starship.toml'),
-        importLine: `"$include" = '${themeBasePath}/starship.toml'`,
-      },
-      wezterm: {
-        configPath: path.join(homeDir, '.wezterm.lua'),
-        importLine: `-- Flowstate WezTerm integration
-local flowstate_colors = wezterm.home_dir .. "/Library/Application Support/Flowstate/wezterm-colors.lua"
-wezterm.add_to_config_reload_watch_list(flowstate_colors)
-config.colors = dofile(flowstate_colors)`,
-      },
-      sketchybar: {
-        configPath: path.join(homeDir, '.config', 'sketchybar', 'sketchybarrc'),
-        importLine: `# Flowstate SketchyBar integration
-source "$HOME/Library/Application Support/Flowstate/current/theme/sketchybar-colors.sh"`,
-      },
-      aerospace: {
-        configPath: path.join(homeDir, '.config', 'aerospace', 'aerospace.toml'),
-        importLine: `# Flowstate AeroSpace/JankyBorders integration
-# Note: JankyBorders must be installed for border colors to work
-# Install with: brew install FelixKratz/formulae/borders
-after-startup-command = [
-  'exec-and-forget source "$HOME/Library/Application Support/Flowstate/current/theme/aerospace-borders.sh"'
-]`,
-      },
-    };
+    // Use the refactored core setup logic for other apps
+    const result = await coreSetupApp(appName);
 
-    const config = appConfigs[appName as AppConfigKey];
-    if (!config) {
-      throw new Error(`Unsupported app: ${appName}`);
+    if (!result.success) {
+      throw result.error;
     }
 
-    const { configPath, importLine } = config;
-    const configDir = path.dirname(configPath);
+    const setupResult = result.data;
 
-    // Create config directory if it doesn't exist
-    if (!existsSync(configDir)) {
-      await ensureDir(configDir);
+    // Handle each action type
+    switch (setupResult.action) {
+      case 'created':
+        // Add to enabledApps
+        await addAppToEnabledApps(appName);
+
+        // Show notification
+        if (Notification.isSupported()) {
+          const notification = new Notification({
+            title: 'Config Created',
+            body: `Created ${appName} config with Flowstate integration`,
+            silent: false,
+          });
+          notification.show();
+        }
+        break;
+
+      case 'clipboard':
+        // Copy snippet to clipboard
+        if (setupResult.snippet) {
+          clipboard.writeText(setupResult.snippet);
+        }
+
+        // Add to enabledApps (user can run unsetup if they don't want auto-refresh)
+        await addAppToEnabledApps(appName);
+
+        // Show notification with instructions
+        if (Notification.isSupported()) {
+          const notification = new Notification({
+            title: 'Snippet Copied',
+            body: setupResult.instructions || `Add the snippet from your clipboard to your ${appName} config`,
+            silent: false,
+          });
+          notification.show();
+        }
+        break;
+
+      case 'already_setup':
+        // Ensure app is in enabledApps
+        await addAppToEnabledApps(appName);
+
+        if (Notification.isSupported()) {
+          const notification = new Notification({
+            title: 'Already Configured',
+            body: `${appName} already has Flowstate integration`,
+            silent: false,
+          });
+          notification.show();
+        }
+        break;
     }
 
-    // Read existing config or create new one
-    let configContent = '';
-    if (existsSync(configPath)) {
-      // Create backup
-      const backupPath = `${configPath}.bak`;
-      await copyFile(configPath, backupPath);
-      logger.info(`Created backup at: ${backupPath}`);
+    logger.info(`Setup ${appName}: ${setupResult.action}`);
+    return setupResult;
 
-      configContent = await readFile(configPath);
-
-      // Check if import already exists
-      if (configContent.includes(importLine) || configContent.includes('Flowstate/current/theme')) {
-        throw new Error('Flowstate import already exists in config file');
-      }
-    }
-
-    // Add import statement at the top of the file
-    const newContent = importLine + '\n\n' + configContent;
-    await writeFile(configPath, newContent);
-
-    logger.info(`Successfully configured ${appName} at ${configPath}`);
-
-    // Add to enabledApps in preferences so the app is tracked
-    const prefs = await handleGetPreferences();
-    if (!prefs.enabledApps) {
-      prefs.enabledApps = [];
-    }
-    if (!prefs.enabledApps.includes(appName)) {
-      prefs.enabledApps.push(appName);
-      await handleSetPreferences(null, prefs);
-      logger.info(`Added ${appName} to enabled apps`);
-    }
-
-    // Show notification
-    if (Notification.isSupported()) {
-      const notification = new Notification({
-        title: 'Setup Complete',
-        body: `${appName} has been configured to use Flowstate themes`,
-        silent: false,
-      });
-      notification.show();
-    }
   } catch (error: unknown) {
     logger.error(`Failed to setup ${appName}:`, error);
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`Failed to setup ${appName}: ${message}`);
+  }
+}
+
+/**
+ * Helper to add an app to enabledApps in preferences
+ */
+async function addAppToEnabledApps(appName: string): Promise<void> {
+  const prefs = await handleGetPreferences();
+  if (!prefs.enabledApps) {
+    prefs.enabledApps = [];
+  }
+  if (!prefs.enabledApps.includes(appName)) {
+    prefs.enabledApps.push(appName);
+    await handleSetPreferences(null, prefs);
+    logger.info(`Added ${appName} to enabled apps`);
   }
 }
 

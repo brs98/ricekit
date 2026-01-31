@@ -62,8 +62,14 @@ async function handleGetUIState(): Promise<UIState | null> {
     const stateAge = Date.now() - (uiState.timestamp || 0);
     if (stateAge > 86400000) {
       logger.info('UI state is too old, ignoring', { ageHours: Math.round(stateAge / 3600000) });
-      // Delete old state file
-      await unlink(uiStatePath);
+      // Delete old state file (ignore errors if already deleted by another call)
+      try {
+        if (existsSync(uiStatePath)) {
+          await unlink(uiStatePath);
+        }
+      } catch {
+        // File may have been deleted by a concurrent call - ignore
+      }
       return null;
     }
 

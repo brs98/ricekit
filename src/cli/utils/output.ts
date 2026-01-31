@@ -68,6 +68,24 @@ export function error(message: string, details?: string): void {
 }
 
 /**
+ * Output info message (human mode only)
+ */
+export function info(message: string): void {
+  if (!isJsonMode()) {
+    console.log(chalk.blue('ℹ'), message);
+  }
+}
+
+/**
+ * Output warning message (human mode only)
+ */
+export function warn(message: string): void {
+  if (!isJsonMode()) {
+    console.log(chalk.yellow('⚠'), message);
+  }
+}
+
+/**
  * Output a table (human mode)
  */
 export function table(

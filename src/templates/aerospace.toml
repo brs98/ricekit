@@ -1,0 +1,23 @@
+# AeroSpace configuration
+# Flowstate theme integration for JankyBorders
+
+# Run the borders script on startup to apply theme colors
+after-startup-command = [
+  'exec-and-forget source "$HOME/Library/Application Support/Flowstate/current/theme/aerospace-borders.sh"'
+]
+
+# Add your customizations below
+[gaps]
+inner.horizontal = 8
+inner.vertical = 8
+outer.left = 8
+outer.bottom = 8
+outer.top = 8
+outer.right = 8
+
+[mode.main.binding]
+alt-enter = 'exec-and-forget open -na "WezTerm"'
+alt-h = 'focus left'
+alt-j = 'focus down'
+alt-k = 'focus up'
+alt-l = 'focus right'

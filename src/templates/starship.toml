@@ -1,0 +1,6 @@
+"$include" = '~/Library/Application Support/Flowstate/current/theme/starship.toml'
+
+# Add your customizations below
+[character]
+success_symbol = "[>](bold green)"
+error_symbol = "[>](bold red)"

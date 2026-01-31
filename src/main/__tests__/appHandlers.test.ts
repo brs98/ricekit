@@ -25,6 +25,9 @@ vi.mock('electron', () => ({
   shell: {
     openPath: vi.fn(() => Promise.resolve('')),
   },
+  clipboard: {
+    writeText: vi.fn(),
+  },
 }));
 
 // Mock os.homedir()
@@ -89,21 +92,23 @@ vi.mock('../handlers/stateHandlers', () => ({
   ),
 }));
 
+// Mock the core setup module
+vi.mock('../../core/apps/setup', () => ({
+  setupApp: vi.fn(),
+}));
+
 // Import after mocks are set up
 import {
   existsSync as mockExistsSync,
-  readFile as mockReadFile,
-  writeFile as mockWriteFile,
-  ensureDir as mockEnsureDir,
-  copyFile as mockCopyFile,
 } from '../utils/asyncFs';
 import { handleGetPreferences, handleSetPreferences } from '../handlers/preferencesHandlers';
-import { shell } from 'electron';
+import { shell, clipboard } from 'electron';
 import {
   handleDetectApps,
   handleSetupApp,
   setThemeHandlers,
 } from '../handlers/appHandlers';
+import { setupApp as coreSetupApp } from '../../core/apps/setup';
 
 // Real home directory (captured before mocks)
 const realHomeDir = os.homedir();
@@ -184,131 +189,79 @@ describe('appHandlers', () => {
   });
 
   describe('handleSetupApp', () => {
-    it('should add import line to alacritty config and create backup', async () => {
-      // Create an existing alacritty config
-      const configPath = path.join(mockHomeDir, '.config', 'alacritty', 'alacritty.toml');
-      fs.writeFileSync(configPath, '# Existing alacritty config\n[window]\ndecorations = "full"\n');
-
-      // Mock existsSync to find the config
-      vi.mocked(mockExistsSync).mockImplementation((filePath) => {
-        const filePathStr = String(filePath);
-        if (filePathStr.includes('alacritty.toml')) {
-          return true;
-        }
-        if (filePathStr.includes('Flowstate/current/theme')) {
-          return false;
-        }
-        return false;
+    it('should return created action when no config exists', async () => {
+      // Mock core setupApp to return 'created' action
+      vi.mocked(coreSetupApp).mockResolvedValue({
+        success: true,
+        data: {
+          action: 'created',
+          configPath: path.join(mockHomeDir, '.config', 'alacritty', 'alacritty.toml'),
+          message: 'Created alacritty config',
+        },
       });
 
-      // Mock readFile to return existing config
-      vi.mocked(mockReadFile).mockResolvedValue('# Existing alacritty config\n[window]\ndecorations = "full"\n');
+      const result = await handleSetupApp(null, 'alacritty');
 
-      await handleSetupApp(null, 'alacritty');
-
-      // Should have created backup
-      expect(mockCopyFile).toHaveBeenCalled();
-
-      // Should have written new config with import at top
-      expect(mockWriteFile).toHaveBeenCalled();
-      const calls = vi.mocked(mockWriteFile).mock.calls;
-      const writeCall = calls[0];
-      expect(writeCall).toBeDefined();
-      if (!writeCall) return;
-      const newContent = String(writeCall[1]);
-      expect(newContent).toContain('import = ["~/Library/Application Support/Flowstate/current/theme/alacritty.toml"]');
-      expect(newContent).toContain('# Existing alacritty config');
+      expect(result.action).toBe('created');
+      expect(result.configPath).toContain('alacritty.toml');
 
       // Should have added to enabledApps
       expect(handleSetPreferences).toHaveBeenCalled();
     });
 
-    it('should add include line to kitty config', async () => {
-      const configPath = path.join(mockHomeDir, '.config', 'kitty', 'kitty.conf');
-      fs.writeFileSync(configPath, '# Existing kitty config\nfont_size 12\n');
+    it('should copy snippet to clipboard when config exists', async () => {
+      const snippet = 'import = ["~/Library/Application Support/Flowstate/current/theme/alacritty.toml"]';
 
-      vi.mocked(mockExistsSync).mockImplementation((filePath) => {
-        const filePathStr = String(filePath);
-        if (filePathStr.includes('kitty.conf')) {
-          return true;
-        }
-        return false;
+      // Mock core setupApp to return 'clipboard' action
+      vi.mocked(coreSetupApp).mockResolvedValue({
+        success: true,
+        data: {
+          action: 'clipboard',
+          configPath: path.join(mockHomeDir, '.config', 'kitty', 'kitty.conf'),
+          snippet,
+          instructions: 'Add this at the top of your kitty.conf:',
+          message: 'kitty config exists. Add the integration snippet to your config.',
+        },
       });
 
-      vi.mocked(mockReadFile).mockResolvedValue('# Existing kitty config\nfont_size 12\n');
+      const result = await handleSetupApp(null, 'kitty');
 
-      await handleSetupApp(null, 'kitty');
+      expect(result.action).toBe('clipboard');
+      expect(result.snippet).toBe(snippet);
 
-      expect(mockWriteFile).toHaveBeenCalled();
-      const calls = vi.mocked(mockWriteFile).mock.calls;
-      const writeCall = calls[0];
-      expect(writeCall).toBeDefined();
-      if (!writeCall) return;
-      const newContent = String(writeCall[1]);
-      expect(newContent).toContain('include ~/Library/Application Support/Flowstate/current/theme/kitty.conf');
+      // Should have copied to clipboard
+      expect(clipboard.writeText).toHaveBeenCalledWith(snippet);
+
+      // Should have added to enabledApps
+      expect(handleSetPreferences).toHaveBeenCalled();
     });
 
-    it('should add dofile line to neovim config', async () => {
-      const configDir = path.join(mockHomeDir, '.config', 'nvim');
-      const configPath = path.join(configDir, 'init.lua');
-      fs.writeFileSync(configPath, '-- Existing neovim config\nvim.opt.number = true\n');
-
-      vi.mocked(mockExistsSync).mockImplementation((filePath) => {
-        const filePathStr = String(filePath);
-        if (filePathStr.includes('init.lua')) {
-          return true;
-        }
-        return false;
+    it('should return already_setup when Flowstate integration exists', async () => {
+      // Mock core setupApp to return 'already_setup' action
+      vi.mocked(coreSetupApp).mockResolvedValue({
+        success: true,
+        data: {
+          action: 'already_setup',
+          configPath: path.join(mockHomeDir, '.config', 'alacritty', 'alacritty.toml'),
+          message: 'alacritty is already configured with Flowstate integration.',
+        },
       });
 
-      vi.mocked(mockReadFile).mockResolvedValue('-- Existing neovim config\nvim.opt.number = true\n');
+      const result = await handleSetupApp(null, 'alacritty');
 
-      await handleSetupApp(null, 'neovim');
+      expect(result.action).toBe('already_setup');
 
-      expect(mockWriteFile).toHaveBeenCalled();
-      const calls = vi.mocked(mockWriteFile).mock.calls;
-      const writeCall = calls[0];
-      expect(writeCall).toBeDefined();
-      if (!writeCall) return;
-      const newContent = String(writeCall[1]);
-      expect(newContent).toContain('dofile(vim.fn.expand("~/Library/Application Support/Flowstate/current/theme/neovim.lua"))');
-    });
-
-    it('should throw error if Flowstate import already exists', async () => {
-      const configPath = path.join(mockHomeDir, '.config', 'alacritty', 'alacritty.toml');
-      fs.writeFileSync(configPath, 'import = ["~/Library/Application Support/Flowstate/current/theme/alacritty.toml"]\n');
-
-      vi.mocked(mockExistsSync).mockImplementation((filePath) => {
-        const filePathStr = String(filePath);
-        if (filePathStr.includes('alacritty.toml')) {
-          return true;
-        }
-        return false;
-      });
-
-      vi.mocked(mockReadFile).mockResolvedValue(
-        'import = ["~/Library/Application Support/Flowstate/current/theme/alacritty.toml"]\n'
-      );
-
-      await expect(handleSetupApp(null, 'alacritty')).rejects.toThrow(
-        'Flowstate import already exists in config file'
-      );
-    });
-
-    it('should create config directory if it does not exist', async () => {
-      // Config file doesn't exist
-      vi.mocked(mockExistsSync).mockReturnValue(false);
-
-      await handleSetupApp(null, 'alacritty');
-
-      // Should have called ensureDir to create config directory
-      expect(mockEnsureDir).toHaveBeenCalled();
-
-      // Should have written new config
-      expect(mockWriteFile).toHaveBeenCalled();
+      // Should still ensure app is in enabledApps
+      expect(handleSetPreferences).toHaveBeenCalled();
     });
 
     it('should throw error for unsupported app', async () => {
+      // Mock core setupApp to return error
+      vi.mocked(coreSetupApp).mockResolvedValue({
+        success: false,
+        error: new Error('Unsupported app: unknown-app'),
+      });
+
       await expect(handleSetupApp(null, 'unknown-app')).rejects.toThrow(
         'Unsupported app: unknown-app'
       );
@@ -336,7 +289,9 @@ describe('appHandlers', () => {
         return false;
       });
 
-      await handleSetupApp(null, 'slack');
+      const result = await handleSetupApp(null, 'slack');
+
+      expect(result.action).toBe('special');
 
       // Should have opened the theme file
       expect(shell.openPath).toHaveBeenCalled();
@@ -353,32 +308,24 @@ describe('appHandlers', () => {
       );
     });
 
-    it('should add starship include to config', async () => {
-      const configPath = path.join(mockHomeDir, '.config', 'starship.toml');
-      fs.writeFileSync(configPath, '# Existing starship config\n[character]\nsuccess_symbol = "[>](green)"\n');
+    it('should return special action for vscode', async () => {
+      const result = await handleSetupApp(null, 'vscode');
 
-      vi.mocked(mockExistsSync).mockImplementation((filePath) => {
-        const filePathStr = String(filePath);
-        if (filePathStr.includes('starship.toml')) {
-          return true;
-        }
-        return false;
-      });
+      expect(result.action).toBe('special');
+      expect(result.message).toContain('VS Code');
 
-      vi.mocked(mockReadFile).mockResolvedValue(
-        '# Existing starship config\n[character]\nsuccess_symbol = "[>](green)"\n'
-      );
+      // Should have added to enabledApps
+      expect(handleSetPreferences).toHaveBeenCalled();
+    });
 
-      await handleSetupApp(null, 'starship');
+    it('should return special action for cursor', async () => {
+      const result = await handleSetupApp(null, 'cursor');
 
-      expect(mockWriteFile).toHaveBeenCalled();
-      const calls = vi.mocked(mockWriteFile).mock.calls;
-      const writeCall = calls[0];
-      expect(writeCall).toBeDefined();
-      if (!writeCall) return;
-      const newContent = String(writeCall[1]);
-      expect(newContent).toContain('"$include"');
-      expect(newContent).toContain('Flowstate/current/theme/starship.toml');
+      expect(result.action).toBe('special');
+      expect(result.message).toContain('Cursor');
+
+      // Should have added to enabledApps
+      expect(handleSetPreferences).toHaveBeenCalled();
     });
   });
 });

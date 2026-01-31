@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# Flowstate SketchyBar integration
+source "$HOME/Library/Application Support/Flowstate/current/theme/sketchybar-colors.sh"
+
+# Add your customizations below
+FONT="SF Pro"
+
+# Bar appearance
+sketchybar --bar height=32 \
+                 blur_radius=30 \
+                 position=top \
+                 sticky=off \
+                 padding_left=10 \
+                 padding_right=10 \
+                 color="$BAR_COLOR"
+
+# Default item styling
+sketchybar --default label.font="$FONT:Regular:14.0" \
+                     icon.font="$FONT:Regular:14.0" \
+                     label.color="$LABEL_COLOR" \
+                     icon.color="$ICON_COLOR" \
+                     padding_left=5 \
+                     padding_right=5
+
+# Apply changes
+sketchybar --update
