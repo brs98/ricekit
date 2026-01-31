@@ -213,7 +213,7 @@ export interface ElectronAPI {
   listThemes: () => Promise<Theme[]>;
   getTheme: (name: string) => Promise<Theme>;
   applyTheme: (name: string) => Promise<void>;
-  createTheme: (data: ThemeMetadata) => Promise<void>;
+  createTheme: (data: ThemeMetadata, sourceImageDataUrl?: string) => Promise<void>;
   updateTheme: (name: string, data: ThemeMetadata) => Promise<void>;
   deleteTheme: (name: string) => Promise<void>;
   duplicateTheme: (name: string) => Promise<void>;

@@ -47,6 +47,8 @@ interface ThemeEditorProps {
   presetKey?: string;
   /** Optional colors to start with (e.g., from preview customize flow) */
   initialColors?: ThemeColors;
+  /** Optional source image data URL to save as wallpaper when creating theme */
+  imageDataUrl?: string;
   onSave?: () => void;
   onSaveAndApply?: () => void;
   onBack?: () => void;
@@ -232,6 +234,7 @@ export function ThemeEditor({
   starterType,
   presetKey,
   initialColors,
+  imageDataUrl,
   onSave,
   onSaveAndApply,
   onBack,
@@ -428,7 +431,7 @@ export function ThemeEditor({
           await window.electronAPI.applyTheme(initialTheme.name);
         }
       } else {
-        await window.electronAPI.createTheme(metadata);
+        await window.electronAPI.createTheme(metadata, imageDataUrl);
         if (andApply) {
           const themeDirName = metadata.name.toLowerCase().replace(/[^a-z0-9-]/g, '-');
           await window.electronAPI.applyTheme(themeDirName);
@@ -460,7 +463,7 @@ export function ThemeEditor({
         ...metadata,
         name: newThemeName.trim(),
       };
-      await window.electronAPI.createTheme(newMetadata);
+      await window.electronAPI.createTheme(newMetadata, imageDataUrl);
       setHasChanges(false);
       setShowSaveAsDialog(false);
       setNewThemeName('');

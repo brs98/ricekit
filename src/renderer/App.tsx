@@ -123,7 +123,7 @@ function App() {
   // Handle "Use Theme" from preview - save and return to grid
   async function handlePreviewUseTheme(metadata: ThemeMetadata) {
     try {
-      await window.electronAPI.createTheme(metadata);
+      await window.electronAPI.createTheme(metadata, previewImageDataUrl);
       handleEditorBack();
       // Optionally apply the theme immediately
       const themeDirName = metadata.name.toLowerCase().replace(/[^a-z0-9-]/g, '-');
@@ -460,6 +460,7 @@ function App() {
                   starterType={editorStarterType}
                   presetKey={editorPresetKey}
                   initialColors={previewColors}
+                  imageDataUrl={previewImageDataUrl}
                   onSave={handleEditorBack}
                   onSaveAndApply={handleEditorBack}
                   onBack={handleEditorBack}

@@ -47,6 +47,19 @@ import { handleGetPreferences, handleSetPreferences } from './preferencesHandler
 import { isEditorSettings } from '../../shared/validation';
 
 /**
+ * Decode a data URL into a buffer and file extension
+ */
+function decodeDataUrl(dataUrl: string): { buffer: Buffer; extension: string } {
+  const matches = dataUrl.match(/^data:image\/(\w+);base64,(.+)$/);
+  if (!matches || !matches[1] || !matches[2]) {
+    throw new Error('Invalid image data URL');
+  }
+  const extension = matches[1] === 'jpeg' ? 'jpg' : matches[1];
+  const buffer = Buffer.from(matches[2], 'base64');
+  return { buffer, extension };
+}
+
+/**
  * Theme name mapping for VS Code and Cursor
  * Maps Flowstate internal names to VS Code/Cursor theme extension names
  */
@@ -789,7 +802,11 @@ export async function handleApplyTheme(_event: IpcMainInvokeEvent | null, name: 
 /**
  * Create a new custom theme
  */
-async function handleCreateTheme(_event: IpcMainInvokeEvent, data: ThemeMetadata): Promise<void> {
+async function handleCreateTheme(
+  _event: IpcMainInvokeEvent,
+  data: ThemeMetadata,
+  sourceImageDataUrl?: string
+): Promise<void> {
   logger.info(`Creating theme: ${data.name}`);
 
   ensureDirectories();
@@ -808,8 +825,27 @@ async function handleCreateTheme(_event: IpcMainInvokeEvent, data: ThemeMetadata
   // Import the helper function from themeInstaller
   const { generateThemeConfigFiles } = await import('../themeInstaller');
 
-  // Generate all config files
+  // Generate all config files (this also creates the wallpapers directory)
   await generateThemeConfigFiles(themeDir, data);
+
+  // Save source image as wallpaper if provided
+  logger.info(`Source image data URL provided: ${sourceImageDataUrl ? 'yes' : 'no'}`);
+  if (sourceImageDataUrl) {
+    try {
+      const wallpapersDir = path.join(themeDir, 'wallpapers');
+      logger.info(`Creating wallpapers directory: ${wallpapersDir}`);
+      await ensureDir(wallpapersDir);
+      const { buffer, extension } = decodeDataUrl(sourceImageDataUrl);
+      const filename = `source-wallpaper.${extension}`;
+      const wallpaperPath = path.join(wallpapersDir, filename);
+      logger.info(`Writing wallpaper to: ${wallpaperPath} (${buffer.length} bytes)`);
+      await fs.promises.writeFile(wallpaperPath, buffer);
+      logger.info(`Saved source image as wallpaper: ${filename}`);
+    } catch (err: unknown) {
+      logger.error('Failed to save source image as wallpaper:', getErrorMessage(err));
+      // Don't fail theme creation if wallpaper save fails
+    }
+  }
 
   logger.info(`Theme created successfully: ${data.name}`, { path: themeDir });
   logger.info(`Theme "${data.name}" created successfully at ${themeDir}`);
