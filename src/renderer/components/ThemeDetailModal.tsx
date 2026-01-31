@@ -188,7 +188,7 @@ export function ThemeDetailModal({
               {isFavorite && <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />}
             </DialogTitle>
             <DialogDescription>
-              by {theme.metadata.author} · {theme.isLight ? 'Light' : 'Dark'} theme
+              {theme.isLight ? 'Light' : 'Dark'} theme
             </DialogDescription>
           </DialogHeader>
 
@@ -218,9 +218,6 @@ export function ThemeDetailModal({
                 </button>
               </div>
             )}
-
-            {/* Description */}
-            <p className="text-sm text-muted-foreground">{theme.metadata.description}</p>
 
             {/* Terminal Preview - Larger */}
             <div className="space-y-2">

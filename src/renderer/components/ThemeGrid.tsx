@@ -153,9 +153,8 @@ export function ThemeGrid({ searchQuery = '', filterMode = 'all', sortMode = 'de
 
     return themes
       .filter((theme) => {
-        // Search filter
-        const matchesSearch = theme.metadata.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                             theme.metadata.description.toLowerCase().includes(searchQuery.toLowerCase());
+        // Search filter (name only)
+        const matchesSearch = theme.metadata.name.toLowerCase().includes(searchQuery.toLowerCase());
 
         if (!matchesSearch) return false;
 

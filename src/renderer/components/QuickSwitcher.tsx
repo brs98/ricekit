@@ -122,12 +122,10 @@ export function QuickSwitcher() {
       const query = searchQuery.toLowerCase();
       filtered = themes.filter(theme => {
         const name = theme.metadata.name.toLowerCase();
-        const description = theme.metadata.description.toLowerCase();
-        const author = theme.metadata.author.toLowerCase();
 
         // Simple fuzzy search: check if all query characters appear in order
         let queryIndex = 0;
-        const searchText = `${name} ${description} ${author}`;
+        const searchText = name;
         for (const char of searchText) {
           if (char === query[queryIndex]) {
             queryIndex++;

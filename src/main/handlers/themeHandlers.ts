@@ -1018,11 +1018,10 @@ async function handleDuplicateTheme(_event: IpcMainInvokeEvent, sourceThemeName:
       }
     }
 
-    // Update metadata in the copy
+    // Update metadata in the copy (just change the name)
     const newMetadata = {
       ...sourceMetadata,
       name: newThemeName,
-      author: `${sourceMetadata.author} (duplicated)`,
     };
     await writeJson(path.join(newThemeDir, 'theme.json'), newMetadata);
 

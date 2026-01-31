@@ -68,9 +68,9 @@ export type ColorLockState = {
 
 export interface ThemeMetadata {
   name: string;
-  author: string;
-  description: string;
-  version: string;
+  author?: string;
+  description?: string;
+  version?: string;
   colors: ThemeColors;
   colorLocks?: ColorLockState; // Optional: tracks which derived colors are manually overridden
   variants?: {

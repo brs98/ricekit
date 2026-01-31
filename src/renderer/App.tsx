@@ -4,6 +4,7 @@ import './App.css';
 import { ThemeGrid } from './components/ThemeGrid';
 import type { Theme, SortMode, FilterMode } from '../shared/types';
 import { isSortMode } from '../shared/validation';
+import { StarterPickerModal, type StarterType } from './components/StarterPickerModal';
 
 // Lazy load heavy components for better initial bundle size
 const ThemeEditor = lazy(() => import('./components/ThemeEditor').then(m => ({ default: m.ThemeEditor })));
@@ -23,7 +24,7 @@ import {
 } from '@/renderer/components/ui/dialog';
 import { Button } from '@/renderer/components/ui/button';
 import { Input } from '@/renderer/components/ui/input';
-import { Palette, Pencil, AppWindow, Image, Settings, Star, Download, Search, ArrowUpDown } from 'lucide-react';
+import { Palette, AppWindow, Image, Settings, Star, Download, Search, ArrowUpDown, Plus, ArrowLeft } from 'lucide-react';
 
 function App() {
   const [activeView, setActiveView] = useState('themes');
@@ -38,6 +39,11 @@ function App() {
   const [importUrl, setImportUrl] = useState('');
   const [importing, setImporting] = useState(false);
   const [stateRestored, setStateRestored] = useState(false);
+  // Editor mode: 'off' = showing grid, 'editing' = editing existing theme, 'creating' = creating new theme
+  const [editorMode, setEditorMode] = useState<'off' | 'editing' | 'creating'>('off');
+  const [showStarterModal, setShowStarterModal] = useState(false);
+  const [editorStarterType, setEditorStarterType] = useState<StarterType>('blank');
+  const [editorPresetKey, setEditorPresetKey] = useState<string | undefined>(undefined);
 
   // Apply the current theme's colors to the app's own UI
   useThemeSelfStyling();
@@ -90,6 +96,21 @@ function App() {
 
   function handleOnboardingComplete() {
     setShowOnboarding(false);
+  }
+
+  function handleStarterSelect(starterType: StarterType, presetKey?: string) {
+    setEditorStarterType(starterType);
+    setEditorPresetKey(presetKey);
+    setEditorTheme(undefined); // Clear any existing theme being edited
+    setEditorMode('creating');
+    setShowStarterModal(false);
+  }
+
+  function handleEditorBack() {
+    setEditorMode('off');
+    setEditorTheme(undefined);
+    setEditorStarterType('blank');
+    setEditorPresetKey(undefined);
   }
 
   // Save UI state whenever it changes (for crash recovery)
@@ -174,6 +195,13 @@ function App() {
         </Suspense>
       )}
 
+      {/* New Theme Starter Picker Modal */}
+      <StarterPickerModal
+        open={showStarterModal}
+        onOpenChange={setShowStarterModal}
+        onSelect={handleStarterSelect}
+      />
+
       {/* Import from URL modal */}
       <Dialog open={showImportUrlModal} onOpenChange={(open) => {
         if (!open) {
@@ -224,15 +252,12 @@ function App() {
         <nav className="sidebar-nav">
           <button
             className={`nav-item ${activeView === 'themes' ? 'active' : ''}`}
-            onClick={() => setActiveView('themes')}
+            onClick={() => {
+              setActiveView('themes');
+              setEditorMode('off');
+            }}
           >
             <Palette size={20} /> Themes
-          </button>
-          <button
-            className={`nav-item ${activeView === 'editor' ? 'active' : ''}`}
-            onClick={() => setActiveView('editor')}
-          >
-            <Pencil size={20} /> Editor
           </button>
           <button
             className={`nav-item ${activeView === 'apps' ? 'active' : ''}`}
@@ -259,8 +284,24 @@ function App() {
       </div>
       <div className="main-content">
         <div className="content-header">
-          <h2 className="text-2xl font-bold capitalize tracking-tight">{activeView}</h2>
-          {activeView === 'themes' && (
+          {/* Editor mode header with back button */}
+          {activeView === 'themes' && editorMode !== 'off' ? (
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleEditorBack}
+                className="p-2 rounded-lg hover:bg-accent transition-colors"
+                title="Back to themes"
+              >
+                <ArrowLeft size={20} />
+              </button>
+              <h2 className="text-2xl font-bold tracking-tight">
+                {editorMode === 'creating' ? 'New Theme' : `Edit: ${editorTheme?.metadata.name ?? 'Theme'}`}
+              </h2>
+            </div>
+          ) : (
+            <h2 className="text-2xl font-bold capitalize tracking-tight">{activeView}</h2>
+          )}
+          {activeView === 'themes' && editorMode === 'off' && (
             <div className="theme-controls">
               {/* Search input with icon */}
               <div className="search-wrapper">
@@ -329,6 +370,14 @@ function App() {
                   >
                     <Download size={14} />
                   </button>
+                  <Button
+                    onClick={() => setShowStarterModal(true)}
+                    size="sm"
+                    className="ml-2"
+                  >
+                    <Plus size={14} className="mr-1" />
+                    New Theme
+                  </Button>
                 </div>
               </div>
             </div>
@@ -336,32 +385,30 @@ function App() {
         </div>
         <div className="content-body">
           {/* View container with key for transition animation */}
-          <div className="view-container" key={activeView}>
-            {activeView === 'themes' && (
+          <div className="view-container" key={`${activeView}-${editorMode}`}>
+            {activeView === 'themes' && editorMode === 'off' && (
               <ThemeGrid
                 searchQuery={searchQuery}
                 filterMode={filterMode}
                 sortMode={sortMode}
                 onEditTheme={(theme) => {
                   setEditorTheme(theme);
-                  setActiveView('editor');
+                  setEditorMode('editing');
                 }}
               />
             )}
             {/* Lazy-loaded views wrapped in Suspense */}
             <Suspense fallback={<div className="view-loading">Loading view...</div>}>
-              {activeView === 'editor' && (
+              {activeView === 'themes' && editorMode !== 'off' && (
                 <ThemeEditor
                   initialTheme={editorTheme?.metadata}
                   sourceTheme={editorTheme}
-                  onSave={() => {
-                    setActiveView('themes');
-                    setEditorTheme(undefined);
-                  }}
-                  onCancel={() => {
-                    setActiveView('themes');
-                    setEditorTheme(undefined);
-                  }}
+                  mode={editorMode === 'creating' ? 'create' : 'edit'}
+                  starterType={editorStarterType}
+                  presetKey={editorPresetKey}
+                  onSave={handleEditorBack}
+                  onSaveAndApply={handleEditorBack}
+                  onBack={handleEditorBack}
                 />
               )}
               {activeView === 'apps' && (

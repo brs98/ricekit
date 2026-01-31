@@ -44,11 +44,17 @@ import {
   AlertDialogTitle,
 } from '@/renderer/components/ui/alert-dialog';
 
+type StarterType = 'preset' | 'image' | 'blank';
+
 interface ThemeEditorProps {
   initialTheme?: ThemeMetadata;
   sourceTheme?: Theme;  // Optional: full theme object to check if built-in
+  mode: 'edit' | 'create';
+  starterType?: StarterType;
+  presetKey?: string;
   onSave?: () => void;
-  onCancel?: () => void;
+  onSaveAndApply?: () => void;
+  onBack?: () => void;
 }
 
 const defaultColors: ThemeColors = {
@@ -221,9 +227,6 @@ const presetSchemes: Record<string, { name: string; colors: ThemeColors }> = {
 
 const defaultMetadata: ThemeMetadata = {
   name: 'New Theme',
-  author: 'Unknown',
-  description: 'A custom theme',
-  version: '1.0.0',
   colors: defaultColors,
 };
 
@@ -353,15 +356,26 @@ function DerivedColorInput({
   );
 }
 
-export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: ThemeEditorProps) {
-  const [metadata, setMetadata] = useState<ThemeMetadata>(initialTheme || defaultMetadata);
+export function ThemeEditor({ initialTheme, sourceTheme, mode, starterType, presetKey, onSave, onSaveAndApply, onBack }: ThemeEditorProps) {
+  // Initialize metadata based on mode and starter type
+  const getInitialMetadata = (): ThemeMetadata => {
+    if (initialTheme) return initialTheme;
+    if (mode === 'create' && starterType === 'preset' && presetKey && presetSchemes[presetKey]) {
+      return { name: 'New Theme', colors: { ...presetSchemes[presetKey].colors } };
+    }
+    return defaultMetadata;
+  };
+
+  const [metadata, setMetadata] = useState<ThemeMetadata>(getInitialMetadata);
   const [selectedColor, setSelectedColor] = useState<keyof ThemeColors | null>(null);
   const [saving, setSaving] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [showSaveAsDialog, setShowSaveAsDialog] = useState(false);
   const [newThemeName, setNewThemeName] = useState('');
   const [hasChanges, setHasChanges] = useState(false);
-  const [selectedPreset, setSelectedPreset] = useState<string>('');
+  const [selectedPreset, setSelectedPreset] = useState<string>(presetKey || '');
+  // Track whether we should auto-trigger image import on mount
+  const [shouldTriggerImageImport, setShouldTriggerImageImport] = useState(mode === 'create' && starterType === 'image');
   const [colorErrors, setColorErrors] = useState<{ [key in keyof ThemeColors]?: string }>({});
   const [extractingColors, setExtractingColors] = useState(false);
   // Use lazy initializer to avoid calling getDefaultLockState() on every render
@@ -420,6 +434,18 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
       }
     }
   }, [initialTheme, sourceTheme]);
+
+  // Auto-trigger image import when starterType is 'image'
+  useEffect(() => {
+    if (shouldTriggerImageImport && fileInputRef.current) {
+      // Small delay to ensure the component is fully mounted
+      const timer = setTimeout(() => {
+        fileInputRef.current?.click();
+        setShouldTriggerImageImport(false);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [shouldTriggerImageImport]);
 
   // Validate paste input as it changes
   useEffect(() => {
@@ -686,7 +712,7 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
     setHasChanges(true);
   };
 
-  const handleSave = async () => {
+  const handleSave = async (andApply = false) => {
     if (Object.keys(colorErrors).length > 0) {
       alert('Please fix all color validation errors before saving.');
       return;
@@ -701,11 +727,23 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
       setSaving(true);
       if (initialTheme && sourceTheme?.isCustom) {
         await window.electronAPI.updateTheme(initialTheme.name, metadata);
+        if (andApply) {
+          await window.electronAPI.applyTheme(initialTheme.name);
+        }
       } else {
         await window.electronAPI.createTheme(metadata);
+        if (andApply) {
+          // Get the theme name that will be used (based on the slug generation)
+          const themeDirName = metadata.name.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+          await window.electronAPI.applyTheme(themeDirName);
+        }
       }
       setHasChanges(false);
-      if (onSave) onSave();
+      if (andApply && onSaveAndApply) {
+        onSaveAndApply();
+      } else if (onSave) {
+        onSave();
+      }
     } catch (error: unknown) {
       console.error('Failed to save theme:', error);
       alert('Failed to save theme. Please try again.');
@@ -745,8 +783,8 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
       return;
     }
 
-    if (onCancel) {
-      onCancel();
+    if (onBack) {
+      onBack();
     } else {
       setMetadata(initialTheme || defaultMetadata);
       setHasChanges(false);
@@ -756,8 +794,8 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
   const confirmCancel = () => {
     setShowCancelConfirm(false);
     setHasChanges(false);
-    if (onCancel) {
-      onCancel();
+    if (onBack) {
+      onBack();
     } else {
       setMetadata(initialTheme || defaultMetadata);
     }
@@ -944,53 +982,17 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
             </div>
           </details>
 
-          {/* Theme Information Section - Collapsible */}
-          <details open className="editor-section">
-            <summary className="editor-section-header">
-              <ChevronRight size={14} className="editor-section-chevron" />
-              <span>Theme Info</span>
-            </summary>
-            <div className="editor-section-content space-y-3">
-              <div className="space-y-1">
-                <Label htmlFor="theme-name" className="text-xs">Theme Name</Label>
-                <Input
-                  id="theme-name"
-                  value={metadata.name}
-                  onChange={(e) => updateMetadataField('name', e.target.value)}
-                  placeholder="My Custom Theme"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="theme-author" className="text-xs">Author</Label>
-                <Input
-                  id="theme-author"
-                  value={metadata.author}
-                  onChange={(e) => updateMetadataField('author', e.target.value)}
-                  placeholder="Your Name"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="theme-description" className="text-xs">Description</Label>
-                <textarea
-                  id="theme-description"
-                  value={metadata.description}
-                  onChange={(e) => updateMetadataField('description', e.target.value)}
-                  className="flex min-h-[60px] w-full rounded-[8px] border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  placeholder="A brief description..."
-                  rows={2}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="theme-version" className="text-xs">Version</Label>
-                <Input
-                  id="theme-version"
-                  value={metadata.version}
-                  onChange={(e) => updateMetadataField('version', e.target.value)}
-                  placeholder="1.0.0"
-                />
-              </div>
-            </div>
-          </details>
+          {/* Theme Name Section */}
+          <div className="space-y-2">
+            <Label htmlFor="theme-name" className="text-sm font-medium">Theme Name</Label>
+            <Input
+              id="theme-name"
+              value={metadata.name}
+              onChange={(e) => updateMetadataField('name', e.target.value)}
+              placeholder="My Custom Theme"
+              className="text-base"
+            />
+          </div>
 
           {/* Base Colors Section - Collapsible */}
           <details open className="editor-section">
@@ -1046,11 +1048,14 @@ export function ThemeEditor({ initialTheme, sourceTheme, onSave, onCancel }: The
 
           {/* Actions */}
           <div className="flex gap-2 pt-4 border-t border-border">
-            <Button variant="outline" onClick={handleCancel} className="flex-1">
+            <Button variant="outline" onClick={handleCancel}>
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={saving} className="flex-1">
-              {saving ? 'Saving...' : 'Save Theme'}
+            <Button variant="secondary" onClick={() => handleSave(false)} disabled={saving}>
+              {saving ? 'Saving...' : 'Save'}
+            </Button>
+            <Button onClick={() => handleSave(true)} disabled={saving}>
+              {saving ? 'Saving...' : 'Save & Apply'}
             </Button>
           </div>
         </div>
