@@ -54,12 +54,19 @@ export function ColorEditorPanel({
   onClose,
 }: ColorEditorPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const isLocalChangeRef = useRef(false);
   const [hsl, setHsl] = useState<HSL>({ h: 0, s: 0, l: 50 });
   const [hexInput, setHexInput] = useState(colorValue);
   const [showHexInput, setShowHexInput] = useState(false);
 
-  // Convert hex to HSL when colorValue changes
+  // Convert hex to HSL when colorValue changes (from external sources)
   useEffect(() => {
+    // Skip if this change originated from our own sliders/input
+    if (isLocalChangeRef.current) {
+      isLocalChangeRef.current = false;
+      return;
+    }
+
     if (isValidHexColor(colorValue)) {
       const rgb = hexToRgb(colorValue);
       if (rgb) {
@@ -75,6 +82,7 @@ export function ColorEditorPanel({
     setHsl(newHsl);
     const newHex = hslToHex(newHsl);
     setHexInput(newHex);
+    isLocalChangeRef.current = true; // Mark as local change to prevent useEffect sync
     onColorChange(colorKey, newHex);
   }, [hsl, colorKey, onColorChange]);
 
@@ -86,6 +94,7 @@ export function ColorEditorPanel({
       if (rgb) {
         setHsl(rgbToHsl(rgb));
       }
+      isLocalChangeRef.current = true; // Mark as local change to prevent useEffect sync
       onColorChange(colorKey, value);
     }
   }, [colorKey, onColorChange]);
