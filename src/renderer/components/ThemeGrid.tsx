@@ -27,6 +27,17 @@ export function ThemeGrid({ searchQuery = '', filterMode = 'all', sortMode = 'de
     loadData();
   }, []);
 
+  // Listen for theme changes from outside this component
+  // (e.g., ThemeEditor "Save & Apply", scheduler, tray menu, quick switcher)
+  useEffect(() => {
+    window.electronAPI.onThemeChanged((themeName) => {
+      console.log('ThemeGrid received theme:changed IPC event:', themeName);
+      setCurrentTheme(themeName);
+    });
+    // Note: Electron IPC listeners don't return unsubscribe functions in this setup,
+    // but this is consistent with how useThemeSelfStyling handles it
+  }, []);
+
   const loadData = async () => {
     try {
       setLoading(true);
