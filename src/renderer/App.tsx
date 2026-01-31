@@ -135,10 +135,13 @@ function App() {
   }
 
   // Handle "Customize" from preview - go to editor with the colors
-  function handlePreviewCustomize(colors: ThemeColors, imageDataUrl?: string) {
+  function handlePreviewCustomize(colors: ThemeColors, imageDataUrl?: string, themeName?: string) {
     // Set up state to pass colors to editor
     setPreviewColors(colors);
     setPreviewImageDataUrl(imageDataUrl);
+    if (themeName) {
+      setPreviewSuggestedName(themeName);
+    }
     setEditorMode('creating');
   }
 
@@ -460,6 +463,7 @@ function App() {
                   starterType={editorStarterType}
                   presetKey={editorPresetKey}
                   initialColors={previewColors}
+                  initialName={previewSuggestedName}
                   imageDataUrl={previewImageDataUrl}
                   onSave={handleEditorBack}
                   onSaveAndApply={handleEditorBack}

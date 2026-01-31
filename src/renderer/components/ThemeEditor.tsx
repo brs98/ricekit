@@ -47,6 +47,8 @@ interface ThemeEditorProps {
   presetKey?: string;
   /** Optional colors to start with (e.g., from preview customize flow) */
   initialColors?: ThemeColors;
+  /** Optional name to start with (e.g., from preview customize flow) */
+  initialName?: string;
   /** Optional source image data URL to save as wallpaper when creating theme */
   imageDataUrl?: string;
   onSave?: () => void;
@@ -234,6 +236,7 @@ export function ThemeEditor({
   starterType,
   presetKey,
   initialColors,
+  initialName,
   imageDataUrl,
   onSave,
   onSaveAndApply,
@@ -242,7 +245,7 @@ export function ThemeEditor({
   // Initialize metadata based on mode, starter type, and initial colors
   const getInitialMetadata = (): ThemeMetadata => {
     if (initialTheme) return initialTheme;
-    if (initialColors) return { name: 'New Theme', colors: initialColors };
+    if (initialColors) return { name: initialName || 'New Theme', colors: initialColors };
     if (mode === 'create' && starterType === 'preset' && presetKey && presetSchemes[presetKey]) {
       return { name: 'New Theme', colors: { ...presetSchemes[presetKey].colors } };
     }

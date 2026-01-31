@@ -19,7 +19,7 @@ interface ThemePreviewProps {
   /** Called when user clicks "Use Theme" with the final theme name */
   onUseTheme: (metadata: ThemeMetadata) => void;
   /** Called when user clicks "Customize" to enter edit mode */
-  onCustomize: (colors: ThemeColors, imageDataUrl?: string) => void;
+  onCustomize: (colors: ThemeColors, imageDataUrl?: string, themeName?: string) => void;
   /** Called when user regenerates theme with new background anchor */
   onRegenerateTheme?: (colors: ThemeColors) => void;
   /** Called when user clicks back/cancel */
@@ -61,7 +61,7 @@ export function ThemePreview({
   };
 
   const handleCustomize = () => {
-    onCustomize(colors, imageDataUrl);
+    onCustomize(colors, imageDataUrl, themeName);
   };
 
   const handlePickBackground = () => {
