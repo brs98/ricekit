@@ -4,7 +4,7 @@
  */
 
 import { ThemeColors, DerivedColorKey, ColorLockState, typedEntries } from './types';
-import { adjustLightness, blendColors, hexToOklch } from './colorUtils';
+import { adjustLightness, blendColors, hexToOklch, oklchToHex } from './colorUtils';
 
 // Re-export types for convenience
 export type { DerivedColorKey, ColorLockState };
@@ -115,6 +115,37 @@ export function isLightTheme(background: string, foreground: string): boolean {
   const fgLch = hexToOklch(foreground);
   if (!bgLch || !fgLch) return false;
   return bgLch.l > fgLch.l;
+}
+
+/**
+ * Enforce background lightness constraints for theme modes.
+ * Ensures dark themes have sufficiently dark backgrounds and light themes have sufficiently light backgrounds.
+ * Preserves hue and chroma while adjusting lightness to meet thresholds.
+ *
+ * Thresholds are based on popular terminal themes:
+ * - Dark mode max 0.25: Dracula ~0.15, Tokyo Night ~0.12
+ * - Light mode min 0.92: Solarized Light ~0.95
+ */
+export function enforceBackgroundLightness(hex: string, isLight: boolean): string {
+  const DARK_MODE_MAX_LIGHTNESS = 0.20;
+  const LIGHT_MODE_MIN_LIGHTNESS = 0.92;
+
+  const lch = hexToOklch(hex);
+  if (!lch) return hex;
+
+  if (isLight) {
+    // Light mode: ensure background is light enough
+    if (lch.l < LIGHT_MODE_MIN_LIGHTNESS) {
+      return oklchToHex({ ...lch, l: LIGHT_MODE_MIN_LIGHTNESS }) ?? hex;
+    }
+  } else {
+    // Dark mode: ensure background is dark enough
+    if (lch.l > DARK_MODE_MAX_LIGHTNESS) {
+      return oklchToHex({ ...lch, l: DARK_MODE_MAX_LIGHTNESS }) ?? hex;
+    }
+  }
+
+  return hex;
 }
 
 /**

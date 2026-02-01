@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { Palette, Image, FileCode, ChevronRight, Loader2 } from 'lucide-react';
 import type { ThemeColors } from '../../shared/types';
-import { deriveAllColors, getDefaultLockState } from '../../shared/colorDerivation';
+import { deriveAllColors, getDefaultLockState, enforceBackgroundLightness } from '../../shared/colorDerivation';
 import {
   Dialog,
   DialogContent,
@@ -193,6 +193,13 @@ export function StarterPickerModal({ open, onOpenChange, onSelect }: StarterPick
         baseColors.yellow = swatches[2]?.hex ?? swatches[0]?.hex ?? '#f1fa8c';
         baseColors.magenta = swatches[3]?.hex ?? swatches[0]?.hex ?? '#ff79c6';
         baseColors.cyan = swatches[4]?.hex ?? swatches[1]?.hex ?? '#8be9fd';
+      }
+
+      // Enforce background lightness constraints
+      // node-vibrant extracts colors relative to image content, not absolute thresholds
+      // This ensures dark themes are truly dark and light themes are truly light
+      if (baseColors.background) {
+        baseColors.background = enforceBackgroundLightness(baseColors.background, isLight);
       }
 
       // Derive all colors (bright variants, selection, border, etc.)
