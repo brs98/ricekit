@@ -8,6 +8,7 @@ import {
   isDerivedColor,
 } from '../../shared/colorDerivation';
 import { validateColorJson, type ValidationResult } from '../../shared/themeColorValidator';
+import { showErrorAlert } from '../utils/errorDisplay';
 import { Check, AlertTriangle, X, ChevronRight } from 'lucide-react';
 import { Button } from '@/renderer/components/ui/button';
 import { Input } from '@/renderer/components/ui/input';
@@ -448,7 +449,7 @@ export function ThemeEditor({
       }
     } catch (error: unknown) {
       console.error('Failed to save theme:', error);
-      alert('Failed to save theme. Please try again.');
+      showErrorAlert(error);
     } finally {
       setSaving(false);
     }
@@ -473,7 +474,7 @@ export function ThemeEditor({
       if (onSave) onSave();
     } catch (error: unknown) {
       console.error('Failed to save theme:', error);
-      alert('Failed to save theme. Please try again.');
+      showErrorAlert(error);
     } finally {
       setSaving(false);
     }

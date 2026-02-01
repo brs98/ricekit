@@ -821,7 +821,7 @@ async function handleCreateTheme(
   // Check if theme already exists
   if (existsSync(themeDir)) {
     logger.warn(`Attempt to create duplicate theme: ${data.name}`);
-    throw new Error(`Theme "${data.name}" already exists`);
+    throw createError('THEME_EXISTS', `A theme named "${data.name}" already exists. Choose a different name.`);
   }
 
   // Import the helper function from themeInstaller
