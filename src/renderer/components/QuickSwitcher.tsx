@@ -290,7 +290,7 @@ export function QuickSwitcher() {
           <div className="flex items-center justify-center gap-4 px-4 py-2 border-t border-border text-xs text-muted-foreground">
             <span>
               <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px] font-mono">↑↓</kbd>
-              <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px] font-mono ml-1">jk</kbd>
+              <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px] font-mono ml-1">^j ^k</kbd>
               {' '}Navigate
             </span>
             <span>
