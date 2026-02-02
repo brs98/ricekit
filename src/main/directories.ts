@@ -106,6 +106,7 @@ export function getDefaultPreferences(): import('../shared/types').Preferences {
     recentThemes: [],
     keyboardShortcuts: {
       quickSwitcher: 'Cmd+Shift+T',
+      cycleWallpaper: 'Cmd+Shift+W',
     },
     startAtLogin: false,
     showInMenuBar: true,

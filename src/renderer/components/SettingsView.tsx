@@ -543,9 +543,24 @@ export function SettingsView() {
             <ShortcutRecorder
               value={preferences.keyboardShortcuts.quickSwitcher}
               onChange={(shortcut) => updatePreference('keyboardShortcuts', {
+                ...preferences.keyboardShortcuts,
                 quickSwitcher: shortcut
               })}
               placeholder="⌘⇧T"
+            />
+          </SettingItem>
+
+          <SettingItem
+            label="Cycle Wallpaper"
+            description="Global shortcut to cycle to the next wallpaper"
+          >
+            <ShortcutRecorder
+              value={preferences.keyboardShortcuts.cycleWallpaper}
+              onChange={(shortcut) => updatePreference('keyboardShortcuts', {
+                ...preferences.keyboardShortcuts,
+                cycleWallpaper: shortcut
+              })}
+              placeholder="⌘⇧W"
             />
           </SettingItem>
         </section>

@@ -76,14 +76,25 @@ export async function handleSetPreferences(_event: IpcMainInvokeEvent | null, pr
     }
   }
 
-  // Check if keyboard shortcut changed
+  // Check if quick switcher keyboard shortcut changed
   if (oldPrefs.keyboardShortcuts.quickSwitcher !== prefs.keyboardShortcuts.quickSwitcher) {
     try {
       const { updateQuickSwitcherShortcut } = await import('../main');
       updateQuickSwitcherShortcut(prefs.keyboardShortcuts.quickSwitcher);
-      logger.info(`Keyboard shortcut updated to: ${prefs.keyboardShortcuts.quickSwitcher}`);
+      logger.info(`Quick switcher shortcut updated to: ${prefs.keyboardShortcuts.quickSwitcher}`);
     } catch (err: unknown) {
-      logger.error('Failed to update keyboard shortcut:', getErrorMessage(err));
+      logger.error('Failed to update quick switcher shortcut:', getErrorMessage(err));
+    }
+  }
+
+  // Check if cycle wallpaper keyboard shortcut changed
+  if (oldPrefs.keyboardShortcuts.cycleWallpaper !== prefs.keyboardShortcuts.cycleWallpaper) {
+    try {
+      const { updateCycleWallpaperShortcut } = await import('../main');
+      updateCycleWallpaperShortcut(prefs.keyboardShortcuts.cycleWallpaper);
+      logger.info(`Cycle wallpaper shortcut updated to: ${prefs.keyboardShortcuts.cycleWallpaper}`);
+    } catch (err: unknown) {
+      logger.error('Failed to update cycle wallpaper shortcut:', getErrorMessage(err));
     }
   }
 

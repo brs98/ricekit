@@ -491,6 +491,65 @@ async function handleRemoveWallpaper(_event: IpcMainInvokeEvent, wallpaperPath: 
 }
 
 /**
+ * Cycle to the next wallpaper in the current theme's wallpaper collection
+ * Returns the new wallpaper path, or null if cycling wasn't possible
+ */
+export async function handleCycleWallpaper(): Promise<{ newWallpaper: string } | null> {
+  logger.info('Cycling to next wallpaper');
+
+  try {
+    // Read current state to get theme and wallpaper
+    const statePath = getStatePath();
+    const state: State = await readJson<State>(statePath);
+    const currentTheme = state.currentTheme;
+    const currentWallpaper = state.currentWallpaper;
+
+    if (!currentTheme) {
+      logger.warn('No current theme set, cannot cycle wallpaper');
+      return null;
+    }
+
+    // List wallpapers for current theme
+    const wallpapers = await handleListWallpapers(null, currentTheme);
+
+    if (wallpapers.length === 0) {
+      logger.warn(`No wallpapers found for theme: ${currentTheme}`);
+      return null;
+    }
+
+    if (wallpapers.length === 1) {
+      logger.info('Only one wallpaper available, nothing to cycle');
+      return null;
+    }
+
+    // Find current wallpaper index
+    let currentIndex = -1;
+    if (currentWallpaper) {
+      currentIndex = wallpapers.indexOf(currentWallpaper);
+    }
+
+    // Calculate next index (wrapping to 0 at end)
+    const nextIndex = (currentIndex + 1) % wallpapers.length;
+    const nextWallpaper = wallpapers[nextIndex];
+
+    if (!nextWallpaper) {
+      logger.error('Failed to determine next wallpaper');
+      return null;
+    }
+
+    logger.info(`Cycling wallpaper: ${currentIndex} -> ${nextIndex} (${nextWallpaper})`);
+
+    // Apply the next wallpaper (this will handle notifications, state update, etc.)
+    await handleApplyWallpaper(null, nextWallpaper);
+
+    return { newWallpaper: nextWallpaper };
+  } catch (error: unknown) {
+    logger.error('Error cycling wallpaper:', getErrorMessage(error));
+    return null;
+  }
+}
+
+/**
  * Register wallpaper IPC handlers
  */
 export function registerWallpaperHandlers(): void {

@@ -186,12 +186,19 @@ function convertShortcutToAccelerator(shortcut: string): string {
   return shortcut.replace(/Cmd/g, 'CommandOrControl');
 }
 
+// Store registered shortcuts so we can selectively unregister them
+let registeredQuickSwitcherAccelerator: string | null = null;
+let registeredCycleWallpaperAccelerator: string | null = null;
+
 /**
  * Export function to update the quick switcher keyboard shortcut
  */
 export function updateQuickSwitcherShortcut(shortcut: string) {
-  // Unregister all shortcuts first
-  globalShortcut.unregisterAll();
+  // Unregister old quick switcher shortcut if exists
+  if (registeredQuickSwitcherAccelerator) {
+    globalShortcut.unregister(registeredQuickSwitcherAccelerator);
+    registeredQuickSwitcherAccelerator = null;
+  }
 
   // Convert the shortcut to Electron format
   const accelerator = convertShortcutToAccelerator(shortcut);
@@ -203,13 +210,49 @@ export function updateQuickSwitcherShortcut(shortcut: string) {
   });
 
   if (!ret) {
-    logger.error('Failed to register new shortcut:', shortcut);
+    logger.error('Failed to register quick switcher shortcut:', shortcut);
   } else {
+    registeredQuickSwitcherAccelerator = accelerator;
     logger.info('Quick switcher shortcut updated to:', shortcut);
   }
 
   // Verify shortcut is registered
   logger.info('Shortcut registered:', globalShortcut.isRegistered(accelerator));
+}
+
+/**
+ * Export function to update the cycle wallpaper keyboard shortcut
+ */
+export function updateCycleWallpaperShortcut(shortcut: string) {
+  // Unregister old cycle wallpaper shortcut if exists
+  if (registeredCycleWallpaperAccelerator) {
+    globalShortcut.unregister(registeredCycleWallpaperAccelerator);
+    registeredCycleWallpaperAccelerator = null;
+  }
+
+  // Convert the shortcut to Electron format
+  const accelerator = convertShortcutToAccelerator(shortcut);
+
+  // Register new shortcut
+  const ret = globalShortcut.register(accelerator, async () => {
+    logger.info('Cycle wallpaper shortcut triggered:', shortcut);
+    try {
+      const { handleCycleWallpaper } = await import('./handlers/wallpaperHandlers');
+      await handleCycleWallpaper();
+    } catch (err: unknown) {
+      logger.error('Failed to cycle wallpaper:', getErrorMessage(err));
+    }
+  });
+
+  if (!ret) {
+    logger.error('Failed to register cycle wallpaper shortcut:', shortcut);
+  } else {
+    registeredCycleWallpaperAccelerator = accelerator;
+    logger.info('Cycle wallpaper shortcut updated to:', shortcut);
+  }
+
+  // Verify shortcut is registered
+  logger.info('Cycle wallpaper shortcut registered:', globalShortcut.isRegistered(accelerator));
 }
 
 function createWindow() {
@@ -471,28 +514,20 @@ if (!gotTheLock) {
   // Start unified scheduler (checks and applies themes/wallpapers based on time schedules)
   startScheduler();
 
-  // Register global keyboard shortcut for quick switcher from preferences
+  // Register global keyboard shortcuts from preferences
   try {
     const prefsPath = getPreferencesPath();
     const prefs = readJsonSync<Preferences>(prefsPath, isPreferences);
-    const shortcut = prefs.keyboardShortcuts?.quickSwitcher || 'Cmd+Shift+T';
-    const accelerator = shortcut.replace(/Cmd/g, 'CommandOrControl');
 
-    const ret = globalShortcut.register(accelerator, () => {
-      logger.info('Quick switcher shortcut triggered');
-      toggleQuickSwitcher();
-    });
+    // Register quick switcher shortcut
+    const quickSwitcherShortcut = prefs.keyboardShortcuts?.quickSwitcher || 'Cmd+Shift+T';
+    updateQuickSwitcherShortcut(quickSwitcherShortcut);
 
-    if (!ret) {
-      logger.error('Global shortcut registration failed');
-    } else {
-      logger.info('Quick switcher shortcut registered:', shortcut);
-    }
-
-    // Verify shortcut is registered
-    logger.info('Shortcut registered:', globalShortcut.isRegistered(accelerator));
+    // Register cycle wallpaper shortcut
+    const cycleWallpaperShortcut = prefs.keyboardShortcuts?.cycleWallpaper || 'Cmd+Shift+W';
+    updateCycleWallpaperShortcut(cycleWallpaperShortcut);
   } catch (err: unknown) {
-    logger.error('Failed to register keyboard shortcut:', getErrorMessage(err));
+    logger.error('Failed to register keyboard shortcuts:', getErrorMessage(err));
   }
 
   app.on('activate', () => {

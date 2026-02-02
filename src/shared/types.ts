@@ -161,6 +161,7 @@ export interface Preferences {
   recentThemes: string[];
   keyboardShortcuts: {
     quickSwitcher: string;
+    cycleWallpaper: string;
   };
   startAtLogin: boolean;
   showInMenuBar: boolean;
