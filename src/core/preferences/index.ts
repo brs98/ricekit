@@ -22,7 +22,6 @@ export function getDefaultPreferences(): Preferences {
     showInMenuBar: true,
     showNotifications: false,
     notifications: {
-      onThemeChange: false,
       onScheduledSwitch: false,
     },
     onboardingCompleted: false,

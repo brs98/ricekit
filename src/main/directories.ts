@@ -112,7 +112,6 @@ export function getDefaultPreferences(): import('../shared/types').Preferences {
     showInMenuBar: true,
     showNotifications: false,
     notifications: {
-      onThemeChange: false,
       onScheduledSwitch: false,
     },
     onboardingCompleted: false,

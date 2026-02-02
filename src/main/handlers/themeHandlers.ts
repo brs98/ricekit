@@ -2,7 +2,7 @@
  * Theme IPC Handlers
  * Handles theme listing, applying, creating, updating, deleting, importing, and exporting
  */
-import { ipcMain, Notification, dialog, BrowserWindow, IpcMainInvokeEvent } from 'electron';
+import { ipcMain, dialog, BrowserWindow, IpcMainInvokeEvent } from 'electron';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
@@ -685,17 +685,6 @@ export async function handleApplyTheme(_event: IpcMainInvokeEvent | null, name: 
     logger.info(`Updated recent themes: ${prefs.recentThemes.slice(0, 5).join(', ')}`);
     logger.info(`Theme ${name} applied successfully`);
 
-    // Show notification if enabled
-    const shouldShowNotification = prefs.notifications?.onThemeChange ?? prefs.showNotifications ?? true;
-    if (Notification.isSupported() && shouldShowNotification) {
-      const notification = new Notification({
-        title: 'Theme Applied',
-        body: `${theme.metadata.name} is now active`,
-        silent: false,
-      });
-      notification.show();
-    }
-
     // Update tray menu with new recent themes and notify renderer of theme change
     try {
       const { refreshTrayMenu, updateWindowTitle, notifyRendererThemeChanged } = await import('../main');
@@ -858,16 +847,6 @@ async function handleCreateTheme(
 
   logger.info(`Theme created successfully: ${data.name}`, { path: themeDir });
   logger.info(`Theme "${data.name}" created successfully at ${themeDir}`);
-
-  // Show notification
-  if (Notification.isSupported()) {
-    const notification = new Notification({
-      title: 'Theme Created',
-      body: `${data.name} has been created successfully`,
-      silent: false,
-    });
-    notification.show();
-  }
 }
 
 /**
@@ -942,16 +921,6 @@ async function handleUpdateTheme(_event: IpcMainInvokeEvent, name: string, data:
 
     logger.info(`Theme "${name}" updated successfully at ${themeDir}`);
 
-    // Show notification
-    if (Notification.isSupported()) {
-      const notification = new Notification({
-        title: 'Theme Updated',
-        body: `${updatedMetadata.name} has been updated successfully`,
-        silent: false,
-      });
-      notification.show();
-    }
-
     // If this is the currently active theme, refresh all apps to apply the changes
     const statePath = getStatePath();
     const state = await readJson<State>(statePath);
@@ -994,16 +963,6 @@ async function handleDeleteTheme(_event: IpcMainInvokeEvent, name: string): Prom
     // Delete the theme directory recursively
     await rmdir(themeDir);
     logger.info(`Successfully deleted theme: ${name}`);
-
-    // Show notification
-    if (Notification.isSupported()) {
-      const notification = new Notification({
-        title: 'Theme Deleted',
-        body: `${name} has been removed`,
-        silent: false,
-      });
-      notification.show();
-    }
   } catch (error: unknown) {
     logger.error('Error deleting theme:', getErrorMessage(error));
     throw error;
@@ -1071,16 +1030,6 @@ async function handleDuplicateTheme(_event: IpcMainInvokeEvent, sourceThemeName:
     await writeJson(path.join(newThemeDir, 'theme.json'), newMetadata);
 
     logger.info(`Successfully duplicated theme to: ${newThemeName}`);
-
-    // Show notification
-    if (Notification.isSupported()) {
-      const notification = new Notification({
-        title: 'Theme Duplicated',
-        body: `Created ${newThemeName}`,
-        silent: false,
-      });
-      notification.show();
-    }
   } catch (error: unknown) {
     logger.error('Error duplicating theme:', getErrorMessage(error));
     throw error;
@@ -1278,16 +1227,6 @@ async function handleImportTheme(_event: IpcMainInvokeEvent, importPath?: string
 
       // Clean up temp directory
       await rmdir(tmpDir);
-
-      // Show success notification
-      if (Notification.isSupported()) {
-        const notification = new Notification({
-          title: 'Theme Imported',
-          body: `${themeName} has been imported successfully`,
-          silent: false,
-        });
-        notification.show();
-      }
 
       logger.info(`Successfully imported theme: ${themeName}`);
     } catch (extractError: unknown) {

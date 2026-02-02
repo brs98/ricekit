@@ -32,7 +32,7 @@ export function createConfigCommand(): Command {
           console.log(`  Recent Themes:     ${prefs.recentThemes.slice(0, 5).join(', ') || 'None'}`);
           console.log(`  Start at Login:    ${prefs.startAtLogin ? 'Yes' : 'No'}`);
           console.log(`  Show in Menu Bar:  ${prefs.showInMenuBar ? 'Yes' : 'No'}`);
-          console.log(`  Notifications:     ${prefs.notifications?.onThemeChange ? 'On' : 'Off'}`);
+          console.log(`  Schedule Notify:   ${prefs.notifications?.onScheduledSwitch ? 'On' : 'Off'}`);
           console.log(`  Schedule Enabled:  ${prefs.schedule?.enabled ? 'Yes' : 'No'}`);
           if (prefs.hookScript) {
             console.log(`  Hook Script:       ${prefs.hookScript}`);

@@ -2,7 +2,7 @@
  * Application IPC Handlers
  * Handles application detection, setup, and refresh
  */
-import { ipcMain, Notification, shell, clipboard, IpcMainInvokeEvent } from 'electron';
+import { ipcMain, shell, clipboard, IpcMainInvokeEvent } from 'electron';
 import path from 'path';
 import os from 'os';
 import fs from 'fs';
@@ -332,16 +332,6 @@ export async function handleSetupApp(_event: IpcMainInvokeEvent | null, appName:
       );
       await setupEditorApp('cursor', 'Cursor', cursorSettingsPath);
 
-      // Show notification
-      if (Notification.isSupported()) {
-        const notification = new Notification({
-          title: 'Setup Complete',
-          body: 'Cursor has been configured to use Flowstate themes. Themes will be applied automatically when you switch themes.',
-          silent: false,
-        });
-        notification.show();
-      }
-
       return {
         action: 'special',
         message: 'Cursor has been configured. Themes will be applied automatically when you switch themes.',
@@ -351,16 +341,6 @@ export async function handleSetupApp(_event: IpcMainInvokeEvent | null, appName:
     if (appName === 'vscode') {
       const vscodeSettingsPath = path.join(homeDir, 'Library', 'Application Support', 'Code', 'User', 'settings.json');
       await setupEditorApp('vscode', 'Visual Studio Code', vscodeSettingsPath);
-
-      // Show notification
-      if (Notification.isSupported()) {
-        const notification = new Notification({
-          title: 'Setup Complete',
-          body: 'VS Code has been configured to use Flowstate themes. Themes will be applied automatically when you switch themes.',
-          silent: false,
-        });
-        notification.show();
-      }
 
       return {
         action: 'special',
@@ -384,16 +364,6 @@ export async function handleSetupApp(_event: IpcMainInvokeEvent | null, appName:
       if (existsSync(slackThemePath)) {
         // Open the theme file in the default text editor
         await shell.openPath(slackThemePath);
-
-        // Show notification with instructions
-        if (Notification.isSupported()) {
-          const notification = new Notification({
-            title: 'Slack Theme Setup',
-            body: 'Theme file opened. Copy the theme string and paste it in Slack Preferences > Themes > Custom theme',
-            silent: false,
-          });
-          notification.show();
-        }
       } else {
         throw new Error('Slack theme file not found. Please apply a theme first.');
       }
@@ -428,16 +398,6 @@ export async function handleSetupApp(_event: IpcMainInvokeEvent | null, appName:
       case 'created':
         // Add to enabledApps
         await addAppToEnabledApps(appName);
-
-        // Show notification
-        if (Notification.isSupported()) {
-          const notification = new Notification({
-            title: 'Config Created',
-            body: `Created ${appName} config with Flowstate integration`,
-            silent: false,
-          });
-          notification.show();
-        }
         break;
 
       case 'clipboard':
@@ -448,30 +408,11 @@ export async function handleSetupApp(_event: IpcMainInvokeEvent | null, appName:
 
         // Add to enabledApps (user can run unsetup if they don't want auto-refresh)
         await addAppToEnabledApps(appName);
-
-        // Show notification with instructions
-        if (Notification.isSupported()) {
-          const notification = new Notification({
-            title: 'Snippet Copied',
-            body: setupResult.instructions || `Add the snippet from your clipboard to your ${appName} config`,
-            silent: false,
-          });
-          notification.show();
-        }
         break;
 
       case 'already_setup':
         // Ensure app is in enabledApps
         await addAppToEnabledApps(appName);
-
-        if (Notification.isSupported()) {
-          const notification = new Notification({
-            title: 'Already Configured',
-            body: `${appName} already has Flowstate integration`,
-            silent: false,
-          });
-          notification.show();
-        }
         break;
     }
 

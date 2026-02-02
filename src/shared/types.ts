@@ -167,7 +167,6 @@ export interface Preferences {
   showInMenuBar: boolean;
   showNotifications: boolean; // Legacy field for backward compatibility
   notifications: {
-    onThemeChange: boolean;
     onScheduledSwitch: boolean;
   };
   hookScript?: string; // Optional path to user-defined hook script

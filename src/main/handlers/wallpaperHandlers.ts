@@ -2,7 +2,7 @@
  * Wallpaper IPC Handlers
  * Handles wallpaper listing, applying, and management
  */
-import { ipcMain, Notification, dialog, IpcMainInvokeEvent } from 'electron';
+import { ipcMain, dialog, IpcMainInvokeEvent } from 'electron';
 import path from 'path';
 import { promisify } from 'util';
 import { exec } from 'child_process';
@@ -223,21 +223,6 @@ export async function handleApplyWallpaper(
       }
     }
 
-    // Show notification
-    if (Notification.isSupported()) {
-      const body =
-        displayIndex !== undefined && displayIndex !== null
-          ? `Wallpaper updated for Display ${displayIndex}`
-          : `Wallpaper updated for all displays`;
-
-      const notification = new Notification({
-        title: 'Wallpaper Applied',
-        body,
-        silent: false,
-      });
-      notification.show();
-    }
-
     logger.info(`Wallpaper applied successfully: ${wallpaperPath}`);
   } catch (error: unknown) {
     logger.error(`Error applying wallpaper:`, getErrorMessage(error));
@@ -414,16 +399,6 @@ async function handleAddWallpapers(_event: IpcMainInvokeEvent, themeName: string
       }
     }
 
-    // Show notification
-    if (Notification.isSupported() && added.length > 0) {
-      const notification = new Notification({
-        title: 'Wallpapers Added',
-        body: `Added ${added.length} wallpaper${added.length > 1 ? 's' : ''} to ${themeName}`,
-        silent: false,
-      });
-      notification.show();
-    }
-
     return { added, errors };
   } catch (error: unknown) {
     logger.error(`Error adding wallpapers to theme ${themeName}:`, getErrorMessage(error));
@@ -474,16 +449,6 @@ async function handleRemoveWallpaper(_event: IpcMainInvokeEvent, wallpaperPath: 
       }
     }
 
-    // Show notification
-    if (Notification.isSupported()) {
-      const fileName = path.basename(wallpaperPath);
-      const notification = new Notification({
-        title: 'Wallpaper Removed',
-        body: `Removed ${fileName}`,
-        silent: false,
-      });
-      notification.show();
-    }
   } catch (error: unknown) {
     logger.error(`Error removing wallpaper:`, getErrorMessage(error));
     throw new Error(getErrorMessage(error));

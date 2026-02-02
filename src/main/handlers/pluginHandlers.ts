@@ -1,4 +1,4 @@
-import { ipcMain, Notification, shell } from 'electron';
+import { ipcMain, shell } from 'electron';
 import path from 'path';
 import os from 'os';
 import { execSync } from 'child_process';
@@ -236,13 +236,6 @@ export async function handleInstallPlugin(_event: unknown, appName: string): Pro
       }
     }
 
-    // Show notification
-    if (Notification.isSupported()) {
-      new Notification({
-        title: 'Installation Complete',
-        body: `${plugin.displayName} has been installed successfully.`,
-      }).show();
-    }
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
     logger.error(`Failed to install ${appName}:`, message);
@@ -644,14 +637,6 @@ export async function handleRestorePluginBackup(
       prefs.pluginConfigs[appName].preset = undefined;
       prefs.pluginConfigs[appName].lastUpdated = Date.now();
       await handleSetPreferences(null, prefs);
-    }
-
-    // Show notification
-    if (Notification.isSupported()) {
-      new Notification({
-        title: 'Backup Restored',
-        body: `Your original ${plugin.displayName} configuration has been restored.`,
-      }).show();
     }
 
     return { success: true };

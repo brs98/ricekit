@@ -75,7 +75,7 @@ vi.mock('../handlers/preferencesHandlers', () => ({
       startAtLogin: false,
       showInMenuBar: true,
       showNotifications: true,
-      notifications: { onThemeChange: true, onScheduledSwitch: true },
+      notifications: { onScheduledSwitch: true },
       onboardingCompleted: false,
     })
   ),
