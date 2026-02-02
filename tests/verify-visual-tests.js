@@ -21,7 +21,7 @@ const path = require('path');
 async function verifyVisualTests() {
   console.log('\n🎨 Visual Tests Verification');
   console.log('='.repeat(70));
-  console.log('\nConnecting to running MacTheme app...');
+  console.log('\nConnecting to running Ricekit app...');
   console.log('Note: Make sure the app is running via `npm run dev`\n');
 
   let browser;
@@ -87,7 +87,7 @@ async function verifyVisualTests() {
     console.log('='.repeat(70));
     console.log('\n📋 MANUAL VERIFICATION INSTRUCTIONS:');
     console.log('='.repeat(70));
-    console.log('\n1. Open the MacTheme app (should already be running)');
+    console.log('\n1. Open the Ricekit app (should already be running)');
     console.log('2. Inspect the window appearance:');
     console.log('   - Look at the title bar (traffic lights present?)');
     console.log('   - Check corners (rounded?)');
@@ -107,7 +107,7 @@ async function verifyVisualTests() {
     // Let's check if we can at least verify the app is running
     console.log('\n🔍 Checking app state...\n');
 
-    const appDir = path.join(process.env.HOME, 'Library/Application Support/MacTheme');
+    const appDir = path.join(process.env.HOME, 'Library/Application Support/Ricekit');
 
     // Check if app directories exist
     const themesDir = path.join(appDir, 'themes');

@@ -10,7 +10,7 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 
-const MACTHEME_DIR = path.join(os.homedir(), 'Library/Application Support/MacTheme');
+const MACTHEME_DIR = path.join(os.homedir(), 'Library/Application Support/Ricekit');
 
 async function runVerificationTest() {
   console.log('🔍 Session 47 - Verification Test\n');
@@ -21,7 +21,7 @@ async function runVerificationTest() {
 
   try {
     // Launch Electron app
-    console.log('Step 1: Launching MacTheme application...');
+    console.log('Step 1: Launching Ricekit application...');
     electronApp = await electron.launch({
       args: ['.'],
       env: {

@@ -19,7 +19,7 @@ const os = require('os');
 
 // Get paths
 const homeDir = os.homedir();
-const macThemeDir = path.join(homeDir, 'Library', 'Application Support', 'MacTheme');
+const macThemeDir = path.join(homeDir, 'Library', 'Application Support', 'Ricekit');
 const customThemesDir = path.join(macThemeDir, 'custom-themes');
 
 // Test theme name

@@ -16,7 +16,7 @@ async function testColorValidation() {
 
   try {
     // Launch Electron app
-    console.log('Step 1: Launching MacTheme application...');
+    console.log('Step 1: Launching Ricekit application...');
     electronApp = await electron.launch({
       args: ['.'],
       env: {

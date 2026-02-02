@@ -103,7 +103,7 @@ async function runTest() {
     console.log('✅ Test server started\n');
 
     // Step 2: Launch app again for testing
-    console.log('Step 2: Launching MacTheme application...');
+    console.log('Step 2: Launching Ricekit application...');
     electronApp = await electron.launch({
       args: ['.'],
       cwd: process.cwd(),
@@ -176,7 +176,7 @@ async function runTest() {
     // Check if theme exists in custom-themes directory
     const customThemesDir = path.join(
       process.env.HOME,
-      'Library/Application Support/MacTheme/custom-themes'
+      'Library/Application Support/Ricekit/custom-themes'
     );
 
     const themes = fs.readdirSync(customThemesDir);

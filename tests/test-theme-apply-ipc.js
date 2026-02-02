@@ -71,10 +71,10 @@ app.whenReady().then(async () => {
     console.log('✓ Browser window created and loaded\n');
 
     // Get paths
-    const currentDir = path.join(os.homedir(), 'Library', 'Application Support', 'MacTheme', 'current');
+    const currentDir = path.join(os.homedir(), 'Library', 'Application Support', 'Ricekit', 'current');
     const symlinkPath = path.join(currentDir, 'theme');
-    const statePath = path.join(os.homedir(), 'Library', 'Application Support', 'MacTheme', 'state.json');
-    const prefsPath = path.join(os.homedir(), 'Library', 'Application Support', 'MacTheme', 'preferences.json');
+    const statePath = path.join(os.homedir(), 'Library', 'Application Support', 'Ricekit', 'state.json');
+    const prefsPath = path.join(os.homedir(), 'Library', 'Application Support', 'Ricekit', 'preferences.json');
 
     // Read initial state
     const initialState = JSON.parse(fs.readFileSync(statePath, 'utf-8'));
@@ -104,7 +104,7 @@ app.whenReady().then(async () => {
     console.log('\nTest 2: Verifying symlink...');
     try {
       const symlinkTarget = fs.readlinkSync(symlinkPath);
-      const expectedTarget = path.join(os.homedir(), 'Library', 'Application Support', 'MacTheme', 'themes', themeToApply);
+      const expectedTarget = path.join(os.homedir(), 'Library', 'Application Support', 'Ricekit', 'themes', themeToApply);
 
       if (symlinkTarget === expectedTarget) {
         logTest('Symlink points to correct theme directory', true, `${symlinkPath} -> ${symlinkTarget}`);
@@ -194,7 +194,7 @@ app.whenReady().then(async () => {
     console.log('\nTest 6: Verifying symlink updated to second theme...');
     try {
       const symlinkTarget = fs.readlinkSync(symlinkPath);
-      const expectedTarget = path.join(os.homedir(), 'Library', 'Application Support', 'MacTheme', 'themes', secondTheme);
+      const expectedTarget = path.join(os.homedir(), 'Library', 'Application Support', 'Ricekit', 'themes', secondTheme);
 
       if (symlinkTarget === expectedTarget) {
         logTest('Symlink updated to second theme', true, `${symlinkPath} -> ${symlinkTarget}`);

@@ -32,7 +32,7 @@ async function testThemeImport() {
   }
 
   try {
-    const macThemeDir = path.join(os.homedir(), 'Library', 'Application Support', 'MacTheme');
+    const macThemeDir = path.join(os.homedir(), 'Library', 'Application Support', 'Ricekit');
     const customThemesDir = path.join(macThemeDir, 'custom-themes');
     const exportDir = path.join(macThemeDir, 'exports');
 
@@ -105,7 +105,7 @@ async function testThemeImport() {
     console.log('B. Export test theme to file');
     console.log('-----------------------------');
 
-    const exportPath = path.join(exportDir, `${testThemeName}.mactheme`);
+    const exportPath = path.join(exportDir, `${testThemeName}.ricekit`);
 
     // Clean up any existing export file
     if (fs.existsSync(exportPath)) {
@@ -146,7 +146,7 @@ async function testThemeImport() {
     console.log('-------------------------------------------------');
 
     // Simulate the import process (same logic as handleImportTheme)
-    const tmpDir = path.join(os.tmpdir(), `mactheme-import-${Date.now()}`);
+    const tmpDir = path.join(os.tmpdir(), `ricekit-import-${Date.now()}`);
     fs.mkdirSync(tmpDir, { recursive: true });
 
     // Extract the zip archive
@@ -209,7 +209,7 @@ async function testThemeImport() {
     console.log('----------------------------------');
 
     // Try importing again - should create theme with -1 suffix
-    const tmpDir2 = path.join(os.tmpdir(), `mactheme-import-${Date.now()}`);
+    const tmpDir2 = path.join(os.tmpdir(), `ricekit-import-${Date.now()}`);
     fs.mkdirSync(tmpDir2, { recursive: true });
 
     await execAsync(`unzip -q "${exportPath}" -d "${tmpDir2}"`);

@@ -1,6 +1,6 @@
 # AeroSpace Productivity Preset
 # Advanced tiling with workspace assignments and app rules
-# Window borders are managed by JankyBorders (sourced from Flowstate)
+# Window borders are managed by JankyBorders (sourced from Ricekit)
 
 start-at-login = true
 

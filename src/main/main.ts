@@ -42,7 +42,7 @@ function createTray() {
     // Create tray icon
     const icon = createTrayIcon();
     tray = new Tray(icon);
-    tray.setToolTip('Flowstate - Theme Switcher');
+    tray.setToolTip('Ricekit - Theme Switcher');
   }
 
   updateTrayMenu();
@@ -99,7 +99,7 @@ function updateTrayMenu() {
     // Main menu items
     menuItems.push(
       {
-        label: 'Open Flowstate',
+        label: 'Open Ricekit',
         click: () => {
           if (mainWindow && !mainWindow.isDestroyed()) {
             mainWindow.show();
@@ -124,7 +124,7 @@ function updateTrayMenu() {
       },
       { type: 'separator' },
       {
-        label: 'Quit Flowstate',
+        label: 'Quit Ricekit',
         role: 'quit',
       }
     );
@@ -148,8 +148,8 @@ export function refreshTrayMenu() {
  */
 export function updateWindowTitle(themeName: string) {
   if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.setTitle(`Flowstate - ${themeName}`);
-    logger.info(`Window title updated to: Flowstate - ${themeName}`);
+    mainWindow.setTitle(`Ricekit - ${themeName}`);
+    logger.info(`Window title updated to: Ricekit - ${themeName}`);
   }
 }
 
@@ -277,12 +277,12 @@ function createWindow() {
     const statePath = getStatePath();
     const state = readJsonSync<State>(statePath, isState);
     const currentTheme = state.currentTheme || 'tokyo-night';
-    logger.info(`Setting window title to: Flowstate - ${currentTheme}`);
-    mainWindow.setTitle(`Flowstate - ${currentTheme}`);
+    logger.info(`Setting window title to: Ricekit - ${currentTheme}`);
+    mainWindow.setTitle(`Ricekit - ${currentTheme}`);
     logger.info(`Window title set successfully`);
   } catch (err: unknown) {
     logger.error('Error setting initial window title:', getErrorMessage(err));
-    mainWindow.setTitle('Flowstate');
+    mainWindow.setTitle('Ricekit');
   }
 
   // In development, load from Vite dev server
@@ -303,11 +303,11 @@ function createWindow() {
       const statePath = getStatePath();
       const state = readJsonSync<State>(statePath, isState);
       const currentTheme = state.currentTheme || 'tokyo-night';
-      mainWindow?.setTitle(`Flowstate - ${currentTheme}`);
-      logger.info(`Window title set after load: Flowstate - ${currentTheme}`);
+      mainWindow?.setTitle(`Ricekit - ${currentTheme}`);
+      logger.info(`Window title set after load: Ricekit - ${currentTheme}`);
     } catch (err: unknown) {
       logger.error('Error setting window title after load:', getErrorMessage(err));
-      mainWindow?.setTitle('Flowstate');
+      mainWindow?.setTitle('Ricekit');
     }
   });
 
@@ -452,8 +452,8 @@ if (!gotTheLock) {
     logger.info('Registered local-file protocol handler');
 
     // Initialize application directories and files
-    logger.info('=== Flowstate Starting ===');
-    logger.info('=== Flowstate Starting ===');
+    logger.info('=== Ricekit Starting ===');
+    logger.info('=== Ricekit Starting ===');
 
     // Load preferences to check if debug logging is enabled
     try {

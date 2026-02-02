@@ -21,7 +21,7 @@ async function testNativeMacOSAppearance() {
 
   try {
     // Launch the Electron app
-    console.log('\n✓ Step 1: Launching MacTheme application...');
+    console.log('\n✓ Step 1: Launching Ricekit application...');
     app = await electron.launch({
       args: ['.'],
       env: {

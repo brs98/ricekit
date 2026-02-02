@@ -13,7 +13,7 @@ const os = require('os');
 const { execSync } = require('child_process');
 
 const TEST_NAME = 'Permission Error Handling - Validation';
-const MACTHEME_DIR = path.join(os.homedir(), 'Library/Application Support/MacTheme');
+const MACTHEME_DIR = path.join(os.homedir(), 'Library/Application Support/Ricekit');
 const CURRENT_DIR = path.join(MACTHEME_DIR, 'current');
 
 console.log(`[TEST] ========================================`);
@@ -91,12 +91,12 @@ try {
     fail(`ThemeGrid does not parse structured error codes`);
   }
 
-  // Test 3: Verify MacTheme directories exist
-  log(`\nStep 3: Verifying MacTheme directories...`);
+  // Test 3: Verify Ricekit directories exist
+  log(`\nStep 3: Verifying Ricekit directories...`);
   if (fs.existsSync(MACTHEME_DIR)) {
-    pass(`MacTheme directory exists`);
+    pass(`Ricekit directory exists`);
   } else {
-    fail(`MacTheme directory does not exist`);
+    fail(`Ricekit directory does not exist`);
   }
 
   if (fs.existsSync(CURRENT_DIR)) {
@@ -133,7 +133,7 @@ try {
     console.log(`[TEST] 1. Ensure the app is running: npm run dev`);
     console.log(`[TEST] `);
     console.log(`[TEST] 2. Make the current directory read-only:`);
-    console.log(`[TEST]    chmod -R u-w ~/Library/Application\\ Support/MacTheme/current`);
+    console.log(`[TEST]    chmod -R u-w ~/Library/Application\\ Support/Ricekit/current`);
     console.log(`[TEST] `);
     console.log(`[TEST] 3. In the app, try to apply a different theme`);
     console.log(`[TEST] `);
@@ -152,7 +152,7 @@ try {
     console.log(`[TEST]    - No console errors about crashes`);
     console.log(`[TEST] `);
     console.log(`[TEST] 7. Restore permissions:`);
-    console.log(`[TEST]    chmod -R u+w ~/Library/Application\\ Support/MacTheme/current`);
+    console.log(`[TEST]    chmod -R u+w ~/Library/Application\\ Support/Ricekit/current`);
     console.log(`[TEST] `);
     console.log(`[TEST] 8. Try applying a theme again - should work now`);
     console.log(`[TEST] `);

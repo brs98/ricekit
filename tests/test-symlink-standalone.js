@@ -11,7 +11,7 @@ const os = require('os');
 
 console.log('🧪 Testing Symlink Creation Logic\n');
 
-const MACTHEME_DIR = path.join(os.homedir(), 'Library/Application Support/MacTheme');
+const MACTHEME_DIR = path.join(os.homedir(), 'Library/Application Support/Ricekit');
 const THEMES_DIR = path.join(MACTHEME_DIR, 'themes');
 const CURRENT_DIR = path.join(MACTHEME_DIR, 'current');
 const SYMLINK_PATH = path.join(CURRENT_DIR, 'theme');

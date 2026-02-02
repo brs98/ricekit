@@ -12,7 +12,7 @@ const puppeteer = require('puppeteer-core');
 
     await page.goto('http://localhost:5173', { waitUntil: 'networkidle2', timeout: 10000 });
 
-    console.log('✓ Connected to MacTheme app');
+    console.log('✓ Connected to Ricekit app');
 
     // Wait for the app to load
     await page.waitForSelector('.sidebar', { timeout: 5000 });

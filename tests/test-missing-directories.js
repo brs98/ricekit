@@ -23,8 +23,8 @@ console.log('TEST #114: FILE SYSTEM OPERATIONS HANDLE MISSING DIRECTORIES');
 console.log('='.repeat(80));
 console.log();
 
-const appDataDir = path.join(os.homedir(), 'Library/Application Support/MacTheme');
-const backupDir = path.join(os.homedir(), 'Library/Application Support/MacTheme.backup');
+const appDataDir = path.join(os.homedir(), 'Library/Application Support/Ricekit');
+const backupDir = path.join(os.homedir(), 'Library/Application Support/Ricekit.backup');
 
 let passCount = 0;
 let failCount = 0;
@@ -165,10 +165,10 @@ console.log('     // ... rest of function');
 console.log('   }');
 console.log();
 console.log('3. This will create:');
-console.log('   - ~/Library/Application Support/MacTheme/');
-console.log('   - ~/Library/Application Support/MacTheme/themes/');
-console.log('   - ~/Library/Application Support/MacTheme/custom-themes/');
-console.log('   - ~/Library/Application Support/MacTheme/current/');
+console.log('   - ~/Library/Application Support/Ricekit/');
+console.log('   - ~/Library/Application Support/Ricekit/themes/');
+console.log('   - ~/Library/Application Support/Ricekit/custom-themes/');
+console.log('   - ~/Library/Application Support/Ricekit/current/');
 console.log();
 console.log('4. Benefits:');
 console.log('   ✅ No crashes from missing directories');

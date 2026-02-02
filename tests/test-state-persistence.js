@@ -15,7 +15,7 @@ const path = require('path');
 const os = require('os');
 
 const homeDir = os.homedir();
-const macThemeDir = path.join(homeDir, 'Library', 'Application Support', 'MacTheme');
+const macThemeDir = path.join(homeDir, 'Library', 'Application Support', 'Ricekit');
 const statePath = path.join(macThemeDir, 'state.json');
 const themesDir = path.join(macThemeDir, 'themes');
 const currentDir = path.join(macThemeDir, 'current');

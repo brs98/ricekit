@@ -22,7 +22,7 @@ class Logger {
     // Create logs directory in app data
     const appDataPath = app.getPath('userData');
     this.#logDir = path.join(appDataPath, 'logs');
-    this.#logFile = path.join(this.#logDir, 'flowstate.log');
+    this.#logFile = path.join(this.#logDir, 'ricekit.log');
 
     this.#ensureLogDirectory();
     this.#rotateLogsIfNeeded();
@@ -45,9 +45,9 @@ class Logger {
         return;
       }
 
-      // Rotate logs: flowstate.log -> flowstate.log.1 -> flowstate.log.2 -> ...
+      // Rotate logs: ricekit.log -> ricekit.log.1 -> ricekit.log.2 -> ...
       // Delete oldest log if we exceed maxLogFiles
-      const oldestLog = path.join(this.#logDir, `flowstate.log.${this.#maxLogFiles - 1}`);
+      const oldestLog = path.join(this.#logDir, `ricekit.log.${this.#maxLogFiles - 1}`);
       if (fs.existsSync(oldestLog)) {
         fs.unlinkSync(oldestLog);
       }
@@ -56,8 +56,8 @@ class Logger {
       for (let i = this.#maxLogFiles - 2; i >= 0; i--) {
         const currentLog = i === 0
           ? this.#logFile
-          : path.join(this.#logDir, `flowstate.log.${i}`);
-        const nextLog = path.join(this.#logDir, `flowstate.log.${i + 1}`);
+          : path.join(this.#logDir, `ricekit.log.${i}`);
+        const nextLog = path.join(this.#logDir, `ricekit.log.${i + 1}`);
 
         if (fs.existsSync(currentLog)) {
           fs.renameSync(currentLog, nextLog);
@@ -178,7 +178,7 @@ class Logger {
       }
 
       for (let i = 1; i < this.#maxLogFiles; i++) {
-        const logFile = path.join(this.#logDir, `flowstate.log.${i}`);
+        const logFile = path.join(this.#logDir, `ricekit.log.${i}`);
         if (fs.existsSync(logFile)) {
           fs.unlinkSync(logFile);
         }

@@ -92,7 +92,7 @@ const os = require('os');
     // Load theme.json to compare
     const themePath = path.join(
       os.homedir(),
-      'Library/Application Support/MacTheme/themes/tokyo-night/theme.json'
+      'Library/Application Support/Ricekit/themes/tokyo-night/theme.json'
     );
     const themeJson = JSON.parse(fs.readFileSync(themePath, 'utf8'));
 

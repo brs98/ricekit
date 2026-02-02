@@ -123,7 +123,7 @@ async function handleBackupPreferences(): Promise<string | null> {
     // Show save dialog to let user choose backup location
     const { filePath } = await dialog.showSaveDialog({
       title: 'Backup Preferences',
-      defaultPath: path.join(os.homedir(), 'Downloads', 'flowstate-preferences-backup.json'),
+      defaultPath: path.join(os.homedir(), 'Downloads', 'ricekit-preferences-backup.json'),
       filters: [
         { name: 'JSON Files', extensions: ['json'] },
         { name: 'All Files', extensions: ['*'] },

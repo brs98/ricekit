@@ -18,7 +18,7 @@ const { execSync } = require('child_process');
 const { spawn } = require('child_process');
 
 const TEST_NAME = 'Permission Error Handling - End-to-End';
-const MACTHEME_DIR = path.join(os.homedir(), 'Library/Application Support/MacTheme');
+const MACTHEME_DIR = path.join(os.homedir(), 'Library/Application Support/Ricekit');
 const CURRENT_DIR = path.join(MACTHEME_DIR, 'current');
 
 console.log(`[TEST] ========================================`);
@@ -77,13 +77,13 @@ process.on('SIGINT', () => {
 
 async function runTest() {
   try {
-    // Test 1: Verify MacTheme directory exists
-    log(`Step 1: Verifying MacTheme directory exists...`);
+    // Test 1: Verify Ricekit directory exists
+    log(`Step 1: Verifying Ricekit directory exists...`);
     if (fs.existsSync(MACTHEME_DIR)) {
-      pass(`MacTheme directory exists: ${MACTHEME_DIR}`);
+      pass(`Ricekit directory exists: ${MACTHEME_DIR}`);
     } else {
-      fail(`MacTheme directory does not exist: ${MACTHEME_DIR}`);
-      throw new Error('MacTheme directory not found');
+      fail(`Ricekit directory does not exist: ${MACTHEME_DIR}`);
+      throw new Error('Ricekit directory not found');
     }
 
     // Test 2: Verify current directory exists

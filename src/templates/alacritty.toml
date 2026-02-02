@@ -1,4 +1,4 @@
-import = ["~/Library/Application Support/Flowstate/current/theme/alacritty.toml"]
+import = ["~/Library/Application Support/Ricekit/current/theme/alacritty.toml"]
 
 # Add your customizations below
 [window]

@@ -1,5 +1,5 @@
 /**
- * Centralized error codes and utilities for Flowstate
+ * Centralized error codes and utilities for Ricekit
  *
  * All errors thrown in IPC handlers should use createError() to ensure
  * consistent formatting that the UI can parse and display appropriately.

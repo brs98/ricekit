@@ -10,7 +10,7 @@ const fs = require('fs');
 
 // Get theme directories
 const homeDir = require('os').homedir();
-const themesDir = path.join(homeDir, 'Library', 'Application Support', 'MacTheme', 'themes');
+const themesDir = path.join(homeDir, 'Library', 'Application Support', 'Ricekit', 'themes');
 
 let testResults = {
   bat: { passed: 0, failed: 0, errors: [] },
@@ -45,8 +45,8 @@ function validateBatConfig(configPath, themeName) {
     }
 
     // Validate theme name format
-    if (!content.includes('--theme="MacTheme"') && !content.includes("--theme='MacTheme'")) {
-      throw new Error('Theme name should be "MacTheme"');
+    if (!content.includes('--theme="Ricekit"') && !content.includes("--theme='Ricekit'")) {
+      throw new Error('Theme name should be "Ricekit"');
     }
 
     // Validate style format

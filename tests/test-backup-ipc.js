@@ -11,7 +11,7 @@ const os = require('os');
 
 const preferencesPath = path.join(
   os.homedir(),
-  'Library/Application Support/MacTheme/preferences.json'
+  'Library/Application Support/Ricekit/preferences.json'
 );
 
 console.log('Testing Backup/Restore Functionality\n');
@@ -25,7 +25,7 @@ console.log(JSON.stringify(prefs, null, 2));
 console.log('');
 
 // Create a test backup
-const backupPath = path.join(os.homedir(), 'Downloads', 'test-mactheme-backup.json');
+const backupPath = path.join(os.homedir(), 'Downloads', 'test-ricekit-backup.json');
 const backup = {
   version: '1.0',
   timestamp: new Date().toISOString(),
@@ -77,7 +77,7 @@ if (restoredPrefs.startAtLogin === prefs.startAtLogin &&
 console.log('');
 console.log('Test backup file available at:', backupPath);
 console.log('You can now test the UI functionality by:');
-console.log('1. Opening MacTheme app');
+console.log('1. Opening Ricekit app');
 console.log('2. Going to Settings > Backup & Restore');
 console.log('3. Clicking Backup button and saving a new backup');
 console.log('4. Modifying some settings');

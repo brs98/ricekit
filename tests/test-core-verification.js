@@ -14,7 +14,7 @@ async function runVerificationTest() {
 
   try {
     // Launch the Electron app
-    console.log('Step 1: Launching MacTheme application...');
+    console.log('Step 1: Launching Ricekit application...');
     electronApp = await electron.launch({
       args: ['.'],
       cwd: process.cwd(),
@@ -62,7 +62,7 @@ async function runVerificationTest() {
       // Check if symlink was updated
       const symlinkPath = path.join(
         process.env.HOME,
-        'Library/Application Support/MacTheme/current/theme'
+        'Library/Application Support/Ricekit/current/theme'
       );
 
       if (fs.existsSync(symlinkPath)) {

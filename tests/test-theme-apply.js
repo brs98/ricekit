@@ -5,18 +5,18 @@
 const fs = require('fs');
 const path = require('path');
 
-const macthemeDir = path.join(process.env.HOME, 'Library/Application Support/MacTheme');
-const prefsPath = path.join(macthemeDir, 'preferences.json');
-const statePath = path.join(macthemeDir, 'state.json');
+const ricekitDir = path.join(process.env.HOME, 'Library/Application Support/Ricekit');
+const prefsPath = path.join(ricekitDir, 'preferences.json');
+const statePath = path.join(ricekitDir, 'state.json');
 
 console.log('='.repeat(60));
-console.log('MacTheme Application Test');
+console.log('Ricekit Application Test');
 console.log('='.repeat(60));
 console.log();
 
 // Check if directories exist
-console.log('1. Checking MacTheme directories...');
-console.log(`   MacTheme dir: ${fs.existsSync(macthemeDir) ? '✓' : '✗'}`);
+console.log('1. Checking Ricekit directories...');
+console.log(`   Ricekit dir: ${fs.existsSync(ricekitDir) ? '✓' : '✗'}`);
 console.log(`   Preferences: ${fs.existsSync(prefsPath) ? '✓' : '✗'}`);
 console.log(`   State: ${fs.existsSync(statePath) ? '✓' : '✗'}`);
 console.log();
@@ -58,7 +58,7 @@ if (fs.existsSync(prefsPath)) {
 }
 
 // Check symlink
-const currentDir = path.join(macthemeDir, 'current');
+const currentDir = path.join(ricekitDir, 'current');
 const symlinkPath = path.join(currentDir, 'theme');
 
 console.log('4. Symlink Status:');

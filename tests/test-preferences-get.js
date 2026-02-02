@@ -114,7 +114,7 @@ console.log('');
 console.log('C. Preferences file structure verification');
 console.log('-'.repeat(70));
 
-const macThemeDir = path.join(os.homedir(), 'Library/Application Support/MacTheme');
+const macThemeDir = path.join(os.homedir(), 'Library/Application Support/Ricekit');
 const preferencesPath = path.join(macThemeDir, 'preferences.json');
 
 test('Preferences file exists', () => {

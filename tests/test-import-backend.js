@@ -12,12 +12,12 @@ const exec = promisify(require('child_process').exec);
 async function testImportBackend() {
   console.log('\n=== Backend Test: Theme Import ===\n');
 
-  const themesDir = path.join(os.homedir(), 'Library', 'Application Support', 'MacTheme', 'themes');
-  const customThemesDir = path.join(os.homedir(), 'Library', 'Application Support', 'MacTheme', 'custom-themes');
-  const testExportPath = path.join(os.tmpdir(), 'test-theme-export.mactheme');
+  const themesDir = path.join(os.homedir(), 'Library', 'Application Support', 'Ricekit', 'themes');
+  const customThemesDir = path.join(os.homedir(), 'Library', 'Application Support', 'Ricekit', 'custom-themes');
+  const testExportPath = path.join(os.tmpdir(), 'test-theme-export.ricekit');
 
   try {
-    // Step 1: Export a theme to create a .mactheme file
+    // Step 1: Export a theme to create a .ricekit file
     console.log('Step 1: Exporting tokyo-night theme...');
     const sourceThemePath = path.join(themesDir, 'tokyo-night');
 
@@ -34,7 +34,7 @@ async function testImportBackend() {
 
     // Step 2: Test extraction
     console.log('Step 2: Testing extraction...');
-    const tmpDir = path.join(os.tmpdir(), `mactheme-test-import-${Date.now()}`);
+    const tmpDir = path.join(os.tmpdir(), `ricekit-test-import-${Date.now()}`);
     fs.mkdirSync(tmpDir, { recursive: true });
 
     await exec(`unzip -q "${testExportPath}" -d "${tmpDir}"`);
@@ -110,7 +110,7 @@ async function testImportBackend() {
 
     console.log('=== Test Result: SUCCESS ===');
     console.log(`\nImported theme location: ${destThemeDir}`);
-    console.log('You can verify the imported theme in the MacTheme app Themes view.\n');
+    console.log('You can verify the imported theme in the Ricekit app Themes view.\n');
 
     return true;
   } catch (error) {

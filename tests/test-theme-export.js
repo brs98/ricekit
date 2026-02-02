@@ -32,7 +32,7 @@ async function testThemeExport() {
   }
 
   try {
-    const macThemeDir = path.join(os.homedir(), 'Library', 'Application Support', 'MacTheme');
+    const macThemeDir = path.join(os.homedir(), 'Library', 'Application Support', 'Ricekit');
     const exportDir = path.join(macThemeDir, 'exports');
 
     // Create exports directory if it doesn't exist
@@ -43,7 +43,7 @@ async function testThemeExport() {
     console.log('A. Setup - Preparing test environment');
     console.log('------------------------------------');
 
-    const exportPath = path.join(exportDir, 'tokyo-night-export-test.mactheme');
+    const exportPath = path.join(exportDir, 'tokyo-night-export-test.ricekit');
 
     // Clean up any existing export file
     if (fs.existsSync(exportPath)) {

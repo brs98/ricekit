@@ -16,7 +16,7 @@ async function testImport() {
     // Count themes before import
     const customThemesDir = path.join(
       process.env.HOME,
-      'Library/Application Support/MacTheme/custom-themes'
+      'Library/Application Support/Ricekit/custom-themes'
     );
 
     if (!fs.existsSync(customThemesDir)) {
@@ -106,7 +106,7 @@ async function testImport() {
     console.log('  • Loading states and user feedback');
     console.log('\nTo manually test:');
     console.log('  1. Start test server: node test-server.js');
-    console.log('  2. Open MacTheme app');
+    console.log('  2. Open Ricekit app');
     console.log('  3. Click "📥 Import from URL" button');
     console.log('  4. Enter: http://localhost:8888/tokyo-night-test.zip');
     console.log('  5. Click Import');

@@ -13,7 +13,7 @@ console.log('=================================\n');
 
 // Test 1: Check directory structure
 console.log('Test 1: Directory Structure');
-const baseDir = path.join(os.homedir(), 'Library', 'Application Support', 'MacTheme');
+const baseDir = path.join(os.homedir(), 'Library', 'Application Support', 'Ricekit');
 const dirs = [
   path.join(baseDir, 'themes'),
   path.join(baseDir, 'custom-themes'),

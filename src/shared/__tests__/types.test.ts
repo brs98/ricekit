@@ -14,13 +14,13 @@ describe('Plugin Types', () => {
       const config: PluginConfig = {
         mode: 'preset',
         preset: 'minimal',
-        installedBy: 'flowstate',
+        installedBy: 'ricekit',
         lastUpdated: Date.now(),
       };
 
       expect(config.mode).toBe('preset');
       expect(config.preset).toBe('minimal');
-      expect(config.installedBy).toBe('flowstate');
+      expect(config.installedBy).toBe('ricekit');
     });
 
     it('should accept valid custom mode config', () => {
@@ -36,11 +36,11 @@ describe('Plugin Types', () => {
     });
 
     it('should accept all installedBy values', () => {
-      const byMactheme: InstalledBy = 'flowstate';
+      const byMactheme: InstalledBy = 'ricekit';
       const byUser: InstalledBy = 'user';
       const byUnknown: InstalledBy = 'unknown';
 
-      expect(byMactheme).toBe('flowstate');
+      expect(byMactheme).toBe('ricekit');
       expect(byUser).toBe('user');
       expect(byUnknown).toBe('unknown');
     });
@@ -116,7 +116,7 @@ describe('Plugin Types', () => {
           sketchybar: {
             mode: 'preset',
             preset: 'minimal',
-            installedBy: 'flowstate',
+            installedBy: 'ricekit',
           },
           aerospace: {
             mode: 'custom',

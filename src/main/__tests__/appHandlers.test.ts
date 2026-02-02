@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import os from 'os';
 
-const testDir = path.join(os.tmpdir(), 'flowstate-app-test-' + Date.now());
+const testDir = path.join(os.tmpdir(), 'ricekit-app-test-' + Date.now());
 const mockHomeDir = path.join(testDir, 'home');
 
 // Mock electron modules
@@ -116,14 +116,14 @@ const realHomeDir = os.homedir();
 describe('appHandlers', () => {
   beforeEach(() => {
     // Create test directories
-    fs.mkdirSync(path.join(testDir, 'appdata', 'Flowstate', 'current', 'theme'), { recursive: true });
+    fs.mkdirSync(path.join(testDir, 'appdata', 'Ricekit', 'current', 'theme'), { recursive: true });
     fs.mkdirSync(path.join(mockHomeDir, '.config', 'alacritty'), { recursive: true });
     fs.mkdirSync(path.join(mockHomeDir, '.config', 'kitty'), { recursive: true });
     fs.mkdirSync(path.join(mockHomeDir, '.config', 'nvim'), { recursive: true });
     fs.mkdirSync(path.join(mockHomeDir, '.config'), { recursive: true });
     fs.mkdirSync(path.join(mockHomeDir, 'Library', 'Application Support', 'Code', 'User'), { recursive: true });
     fs.mkdirSync(path.join(mockHomeDir, 'Library', 'Application Support', 'Cursor', 'User'), { recursive: true });
-    fs.mkdirSync(path.join(mockHomeDir, 'Library', 'Application Support', 'Flowstate', 'current', 'theme'), { recursive: true });
+    fs.mkdirSync(path.join(mockHomeDir, 'Library', 'Application Support', 'Ricekit', 'current', 'theme'), { recursive: true });
 
     // Reset mocks
     vi.clearAllMocks();
@@ -210,7 +210,7 @@ describe('appHandlers', () => {
     });
 
     it('should copy snippet to clipboard when config exists', async () => {
-      const snippet = 'import = ["~/Library/Application Support/Flowstate/current/theme/alacritty.toml"]';
+      const snippet = 'import = ["~/Library/Application Support/Ricekit/current/theme/alacritty.toml"]';
 
       // Mock core setupApp to return 'clipboard' action
       vi.mocked(coreSetupApp).mockResolvedValue({
@@ -236,14 +236,14 @@ describe('appHandlers', () => {
       expect(handleSetPreferences).toHaveBeenCalled();
     });
 
-    it('should return already_setup when Flowstate integration exists', async () => {
+    it('should return already_setup when Ricekit integration exists', async () => {
       // Mock core setupApp to return 'already_setup' action
       vi.mocked(coreSetupApp).mockResolvedValue({
         success: true,
         data: {
           action: 'already_setup',
           configPath: path.join(mockHomeDir, '.config', 'alacritty', 'alacritty.toml'),
-          message: 'alacritty is already configured with Flowstate integration.',
+          message: 'alacritty is already configured with Ricekit integration.',
         },
       });
 
@@ -273,7 +273,7 @@ describe('appHandlers', () => {
         mockHomeDir,
         'Library',
         'Application Support',
-        'Flowstate',
+        'Ricekit',
         'current',
         'theme',
         'slack-theme.txt'

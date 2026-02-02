@@ -12,8 +12,8 @@ async function testOnboardingFlow() {
   console.log('='.repeat(70));
   console.log('');
 
-  const prefsPath = path.join(os.homedir(), 'Library/Application Support/MacTheme/preferences.json');
-  const statePath = path.join(os.homedir(), 'Library/Application Support/MacTheme/state.json');
+  const prefsPath = path.join(os.homedir(), 'Library/Application Support/Ricekit/preferences.json');
+  const statePath = path.join(os.homedir(), 'Library/Application Support/Ricekit/state.json');
 
   // STEP 1: Verify initial state
   console.log('Step 1: Verify initial state');
@@ -40,12 +40,12 @@ async function testOnboardingFlow() {
   console.log('Step 2: Manual Verification Required');
   console.log('─'.repeat(70));
   console.log('');
-  console.log('Please open the MacTheme application and verify the following:');
+  console.log('Please open the Ricekit application and verify the following:');
   console.log('');
 
   console.log('Test #120: Onboarding flow appears on first launch');
   console.log('  ☐ Step 1: Onboarding modal is visible (not the main app)');
-  console.log('  ☐ Step 2: Modal has "Welcome to MacTheme! 🎨" heading');
+  console.log('  ☐ Step 2: Modal has "Welcome to Ricekit! 🎨" heading');
   console.log('  ☐ Step 3: Progress indicator shows 3 steps at top');
   console.log('  ☐ Step 4: Four feature descriptions are displayed with emojis');
   console.log('  ☐ Step 5: "Next" button is visible at bottom right');

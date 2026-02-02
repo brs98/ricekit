@@ -9,7 +9,7 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
-const prefsPath = path.join(os.homedir(), 'Library', 'Application Support', 'MacTheme', 'preferences.json');
+const prefsPath = path.join(os.homedir(), 'Library', 'Application Support', 'Ricekit', 'preferences.json');
 
 console.log('=== Notification Preferences Test ===\n');
 
@@ -57,7 +57,7 @@ if (process.argv[2] === 'reset') {
 }
 
 console.log('=== Test Instructions ===');
-console.log('1. Open MacTheme app');
+console.log('1. Open Ricekit app');
 console.log('2. Navigate to Settings > Notifications');
 console.log('3. Verify TWO toggles are visible:');
 console.log('   - "Show Notifications on Theme Change"');

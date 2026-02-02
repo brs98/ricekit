@@ -11,7 +11,7 @@ import { exec } from 'child_process';
 console.log('=== Direct Hook Script Test ===\n');
 
 // Path to hook log file
-const logPath = path.join(os.homedir(), 'Library/Application Support/MacTheme/hook-log.txt');
+const logPath = path.join(os.homedir(), 'Library/Application Support/Ricekit/hook-log.txt');
 
 // Clear any previous log
 if (fs.existsSync(logPath)) {
@@ -20,7 +20,7 @@ if (fs.existsSync(logPath)) {
 }
 
 // Path to hook script
-const hookPath = path.join(os.homedir(), 'Library/Application Support/MacTheme/hook.sh');
+const hookPath = path.join(os.homedir(), 'Library/Application Support/Ricekit/hook.sh');
 
 console.log('Testing hook script directly...');
 console.log('Hook script path:', hookPath);

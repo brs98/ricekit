@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import os from 'os';
 
-const testDir = path.join(os.tmpdir(), 'flowstate-preset-test-' + Date.now());
+const testDir = path.join(os.tmpdir(), 'ricekit-preset-test-' + Date.now());
 const presetsDir = path.join(testDir, 'presets');
 const currentPresetsDir = path.join(testDir, 'current', 'presets');
 

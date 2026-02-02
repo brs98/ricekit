@@ -17,7 +17,7 @@ app.whenReady().then(async () => {
     // Clear any previous log
     const logPath = path.join(
       process.env.HOME,
-      'Library/Application Support/MacTheme/hook-log.txt'
+      'Library/Application Support/Ricekit/hook-log.txt'
     );
     if (fs.existsSync(logPath)) {
       fs.unlinkSync(logPath);

@@ -21,7 +21,7 @@ async function testTerminalReload() {
 
   console.log('Test Requirements:');
   console.log('  1. Have Kitty terminal open and configured');
-  console.log('  2. Apply a different theme in MacTheme');
+  console.log('  2. Apply a different theme in Ricekit');
   console.log('  3. Verify Kitty receives reload command (kitty @ set-colors)');
   console.log('  4. Verify Kitty terminal colors update immediately\n');
 
@@ -73,8 +73,8 @@ async function testTerminalReload() {
   console.log('  → Ensure remote control is enabled in kitty.conf:');
   console.log('     allow_remote_control yes\n');
 
-  console.log('Step 2: Apply a theme in MacTheme');
-  console.log('  → Open MacTheme application');
+  console.log('Step 2: Apply a theme in Ricekit');
+  console.log('  → Open Ricekit application');
   console.log('  → Navigate to Themes view');
   console.log('  → Click "Apply" on a different theme (e.g., Nord)\n');
 
@@ -102,7 +102,7 @@ async function testTerminalReload() {
   console.log('The terminal reload notification system has been implemented.');
   console.log('To fully test, you need to:');
   console.log('  1. Have Kitty running with remote control enabled');
-  console.log('  2. Apply a theme through the MacTheme UI');
+  console.log('  2. Apply a theme through the Ricekit UI');
   console.log('  3. Observe the console output and terminal color changes\n');
 
   console.log('Note: Alacritty auto-reloads config files, so no notification needed.');

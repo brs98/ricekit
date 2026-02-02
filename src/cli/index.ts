@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Flowstate CLI
+ * Ricekit CLI
  *
  * Command-line interface for managing macOS themes.
  */

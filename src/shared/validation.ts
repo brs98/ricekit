@@ -90,7 +90,7 @@ export function isPluginConfig(data: unknown): data is PluginConfig {
   const obj = data as Record<string, unknown>;
 
   if (obj.mode !== 'preset' && obj.mode !== 'custom') return false;
-  if (obj.installedBy !== 'flowstate' && obj.installedBy !== 'user' && obj.installedBy !== 'unknown') return false;
+  if (obj.installedBy !== 'ricekit' && obj.installedBy !== 'user' && obj.installedBy !== 'unknown') return false;
 
   return true;
 }

@@ -11,7 +11,7 @@ import { exec } from 'child_process';
 console.log('=== Testing Theme Application with Hook Script ===\n');
 
 // Path to hook log file
-const logPath = path.join(os.homedir(), 'Library/Application Support/MacTheme/hook-log.txt');
+const logPath = path.join(os.homedir(), 'Library/Application Support/Ricekit/hook-log.txt');
 
 // Clear any previous log
 if (fs.existsSync(logPath)) {
@@ -20,7 +20,7 @@ if (fs.existsSync(logPath)) {
 }
 
 // Verify hook script is configured
-const prefsPath = path.join(os.homedir(), 'Library/Application Support/MacTheme/preferences.json');
+const prefsPath = path.join(os.homedir(), 'Library/Application Support/Ricekit/preferences.json');
 const prefs = JSON.parse(fs.readFileSync(prefsPath, 'utf-8'));
 
 console.log('Hook script configured:', prefs.hookScript || 'NOT CONFIGURED');
@@ -31,7 +31,7 @@ if (!prefs.hookScript) {
 }
 
 console.log('\n=== Manual Test Instructions ===');
-console.log('1. The MacTheme app should be running');
+console.log('1. The Ricekit app should be running');
 console.log('2. Open the app window');
 console.log('3. Click on any theme card to apply it');
 console.log('4. Wait a moment for the theme to apply');
@@ -67,7 +67,7 @@ const checkInterval = setInterval(() => {
     clearInterval(checkInterval);
     console.log('\n⏱️  Timeout: No theme was applied within 60 seconds');
     console.log('\n📝 To manually test:');
-    console.log('1. Apply a theme through the MacTheme UI');
+    console.log('1. Apply a theme through the Ricekit UI');
     console.log(`2. Run: cat "${logPath}"`);
     console.log('3. Verify it contains the theme name');
     process.exit(1);

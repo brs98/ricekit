@@ -13,7 +13,7 @@ const path = require('path');
     console.log('Step 1: Mark tokyo-night and nord as favorites');
     const prefsPath = path.join(
       process.env.HOME,
-      'Library/Application Support/MacTheme/preferences.json'
+      'Library/Application Support/Ricekit/preferences.json'
     );
     const prefs = JSON.parse(fs.readFileSync(prefsPath, 'utf8'));
     prefs.favorites = ['Tokyo Night', 'Nord'];

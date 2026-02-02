@@ -118,7 +118,7 @@ async function runTest() {
 
   try {
     // Get paths
-    const appSupportPath = path.join(os.homedir(), 'Library/Application Support/MacTheme');
+    const appSupportPath = path.join(os.homedir(), 'Library/Application Support/Ricekit');
     const themesDir = path.join(appSupportPath, 'themes');
     const customThemesDir = path.join(appSupportPath, 'custom-themes');
     const currentDir = path.join(appSupportPath, 'current');

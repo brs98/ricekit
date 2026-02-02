@@ -1,10 +1,10 @@
 /**
  * App setup operations
  *
- * Configure applications for Flowstate integration.
+ * Configure applications for Ricekit integration.
  * - No config exists → Create minimal working config from template
- * - Config exists with Flowstate → Return 'already_setup'
- * - Config exists without Flowstate → Return snippet for clipboard
+ * - Config exists with Ricekit → Return 'already_setup'
+ * - Config exists without Ricekit → Return snippet for clipboard
  */
 
 import path from 'path';
@@ -90,20 +90,20 @@ const APP_CONFIGS = {
 type AppConfigKey = keyof typeof APP_CONFIGS;
 
 /**
- * Detection patterns for Flowstate integration
+ * Detection patterns for Ricekit integration
  */
-const FLOWSTATE_PATTERNS = [
-  APP_CONFIG.dataDirName,  // 'Flowstate'
-  'flowstate',
+const RICEKIT_PATTERNS = [
+  APP_CONFIG.dataDirName,  // 'Ricekit'
+  'ricekit',
   'wezterm-colors.lua',
 ] as const;
 
 /**
- * Check if content already has Flowstate integration
+ * Check if content already has Ricekit integration
  */
-export function hasFlowstateIntegration(content: string): boolean {
+export function hasRicekitIntegration(content: string): boolean {
   const lowerContent = content.toLowerCase();
-  return FLOWSTATE_PATTERNS.some(pattern => lowerContent.includes(pattern.toLowerCase()));
+  return RICEKIT_PATTERNS.some(pattern => lowerContent.includes(pattern.toLowerCase()));
 }
 
 /**
@@ -157,7 +157,7 @@ export async function getTemplate(appName: string): Promise<string | null> {
  * Returns a SetupResult with the action taken:
  * - 'created': Created new config from template
  * - 'clipboard': Existing config, snippet ready for clipboard
- * - 'already_setup': Config already has Flowstate integration
+ * - 'already_setup': Config already has Ricekit integration
  * - 'special': App requires special handling (VS Code, Cursor, Slack)
  */
 export async function setupApp(
@@ -194,16 +194,16 @@ export async function setupApp(
   if (existsSync(configPath)) {
     const content = await readFile(configPath);
 
-    // Check if already has Flowstate integration
-    if (hasFlowstateIntegration(content)) {
+    // Check if already has Ricekit integration
+    if (hasRicekitIntegration(content)) {
       return ok({
         action: 'already_setup',
         configPath,
-        message: `${appName} is already configured with Flowstate integration.`,
+        message: `${appName} is already configured with Ricekit integration.`,
       });
     }
 
-    // Config exists but no Flowstate - return snippet for clipboard
+    // Config exists but no Ricekit - return snippet for clipboard
     const snippetInfo = getSnippet(normalizedName);
     if (snippetInfo) {
       return ok({
@@ -297,7 +297,7 @@ export async function previewSetup(
       fileExists,
       hasExistingIntegration: false, // VS Code doesn't use file imports
       currentContent,
-      message: 'VS Code integration is automatic. Flowstate will update settings.json with the current theme colors.',
+      message: 'VS Code integration is automatic. Ricekit will update settings.json with the current theme colors.',
     });
   }
 
@@ -324,7 +324,7 @@ export async function previewSetup(
       fileExists,
       hasExistingIntegration: false,
       currentContent,
-      message: 'Cursor integration is automatic. Flowstate will update settings.json with the current theme colors.',
+      message: 'Cursor integration is automatic. Ricekit will update settings.json with the current theme colors.',
     });
   }
 
@@ -361,7 +361,7 @@ export async function previewSetup(
   // Check if config already exists
   if (fileExists) {
     const content = await readFile(configPath);
-    const hasIntegration = hasFlowstateIntegration(content);
+    const hasIntegration = hasRicekitIntegration(content);
 
     if (hasIntegration) {
       return ok({
@@ -370,11 +370,11 @@ export async function previewSetup(
         fileExists: true,
         hasExistingIntegration: true,
         currentContent: truncateContent(content),
-        message: `${appName} is already configured with Flowstate integration.`,
+        message: `${appName} is already configured with Ricekit integration.`,
       });
     }
 
-    // Config exists but no Flowstate - return snippet info
+    // Config exists but no Ricekit - return snippet info
     const snippetInfo = getSnippet(normalizedName);
     if (snippetInfo) {
       return ok({

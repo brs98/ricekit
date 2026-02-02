@@ -13,10 +13,10 @@ function isPlainObject(data: unknown): data is Record<string, unknown> {
 }
 
 /**
- * Get the Flowstate application data directory
+ * Get the Ricekit application data directory
  */
 export function getAppDataDir(): string {
-  return path.join(app.getPath('appData'), 'Flowstate');
+  return path.join(app.getPath('appData'), 'Ricekit');
 }
 
 /**
@@ -76,7 +76,7 @@ export function getUIStatePath(): string {
 }
 
 /**
- * Create all required directories for Flowstate
+ * Create all required directories for Ricekit
  */
 export function ensureDirectories(): void {
   const dirs = [
@@ -349,14 +349,14 @@ export function ensureThemeSymlink(): void {
 }
 
 /**
- * Initialize all Flowstate directories and files
+ * Initialize all Ricekit directories and files
  */
 export function initializeApp(): void {
-  logger.info('Initializing Flowstate application directories...');
+  logger.info('Initializing Ricekit application directories...');
   ensureDirectories();
   ensurePreferences();
   ensureState();
-  logger.info('Flowstate initialization complete!');
+  logger.info('Ricekit initialization complete!');
 }
 
 /**

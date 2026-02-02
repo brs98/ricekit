@@ -48,7 +48,7 @@ async function runTests() {
 
     // Test 2: Verify symlink can be created
     const homeDir = require('os').homedir();
-    const currentDir = path.join(homeDir, 'Library', 'Application Support', 'MacTheme', 'current');
+    const currentDir = path.join(homeDir, 'Library', 'Application Support', 'Ricekit', 'current');
     const symlinkPath = path.join(currentDir, 'theme');
 
     // Test 3: Apply tokyo-night theme
@@ -77,7 +77,7 @@ async function runTests() {
     }
 
     // Test 6: Verify state.json updated
-    const statePath = path.join(homeDir, 'Library', 'Application Support', 'MacTheme', 'state.json');
+    const statePath = path.join(homeDir, 'Library', 'Application Support', 'Ricekit', 'state.json');
     if (fs.existsSync(statePath)) {
       const state = JSON.parse(fs.readFileSync(statePath, 'utf-8'));
       if (state.currentTheme === 'tokyo-night') {

@@ -166,7 +166,7 @@ console.log('\n📋 Step 6: Verify test wallpapers created\n');
 
 const themePath = path.join(
   os.homedir(),
-  'Library/Application Support/MacTheme/themes/tokyo-night/wallpapers'
+  'Library/Application Support/Ricekit/themes/tokyo-night/wallpapers'
 );
 
 const lightWallpaperExists = fs.existsSync(path.join(themePath, 'light.png'));
@@ -210,7 +210,7 @@ console.log(`   🎯 Success Rate: ${Math.round((passed / (passed + failed)) * 1
 if (failed === 0) {
   console.log('\n🎉 ALL TESTS PASSED! Dynamic wallpaper feature is fully implemented.\n');
   console.log('Next Steps for Manual Testing:');
-  console.log('1. Open MacTheme app and navigate to Wallpapers view');
+  console.log('1. Open Ricekit app and navigate to Wallpapers view');
   console.log('2. Verify "Dynamic Wallpaper" toggle is visible');
   console.log('3. Enable the toggle');
   console.log('4. Change macOS appearance: System Preferences > Appearance');

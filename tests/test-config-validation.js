@@ -12,7 +12,7 @@ const yaml = require('js-yaml');
 
 // Get theme directories
 const homeDir = require('os').homedir();
-const themesDir = path.join(homeDir, 'Library', 'Application Support', 'MacTheme', 'custom-themes');
+const themesDir = path.join(homeDir, 'Library', 'Application Support', 'Ricekit', 'custom-themes');
 
 let testResults = {
   alacritty: { passed: 0, failed: 0, errors: [] },
@@ -318,7 +318,7 @@ async function runTests() {
   console.log('='.repeat(80));
 
   // Test bundled themes first
-  const bundledThemesDir = path.join(homeDir, 'Library', 'Application Support', 'MacTheme', 'themes');
+  const bundledThemesDir = path.join(homeDir, 'Library', 'Application Support', 'Ricekit', 'themes');
 
   console.log('\n📦 Testing bundled themes:');
   if (fs.existsSync(bundledThemesDir)) {

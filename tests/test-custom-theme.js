@@ -39,7 +39,7 @@ const testTheme = {
 };
 
 // Create test theme directory
-const customThemesDir = path.join(os.homedir(), 'Library', 'Application Support', 'MacTheme', 'custom-themes');
+const customThemesDir = path.join(os.homedir(), 'Library', 'Application Support', 'Ricekit', 'custom-themes');
 const testThemeDir = path.join(customThemesDir, 'test-theme');
 
 console.log('Creating test theme at:', testThemeDir);

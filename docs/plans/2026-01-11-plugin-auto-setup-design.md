@@ -2,7 +2,7 @@
 
 ## Overview
 
-MacTheme currently themes apps that users have already installed and configured. This design adds the ability to auto-install plugins (starting with system/UI tools) and provide default configurations for new users, while respecting existing setups.
+Ricekit currently themes apps that users have already installed and configured. This design adds the ability to auto-install plugins (starting with system/UI tools) and provide default configurations for new users, while respecting existing setups.
 
 ## Scope
 
@@ -16,14 +16,14 @@ MacTheme currently themes apps that users have already installed and configured.
 
 ### Two-Layer Model
 
-MacTheme separates **configs** (structure/layout) from **themes** (colors):
+Ricekit separates **configs** (structure/layout) from **themes** (colors):
 
 ```
 ┌─────────────────────────────────────────────────────────┐
 │ Config Layer                                            │
 │ • Defines what exists (bar items, window rules, etc.)   │
 │ • User chooses: Preset (managed) or Custom (their own)  │
-│ • Presets are symlinked, updatable by MacTheme          │
+│ • Presets are symlinked, updatable by Ricekit           │
 └─────────────────────────────────────────────────────────┘
                           ↓
 ┌─────────────────────────────────────────────────────────┐
@@ -37,7 +37,7 @@ MacTheme separates **configs** (structure/layout) from **themes** (colors):
 ### File Structure
 
 ```
-~/Library/Application Support/MacTheme/
+~/Library/Application Support/Ricekit/
 ├── presets/
 │   ├── sketchybar/
 │   │   ├── minimal/
@@ -66,16 +66,16 @@ MacTheme separates **configs** (structure/layout) from **themes** (colors):
 For SketchyBar (`~/.config/sketchybar/`):
 
 ```
-sketchybarrc      # MacTheme-managed: imports preset + colors + overrides
+sketchybarrc      # Ricekit-managed: imports preset + colors + overrides
 overrides.sh      # User-owned: customizations that survive preset switches
 ```
 
 The `sketchybarrc` contains:
 
 ```bash
-# MacTheme-managed - do not edit
-source "$HOME/Library/Application Support/MacTheme/current/presets/sketchybar/sketchybarrc"
-source "$HOME/Library/Application Support/MacTheme/current/theme/sketchybar-colors.sh"
+# Ricekit-managed - do not edit
+source "$HOME/Library/Application Support/Ricekit/current/presets/sketchybar/sketchybarrc"
+source "$HOME/Library/Application Support/Ricekit/current/theme/sketchybar-colors.sh"
 source "$HOME/.config/sketchybar/overrides.sh"
 ```
 
@@ -93,13 +93,13 @@ When user clicks "Set Up SketchyBar":
    - Create `~/.config/sketchybar/` if needed
    - Write `sketchybarrc` with imports
    - Create empty `overrides.sh` with helpful comments
-   - Symlink selected preset in MacTheme's `current/presets/`
+   - Symlink selected preset in Ricekit's `current/presets/`
    - Start service: `brew services start sketchybar`
    - Mark app as enabled in preferences
 
 ### For Users WITH Existing Config
 
-MacTheme auto-detects existing configs and defaults to "Custom" mode:
+Ricekit auto-detects existing configs and defaults to "Custom" mode:
 
 - Shows "Using your existing config" badge in UI
 - Only adds color import line to their existing config
@@ -167,7 +167,7 @@ interface Preferences {
 interface PluginConfig {
   mode: 'preset' | 'custom';
   preset?: string;                     // e.g., "minimal", "pro", "islands"
-  installedBy: 'mactheme' | 'user' | 'unknown';
+  installedBy: 'ricekit' | 'user' | 'unknown';
   configBackupPath?: string;           // path to user's original config backup
 }
 ```
@@ -181,12 +181,12 @@ interface PluginConfig {
     "sketchybar": {
       "mode": "preset",
       "preset": "pro",
-      "installedBy": "mactheme"
+      "installedBy": "ricekit"
     },
     "aerospace": {
       "mode": "custom",
       "installedBy": "user",
-      "configBackupPath": "~/.config/aerospace/aerospace.toml.mactheme-backup"
+      "configBackupPath": "~/.config/aerospace/aerospace.toml.ricekit-backup"
     }
   }
 }
@@ -194,7 +194,7 @@ interface PluginConfig {
 
 ### Why Track `installedBy`
 
-- If MacTheme installed it → offer "Uninstall" option
+- If Ricekit installed it → offer "Uninstall" option
 - If user installed it → only manage config, never offer uninstall
 - Helps with troubleshooting
 
@@ -229,7 +229,7 @@ interface PluginConfig {
 
 ### Uninstall Flow
 
-For MacTheme-installed apps only:
+For Ricekit-installed apps only:
 
 ```
 "Remove SketchyBar?"

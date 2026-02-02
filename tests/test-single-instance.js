@@ -10,7 +10,7 @@ const path = require('path');
 
 console.log('\n=== Testing Single Instance Lock (Test #128) ===\n');
 
-console.log('Step 1: MacTheme application is already running');
+console.log('Step 1: Ricekit application is already running');
 console.log('  Current process(es) running\n');
 
 console.log('Step 2: Attempting to launch a second instance...');
@@ -58,7 +58,7 @@ secondInstance.on('close', (code) => {
   }
 
   console.log('\nManual Verification Steps:');
-  console.log('1. Check that only ONE MacTheme window exists');
+  console.log('1. Check that only ONE Ricekit window exists');
   console.log('2. Check that the existing window was brought to front');
   console.log('3. Try launching the app from Finder/Spotlight and verify same behavior');
 });

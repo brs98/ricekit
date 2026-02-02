@@ -70,7 +70,7 @@ app.whenReady().then(async () => {
     console.log('✓ Browser window created and loaded\n');
 
     // Get paths
-    const customThemesDir = path.join(os.homedir(), 'Library', 'Application Support', 'MacTheme', 'custom-themes');
+    const customThemesDir = path.join(os.homedir(), 'Library', 'Application Support', 'Ricekit', 'custom-themes');
 
     // Test 1: Create a test theme to delete
     console.log('Test 1: Creating test theme for deletion...');

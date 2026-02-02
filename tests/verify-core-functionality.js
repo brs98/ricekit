@@ -11,7 +11,7 @@ console.log('VERIFICATION TEST - Core Functionality Check');
 console.log('='.repeat(60));
 console.log('');
 
-const appSupportPath = path.join(require('os').homedir(), 'Library/Application Support/MacTheme');
+const appSupportPath = path.join(require('os').homedir(), 'Library/Application Support/Ricekit');
 
 // Test 1: Verify directory structure exists
 console.log('Test 1: Directory structure...');

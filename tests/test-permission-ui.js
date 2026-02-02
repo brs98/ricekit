@@ -12,7 +12,7 @@ const path = require('path');
 const os = require('os');
 const fs = require('fs');
 
-const CURRENT_DIR = path.join(os.homedir(), 'Library/Application Support/MacTheme/current');
+const CURRENT_DIR = path.join(os.homedir(), 'Library/Application Support/Ricekit/current');
 
 console.log('[TEST] Permission Error UI Test');
 console.log('[TEST] ========================================\n');
@@ -77,7 +77,7 @@ async function runTest() {
     console.log('[TEST] Expected result:');
     console.log('[TEST] ✓ An alert/dialog appears with "Permission Error"');
     console.log('[TEST] ✓ Message mentions "insufficient permissions"');
-    console.log('[TEST] ✓ Message includes path to MacTheme directory');
+    console.log('[TEST] ✓ Message includes path to Ricekit directory');
     console.log('[TEST] ✓ Message suggests chmod command');
     console.log('[TEST] ✓ NO technical error messages or stack traces');
     console.log('[TEST] ');

@@ -8,8 +8,8 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
-const THEMES_DIR = path.join(os.homedir(), 'Library/Application Support/MacTheme/themes');
-const CUSTOM_THEMES_DIR = path.join(os.homedir(), 'Library/Application Support/MacTheme/custom-themes');
+const THEMES_DIR = path.join(os.homedir(), 'Library/Application Support/Ricekit/themes');
+const CUSTOM_THEMES_DIR = path.join(os.homedir(), 'Library/Application Support/Ricekit/custom-themes');
 
 // Simulate the theme loading logic from main process
 function loadThemeFromDirectory(themeDir, themeName) {

@@ -166,7 +166,7 @@ export async function exportTheme(
   }
 
   // Default output path
-  const exportPath = outputPath || path.join(os.homedir(), 'Downloads', `${name}.flowstate`);
+  const exportPath = outputPath || path.join(os.homedir(), 'Downloads', `${name}.ricekit`);
 
   // Ensure output directory exists
   await ensureDir(path.dirname(exportPath));
@@ -205,7 +205,7 @@ export async function importTheme(
   }
 
   // Create temporary directory for extraction
-  const tmpDir = path.join(os.tmpdir(), `flowstate-import-${Date.now()}`);
+  const tmpDir = path.join(os.tmpdir(), `ricekit-import-${Date.now()}`);
   await ensureDir(tmpDir);
 
   try {
@@ -294,15 +294,15 @@ export async function importThemeFromUrl(
   }
 
   // Create temporary directory for download
-  const tmpDir = path.join(os.tmpdir(), `flowstate-url-import-${Date.now()}`);
+  const tmpDir = path.join(os.tmpdir(), `ricekit-url-import-${Date.now()}`);
   await ensureDir(tmpDir);
 
   try {
     // Determine filename from URL or use default
     const urlPath = parsedUrl.pathname;
-    let filename = path.basename(urlPath) || 'theme.flowstate';
-    if (!filename.endsWith('.flowstate') && !filename.endsWith('.zip')) {
-      filename += '.flowstate';
+    let filename = path.basename(urlPath) || 'theme.ricekit';
+    if (!filename.endsWith('.ricekit') && !filename.endsWith('.zip')) {
+      filename += '.ricekit';
     }
     const downloadPath = path.join(tmpDir, filename);
 

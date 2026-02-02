@@ -12,7 +12,7 @@ const os = require('os');
 console.log('🔍 Testing Theme Export Backend\n');
 
 // Test export path
-const testExportPath = path.join(os.tmpdir(), 'tokyo-night-test.mactheme');
+const testExportPath = path.join(os.tmpdir(), 'tokyo-night-test.ricekit');
 
 console.log('Test Configuration:');
 console.log('==================');
@@ -35,7 +35,7 @@ console.log('5. Return the export path\n');
 
 console.log('To test manually:');
 console.log('==================');
-console.log('1. Open the MacTheme app (should be running)');
+console.log('1. Open the Ricekit app (should be running)');
 console.log('2. Open DevTools (View > Toggle Developer Tools)');
 console.log('3. In the console, run:');
 console.log(`   await window.electronAPI.exportTheme("tokyo-night", "${testExportPath}")`);

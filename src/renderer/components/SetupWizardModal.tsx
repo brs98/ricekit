@@ -29,7 +29,7 @@ export function SetupWizardModal({ app, onClose, onSetupComplete }: SetupWizardM
 
   // Generate import statement based on app type (for instructions step)
   const getImportStatement = (): string => {
-    const basePath = '~/Library/Application Support/Flowstate/current/theme';
+    const basePath = '~/Library/Application Support/Ricekit/current/theme';
 
     switch (app.name) {
       case 'alacritty':
@@ -39,14 +39,14 @@ export function SetupWizardModal({ app, onClose, onSetupComplete }: SetupWizardM
       case 'iterm2':
         return 'iTerm2 uses .itermcolors files. Load via Preferences → Profiles → Colors → Color Presets → Import';
       case 'warp':
-        return `# Add to ~/.warp/themes/\ncp "${basePath}/warp.yaml" ~/.warp/themes/flowstate.yaml`;
+        return `# Add to ~/.warp/themes/\ncp "${basePath}/warp.yaml" ~/.warp/themes/ricekit.yaml`;
       case 'hyper':
         return `# Add to ~/.hyper.js config section\ncolors: require('${basePath}/hyper.js')`;
       case 'wezterm':
-        return `-- Flowstate WezTerm integration
-local flowstate_colors = wezterm.home_dir .. "/Library/Application Support/Flowstate/wezterm-colors.lua"
-wezterm.add_to_config_reload_watch_list(flowstate_colors)
-config.colors = dofile(flowstate_colors)`;
+        return `-- Ricekit WezTerm integration
+local ricekit_colors = wezterm.home_dir .. "/Library/Application Support/Ricekit/wezterm-colors.lua"
+wezterm.add_to_config_reload_watch_list(ricekit_colors)
+config.colors = dofile(ricekit_colors)`;
       case 'vscode':
         return 'VS Code themes are applied automatically via settings.json modification';
       case 'neovim':
@@ -73,7 +73,7 @@ config.colors = dofile(flowstate_colors)`;
         return `# Add to your sketchybarrc:
 source "$CONFIG_DIR/colors.sh"
 
-# Or source from Flowstate:
+# Or source from Ricekit:
 source "${basePath}/sketchybar-colors.sh"`;
       case 'slack':
         return `# Slack requires manual theme application
@@ -119,7 +119,7 @@ after-startup-command = [
       case 'vscode':
         return [
           'VS Code integration is automatic',
-          'Flowstate will modify your settings.json',
+          'Ricekit will modify your settings.json',
           'Click "Continue" below to preview the changes',
           'Or manually edit settings.json to include theme colors'
         ];
@@ -165,7 +165,7 @@ after-startup-command = [
           'Scroll down and click "Create a custom theme"',
           `Open the theme file: ${app.configPath}`,
           'Copy the theme string from the file and paste it into Slack',
-          'The theme will be applied automatically when you switch themes in Flowstate'
+          'The theme will be applied automatically when you switch themes in Ricekit'
         ];
       case 'aerospace':
         return [
@@ -262,22 +262,25 @@ after-startup-command = [
 
   return (
     <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle>Setup {app.displayName}</DialogTitle>
-          <DialogDescription>
-            {step === 'instructions' && `Configure ${app.displayName} to use Flowstate`}
-            {step === 'preview' && 'Review what will change before proceeding'}
-            {step === 'complete' && 'Setup complete!'}
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-[600px] p-0 gap-0 overflow-hidden">
+        <div className="bg-muted px-6 py-4">
+          <DialogHeader>
+            <DialogTitle>Setup {app.displayName}</DialogTitle>
+            <DialogDescription>
+              {step === 'instructions' && `Configure ${app.displayName} to use Ricekit`}
+              {step === 'preview' && 'Review what will change before proceeding'}
+              {step === 'complete' && 'Setup complete!'}
+            </DialogDescription>
+          </DialogHeader>
+        </div>
 
+        <div className="p-6 overflow-y-auto max-h-[60vh]">
         {/* Step 1: Instructions */}
         {step === 'instructions' && (
           <div className="space-y-4 py-4">
             <p className="text-sm text-muted-foreground">
-              To use Flowstate with {app.displayName}, you need to configure it to import
-              theme settings from Flowstate&apos;s current theme directory.
+              To use Ricekit with {app.displayName}, you need to configure it to import
+              theme settings from Ricekit&apos;s current theme directory.
             </p>
 
             {/* Import Statement */}
@@ -336,7 +339,7 @@ after-startup-command = [
                 <div>
                   <p className="font-medium text-green-600 dark:text-green-400">Already Configured</p>
                   <p className="text-sm text-muted-foreground">
-                    {app.displayName} is already set up with Flowstate integration.
+                    {app.displayName} is already set up with Ricekit integration.
                   </p>
                 </div>
               </div>
@@ -454,7 +457,7 @@ after-startup-command = [
               <div>
                 <p className="font-medium text-green-600 dark:text-green-400">Setup Complete</p>
                 <p className="text-sm text-muted-foreground">
-                  {app.displayName} has been configured to use Flowstate themes.
+                  {app.displayName} has been configured to use Ricekit themes.
                 </p>
               </div>
             </div>
@@ -466,7 +469,9 @@ after-startup-command = [
             )}
           </div>
         )}
+        </div>
 
+        <div className="bg-muted px-6 py-4">
         <DialogFooter className="gap-2 sm:gap-0">
           {/* Step 1: Instructions */}
           {step === 'instructions' && (
@@ -518,6 +523,7 @@ after-startup-command = [
             </Button>
           )}
         </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );

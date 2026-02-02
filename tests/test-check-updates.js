@@ -109,7 +109,7 @@ async function test() {
 
     // Take a screenshot for verification
     await page.screenshot({
-      path: '/Users/brandon/personal/mac-themes/autonomous-coding/mactheme/screenshots/test-129-check-updates.png',
+      path: '/Users/brandon/personal/mac-themes/autonomous-coding/ricekit/screenshots/test-129-check-updates.png',
       fullPage: true
     });
     console.log('\n✓ Screenshot saved to screenshots/test-129-check-updates.png');

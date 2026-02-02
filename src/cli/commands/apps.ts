@@ -173,7 +173,7 @@ export function createAppsCommand(): Command {
             break;
 
           case 'already_setup':
-            info(`${chalk.bold(appName)} is already configured with Flowstate`);
+            info(`${chalk.bold(appName)} is already configured with Ricekit`);
             console.log(chalk.gray(`  ${setupResult.configPath}`));
             break;
 
@@ -215,7 +215,7 @@ export function createAppsCommand(): Command {
         } else {
           success(`Removed ${chalk.bold(appName)} from auto-refresh`);
           console.log(chalk.gray('  Your config file was not modified'));
-          console.log(chalk.gray('  To fully remove Flowstate integration, manually edit your config'));
+          console.log(chalk.gray('  To fully remove Ricekit integration, manually edit your config'));
         }
       } catch (err: unknown) {
         error('Failed to unsetup app', err instanceof Error ? err.message : undefined);
@@ -237,7 +237,7 @@ export function createAppsCommand(): Command {
         supportedApps.forEach((app) => {
           console.log(`  ${app}`);
         });
-        console.log(chalk.gray('\nUse: flowstate apps setup <app>'));
+        console.log(chalk.gray('\nUse: ricekit apps setup <app>'));
         console.log();
       }
     });
@@ -256,7 +256,7 @@ export function createAppsCommand(): Command {
         } else {
           if (enabledApps.length === 0) {
             console.log(chalk.gray('\nNo apps enabled for auto-refresh'));
-            console.log(chalk.gray('Use: flowstate apps setup <app>'));
+            console.log(chalk.gray('Use: ricekit apps setup <app>'));
           } else {
             console.log(chalk.bold('\nApps enabled for auto-refresh:\n'));
             enabledApps.forEach((app) => {

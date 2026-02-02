@@ -9,7 +9,7 @@ const os = require('os');
 
 // Simple test to apply a theme
 async function testThemeApplication() {
-  const prefsPath = path.join(os.homedir(), 'Library', 'Application Support', 'MacTheme', 'preferences.json');
+  const prefsPath = path.join(os.homedir(), 'Library', 'Application Support', 'Ricekit', 'preferences.json');
   const prefs = JSON.parse(fs.readFileSync(prefsPath, 'utf-8'));
 
   console.log('\n=== Testing Theme Application with Notifications OFF ===\n');
@@ -25,14 +25,14 @@ async function testThemeApplication() {
   console.log();
 
   console.log('To test:');
-  console.log('1. In the MacTheme app, click on any theme card');
+  console.log('1. In the Ricekit app, click on any theme card');
   console.log('2. Click "Apply Theme"');
   console.log('3. Verify NO notification appears');
   console.log('4. Verify theme is still applied (check symlink and UI)');
   console.log();
 
   // Check current symlink
-  const symlinkPath = path.join(os.homedir(), 'Library', 'Application Support', 'MacTheme', 'current', 'theme');
+  const symlinkPath = path.join(os.homedir(), 'Library', 'Application Support', 'Ricekit', 'current', 'theme');
   try {
     const target = fs.readlinkSync(symlinkPath);
     console.log('Current theme symlink points to:', target);

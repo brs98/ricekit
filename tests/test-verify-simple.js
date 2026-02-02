@@ -17,17 +17,17 @@ function testThemeDirectories() {
   log('Testing theme directory structure...');
 
   const homeDir = os.homedir();
-  const macThemeDir = path.join(homeDir, 'Library', 'Application Support', 'MacTheme');
+  const macThemeDir = path.join(homeDir, 'Library', 'Application Support', 'Ricekit');
   const themesDir = path.join(macThemeDir, 'themes');
   const customThemesDir = path.join(macThemeDir, 'custom-themes');
   const currentDir = path.join(macThemeDir, 'current');
 
   // Check directories exist
   if (!fs.existsSync(macThemeDir)) {
-    log('✗ FAIL: MacTheme directory does not exist');
+    log('✗ FAIL: Ricekit directory does not exist');
     return false;
   }
-  log('✓ MacTheme directory exists');
+  log('✓ Ricekit directory exists');
 
   if (!fs.existsSync(themesDir)) {
     log('✗ FAIL: themes directory does not exist');
@@ -99,7 +99,7 @@ function testThemeFiles() {
   log('\nTesting theme file structure...');
 
   const homeDir = os.homedir();
-  const themesDir = path.join(homeDir, 'Library', 'Application Support', 'MacTheme', 'themes');
+  const themesDir = path.join(homeDir, 'Library', 'Application Support', 'Ricekit', 'themes');
   const tokyoNightDir = path.join(themesDir, 'tokyo-night');
 
   if (!fs.existsSync(tokyoNightDir)) {

@@ -381,9 +381,9 @@ export function PluginCard({
           <AlertDialogHeader>
             <AlertDialogTitle>Restore Original Configuration?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will restore your original {displayName} configuration from before Flowstate was applied.
+              This will restore your original {displayName} configuration from before Ricekit was applied.
               <br /><br />
-              Your current Flowstate preset configuration will be replaced with your backed-up config.
+              Your current Ricekit preset configuration will be replaced with your backed-up config.
               This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>

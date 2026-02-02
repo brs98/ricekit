@@ -51,7 +51,7 @@ async function simulateImport(zipPath) {
     }
 
     // Create temporary directory for extraction
-    const tmpDir = path.join(os.tmpdir(), `mactheme-test-import-${Date.now()}`);
+    const tmpDir = path.join(os.tmpdir(), `ricekit-test-import-${Date.now()}`);
     fs.mkdirSync(tmpDir, { recursive: true });
 
     try {
@@ -113,7 +113,7 @@ async function runTest() {
   console.log('='.repeat(70) + colors.reset);
   console.log('');
 
-  const testDir = path.join(os.tmpdir(), `mactheme-validation-test-${Date.now()}`);
+  const testDir = path.join(os.tmpdir(), `ricekit-validation-test-${Date.now()}`);
   fs.mkdirSync(testDir, { recursive: true });
 
   try {
@@ -148,7 +148,7 @@ async function runTest() {
     fs.writeFileSync(path.join(validThemeDir, 'alacritty.toml'), '# Alacritty config');
     fs.writeFileSync(path.join(validThemeDir, 'kitty.conf'), '# Kitty config');
 
-    const validZipPath = path.join(testDir, 'valid-theme.mactheme');
+    const validZipPath = path.join(testDir, 'valid-theme.ricekit');
     await createZipArchive(validThemeDir, validZipPath);
 
     const result1 = await simulateImport(validZipPath);
@@ -166,7 +166,7 @@ async function runTest() {
     fs.writeFileSync(path.join(invalidThemeDir, 'alacritty.toml'), '# Alacritty config');
     fs.writeFileSync(path.join(invalidThemeDir, 'kitty.conf'), '# Kitty config');
 
-    const invalidZipPath = path.join(testDir, 'invalid-no-json.mactheme');
+    const invalidZipPath = path.join(testDir, 'invalid-no-json.ricekit');
     await createZipArchive(invalidThemeDir, invalidZipPath);
 
     const result2 = await simulateImport(invalidZipPath);
@@ -183,7 +183,7 @@ async function runTest() {
     fs.mkdirSync(corruptedThemeDir, { recursive: true });
     fs.writeFileSync(path.join(corruptedThemeDir, 'theme.json'), '{ invalid json }');
 
-    const corruptedZipPath = path.join(testDir, 'corrupted-theme.mactheme');
+    const corruptedZipPath = path.join(testDir, 'corrupted-theme.ricekit');
     await createZipArchive(corruptedThemeDir, corruptedZipPath);
 
     const result3 = await simulateImport(corruptedZipPath);
@@ -200,7 +200,7 @@ async function runTest() {
 
     // Test 4: Empty archive
     console.log(`\n${colors.bright}${colors.cyan}Test 4: Empty archive${colors.reset}`);
-    const emptyZipPath = path.join(testDir, 'empty.mactheme');
+    const emptyZipPath = path.join(testDir, 'empty.ricekit');
     await new Promise((resolve, reject) => {
       const output = fs.createWriteStream(emptyZipPath);
       const archive = archiver('zip', { zlib: { level: 9 } });

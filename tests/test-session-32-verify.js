@@ -17,7 +17,7 @@ console.log('='.repeat(60));
 console.log('');
 
 // Test configuration
-const APP_SUPPORT = path.join(process.env.HOME, 'Library/Application Support/MacTheme');
+const APP_SUPPORT = path.join(process.env.HOME, 'Library/Application Support/Ricekit');
 const THEMES_DIR = path.join(APP_SUPPORT, 'themes');
 const CURRENT_DIR = path.join(APP_SUPPORT, 'current');
 const THEME_SYMLINK = path.join(CURRENT_DIR, 'theme');
@@ -42,7 +42,7 @@ function test(description, fn) {
 console.log('VERIFICATION TEST 1: Theme Directory Structure');
 console.log('-'.repeat(60));
 
-test('MacTheme directory exists', () => {
+test('Ricekit directory exists', () => {
   if (!fs.existsSync(APP_SUPPORT)) {
     throw new Error(`Directory not found: ${APP_SUPPORT}`);
   }

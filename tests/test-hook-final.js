@@ -9,7 +9,7 @@ const os = require('os');
 console.log('=== Final Hook Script Test ===\n');
 
 // Path to hook log file
-const logPath = path.join(os.homedir(), 'Library/Application Support/MacTheme/hook-log.txt');
+const logPath = path.join(os.homedir(), 'Library/Application Support/Ricekit/hook-log.txt');
 
 // Clear any previous log
 if (fs.existsSync(logPath)) {
@@ -21,7 +21,7 @@ if (fs.existsSync(logPath)) {
 const mockApp = {
   getPath: (name) => {
     if (name === 'userData') {
-      return path.join(os.homedir(), 'Library/Application Support/MacTheme');
+      return path.join(os.homedir(), 'Library/Application Support/Ricekit');
     }
     return os.homedir();
   }

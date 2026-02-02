@@ -15,7 +15,7 @@ const os = require('os');
 const { execSync } = require('child_process');
 
 const TEST_NAME = 'Permission Error Handling';
-const MACTHEME_DIR = path.join(os.homedir(), 'Library/Application Support/MacTheme');
+const MACTHEME_DIR = path.join(os.homedir(), 'Library/Application Support/Ricekit');
 
 console.log(`[TEST] ========================================`);
 console.log(`[TEST] TEST: ${TEST_NAME}`);
@@ -63,13 +63,13 @@ process.on('SIGINT', () => {
 });
 
 try {
-  // Test 1: Verify MacTheme directory exists
-  log(`Step 1: Verifying MacTheme directory exists...`);
+  // Test 1: Verify Ricekit directory exists
+  log(`Step 1: Verifying Ricekit directory exists...`);
   if (fs.existsSync(MACTHEME_DIR)) {
-    pass(`MacTheme directory exists: ${MACTHEME_DIR}`);
+    pass(`Ricekit directory exists: ${MACTHEME_DIR}`);
   } else {
-    fail(`MacTheme directory does not exist: ${MACTHEME_DIR}`);
-    throw new Error('MacTheme directory not found');
+    fail(`Ricekit directory does not exist: ${MACTHEME_DIR}`);
+    throw new Error('Ricekit directory not found');
   }
 
   // Test 2: Get original permissions
@@ -143,11 +143,11 @@ try {
     log(`\nMANUAL VERIFICATION REQUIRED:`);
     log(`=================================`);
     log(`1. Run the app with: npm run dev`);
-    log(`2. Make ~/Library/Application Support/MacTheme/themes read-only`);
+    log(`2. Make ~/Library/Application Support/Ricekit/themes read-only`);
     log(`3. Try to apply a theme`);
     log(`4. Verify you see a user-friendly error message`);
     log(`5. Verify the app does not crash`);
-    log(`6. Restore permissions: chmod -R u+w ~/Library/Application\\ Support/MacTheme`);
+    log(`6. Restore permissions: chmod -R u+w ~/Library/Application\\ Support/Ricekit`);
     process.exit(0);
   } else {
     console.log(`✗ SOME TESTS FAILED\n`);

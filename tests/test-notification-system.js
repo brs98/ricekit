@@ -67,7 +67,7 @@ if (ipcHandlersContent.includes('Wallpaper Applied')) {
   successNotifications.push('wallpaper-apply');
 }
 
-if (ipcHandlersContent.includes('Setup Complete') && ipcHandlersContent.includes('configured to use MacTheme')) {
+if (ipcHandlersContent.includes('Setup Complete') && ipcHandlersContent.includes('configured to use Ricekit')) {
   console.log('  ✓ App setup success notification');
   successNotifications.push('app-setup');
 }

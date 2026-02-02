@@ -19,7 +19,7 @@ const themeBasePath = `~/Library/Application Support/${APP_CONFIG.dataDirName}/c
  */
 export const APP_SNIPPETS = {
   wezterm: {
-    snippet: `-- Flowstate WezTerm integration
+    snippet: `-- Ricekit WezTerm integration
 local colors_path = wezterm.home_dir .. "/Library/Application Support/${APP_CONFIG.dataDirName}/wezterm-colors.lua"
 wezterm.add_to_config_reload_watch_list(colors_path)
 config.colors = dofile(colors_path)`,
@@ -42,13 +42,13 @@ config.colors = dofile(colors_path)`,
   },
 
   sketchybar: {
-    snippet: `# Flowstate SketchyBar integration
+    snippet: `# Ricekit SketchyBar integration
 source "$HOME/Library/Application Support/${APP_CONFIG.dataDirName}/current/theme/sketchybar-colors.sh"`,
     instructions: 'Add this near the top of your sketchybarrc (after #!/bin/bash):',
   },
 
   aerospace: {
-    snippet: `# Flowstate AeroSpace/JankyBorders integration
+    snippet: `# Ricekit AeroSpace/JankyBorders integration
 # Note: JankyBorders must be installed for border colors to work
 # Install with: brew install FelixKratz/formulae/borders
 after-startup-command = [

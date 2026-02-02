@@ -27,8 +27,8 @@ async function test() {
   let title = getWindowTitle();
   console.log(`Step 1: Initial window title: "${title}"`);
 
-  if (!title || !title.includes('MacTheme')) {
-    console.log('❌ FAIL: Window title does not contain "MacTheme"');
+  if (!title || !title.includes('Ricekit')) {
+    console.log('❌ FAIL: Window title does not contain "Ricekit"');
     return;
   }
 

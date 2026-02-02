@@ -61,8 +61,8 @@ async function testThemeSwitchTiming() {
   console.log('='.repeat(70));
 
   const homeDir = os.homedir();
-  const themesDir = path.join(homeDir, 'Library', 'Application Support', 'MacTheme', 'themes');
-  const currentDir = path.join(homeDir, 'Library', 'Application Support', 'MacTheme', 'current');
+  const themesDir = path.join(homeDir, 'Library', 'Application Support', 'Ricekit', 'themes');
+  const currentDir = path.join(homeDir, 'Library', 'Application Support', 'Ricekit', 'current');
   const symlinkPath = path.join(currentDir, 'theme');
 
   // Get available themes

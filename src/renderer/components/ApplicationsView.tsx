@@ -319,7 +319,7 @@ export function ApplicationsView() {
     <div className="apps-view">
       <div className="apps-header">
         <p className="apps-description">
-          Configure which applications should use Flowstate themes.
+          Configure which applications should use Ricekit themes.
           Detected: {apps.filter(a => a.isInstalled).length} / {apps.length} apps installed
         </p>
         <Button variant="outline" onClick={loadApps}>
@@ -457,7 +457,7 @@ export function ApplicationsView() {
         <div className="empty-state">
           <p>No supported applications detected.</p>
           <p className="empty-state-hint">
-            Install terminal emulators, editors, or CLI tools to use Flowstate.
+            Install terminal emulators, editors, or CLI tools to use Ricekit.
           </p>
         </div>
       )}

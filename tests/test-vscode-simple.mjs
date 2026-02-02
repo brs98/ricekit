@@ -5,7 +5,7 @@ import os from 'os';
 // Simulate theme application by checking file system changes
 async function testVSCode() {
   const vscodeSettingsPath = path.join(os.homedir(), 'Library', 'Application Support', 'Code', 'User', 'settings.json');
-  const statePath = path.join(os.homedir(), 'Library', 'Application Support', 'MacTheme', 'state.json');
+  const statePath = path.join(os.homedir(), 'Library', 'Application Support', 'Ricekit', 'state.json');
 
   console.log('=== VS Code Integration Test ===\n');
 
@@ -26,7 +26,7 @@ async function testVSCode() {
     console.log(`   Current VS Code theme: ${settings['workbench.colorTheme'] || 'not set'}`);
   }
 
-  console.log('\n2. Apply a theme through the MacTheme app UI');
+  console.log('\n2. Apply a theme through the Ricekit app UI');
   console.log('   (Use the app to apply tokyo-night theme)');
   console.log('\n   Press Enter when done...');
 

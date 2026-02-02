@@ -258,7 +258,7 @@ function App() {
           <DialogHeader>
             <DialogTitle>Import Theme from URL</DialogTitle>
             <DialogDescription>
-              Enter the URL of a theme file (.zip or .flowstate) to import it.
+              Enter the URL of a theme file (.zip or .ricekit) to import it.
             </DialogDescription>
           </DialogHeader>
           <Input
@@ -292,7 +292,7 @@ function App() {
 
       <div className="sidebar">
         <div className="sidebar-header">
-          <h1 className="text-lg font-semibold tracking-tight">Flowstate</h1>
+          <h1 className="text-lg font-semibold tracking-tight">Ricekit</h1>
         </div>
         <nav className="sidebar-nav">
           <button

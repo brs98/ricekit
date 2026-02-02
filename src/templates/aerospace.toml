@@ -1,9 +1,9 @@
 # AeroSpace configuration
-# Flowstate theme integration for JankyBorders
+# Ricekit theme integration for JankyBorders
 
 # Run the borders script on startup to apply theme colors
 after-startup-command = [
-  'exec-and-forget source "$HOME/Library/Application Support/Flowstate/current/theme/aerospace-borders.sh"'
+  'exec-and-forget source "$HOME/Library/Application Support/Ricekit/current/theme/aerospace-borders.sh"'
 ]
 
 # Add your customizations below

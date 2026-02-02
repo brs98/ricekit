@@ -10,7 +10,7 @@ const fs = require('fs');
 
 // Get theme directories
 const homeDir = require('os').homedir();
-const themesDir = path.join(homeDir, 'Library', 'Application Support', 'MacTheme', 'themes');
+const themesDir = path.join(homeDir, 'Library', 'Application Support', 'Ricekit', 'themes');
 
 console.log('🔍 Light Mode Marker File Test (Test #146)\n');
 console.log('Testing themes directory:', themesDir);

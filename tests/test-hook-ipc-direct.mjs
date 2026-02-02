@@ -14,7 +14,7 @@ const __dirname = dirname(__filename);
 console.log('=== Testing Hook Script via Direct IPC Call ===\n');
 
 // Path to hook log file
-const logPath = path.join(os.homedir(), 'Library/Application Support/MacTheme/hook-log.txt');
+const logPath = path.join(os.homedir(), 'Library/Application Support/Ricekit/hook-log.txt');
 
 // Clear any previous log
 if (fs.existsSync(logPath)) {
@@ -23,7 +23,7 @@ if (fs.existsSync(logPath)) {
 }
 
 // Verify preferences
-const prefsPath = path.join(os.homedir(), 'Library/Application Support/MacTheme/preferences.json');
+const prefsPath = path.join(os.homedir(), 'Library/Application Support/Ricekit/preferences.json');
 const prefs = JSON.parse(fs.readFileSync(prefsPath, 'utf-8'));
 
 console.log('Hook script path:', prefs.hookScript || 'NOT CONFIGURED');

@@ -18,7 +18,7 @@ async function testThemeApplyWithReload() {
   console.log('\n=== Testing Theme Application with Terminal Reload ===\n');
 
   // Check current theme
-  const statePath = path.join(os.homedir(), 'Library/Application Support/MacTheme/state.json');
+  const statePath = path.join(os.homedir(), 'Library/Application Support/Ricekit/state.json');
   const state = JSON.parse(fs.readFileSync(statePath, 'utf-8'));
   const currentTheme = state.currentTheme;
 
@@ -29,7 +29,7 @@ async function testThemeApplyWithReload() {
   console.log(`Will apply: ${themeToApply}\n`);
 
   console.log('To test the terminal reload feature:');
-  console.log('1. In the MacTheme app, click on a theme card');
+  console.log('1. In the Ricekit app, click on a theme card');
   console.log('2. Click the "Apply" button');
   console.log('3. Watch the console output from npm run dev\n');
 
@@ -50,7 +50,7 @@ async function testThemeApplyWithReload() {
   console.log('Verifying symlink after theme application...');
   await sleep(2000);
 
-  const symlinkPath = path.join(os.homedir(), 'Library/Application Support/MacTheme/current/theme');
+  const symlinkPath = path.join(os.homedir(), 'Library/Application Support/Ricekit/current/theme');
   try {
     const target = fs.readlinkSync(symlinkPath);
     console.log(`✓ Symlink points to: ${target}`);

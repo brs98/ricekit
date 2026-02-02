@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import os from 'os';
 
-const testDir = path.join(os.tmpdir(), 'flowstate-plugin-test-' + Date.now());
+const testDir = path.join(os.tmpdir(), 'ricekit-plugin-test-' + Date.now());
 const mockHomeDir = path.join(testDir, 'home');
 
 // Mock electron modules
@@ -132,9 +132,9 @@ const realHomeDir = os.homedir();
 describe('pluginHandlers', () => {
   beforeEach(() => {
     // Create test directories
-    fs.mkdirSync(path.join(testDir, 'appdata', 'Flowstate', 'presets'), { recursive: true });
-    fs.mkdirSync(path.join(testDir, 'appdata', 'Flowstate', 'current', 'presets'), { recursive: true });
-    fs.mkdirSync(path.join(testDir, 'appdata', 'Flowstate', 'current', 'theme'), { recursive: true });
+    fs.mkdirSync(path.join(testDir, 'appdata', 'Ricekit', 'presets'), { recursive: true });
+    fs.mkdirSync(path.join(testDir, 'appdata', 'Ricekit', 'current', 'presets'), { recursive: true });
+    fs.mkdirSync(path.join(testDir, 'appdata', 'Ricekit', 'current', 'theme'), { recursive: true });
     fs.mkdirSync(path.join(mockHomeDir, '.config', 'sketchybar'), { recursive: true });
     fs.mkdirSync(path.join(mockHomeDir, '.config', 'aerospace'), { recursive: true });
 
@@ -224,7 +224,7 @@ describe('pluginHandlers', () => {
           sketchybar: {
             mode: 'preset',
             preset: 'minimal',
-            installedBy: 'flowstate',
+            installedBy: 'ricekit',
           },
         },
         favorites: [],
@@ -242,7 +242,7 @@ describe('pluginHandlers', () => {
       expect(config).not.toBeNull();
       expect(config?.mode).toBe('preset');
       expect(config?.preset).toBe('minimal');
-      expect(config?.installedBy).toBe('flowstate');
+      expect(config?.installedBy).toBe('ricekit');
     });
   });
 
@@ -254,7 +254,7 @@ describe('pluginHandlers', () => {
           sketchybar: {
             mode: 'preset',
             preset: 'minimal',
-            installedBy: 'flowstate',
+            installedBy: 'ricekit',
           },
         },
         favorites: [],
@@ -372,7 +372,7 @@ describe('pluginHandlers - generateWrapperConfig', () => {
     expect(starshipConfigCall).toBeDefined();
     if (!starshipConfigCall) return;
     const content = String(starshipConfigCall[1]);
-    expect(content).toContain('# Flowstate Starship Configuration');
+    expect(content).toContain('# Ricekit Starship Configuration');
     expect(content).toContain('# Preset: minimal');
     // Preset content should be copied inline (starship doesn't support includes)
     expect(content).toContain('format = "$all"');
@@ -401,7 +401,7 @@ describe('pluginHandlers - generateWrapperConfig', () => {
     expect(tmuxConfigCall).toBeDefined();
     if (!tmuxConfigCall) return;
     const content = String(tmuxConfigCall[1]);
-    expect(content).toContain('# Flowstate tmux Configuration');
+    expect(content).toContain('# Ricekit tmux Configuration');
     expect(content).toContain('source-file');
     expect(content).toContain('tmux-colors.conf');
     expect(content).toContain('.tmux-overrides.conf');
@@ -444,7 +444,7 @@ describe('pluginHandlers - generateWrapperConfig', () => {
     expect(batConfigCall).toBeDefined();
     if (!batConfigCall) return;
     const content = String(batConfigCall[1]);
-    expect(content).toContain('# Flowstate bat Configuration');
+    expect(content).toContain('# Ricekit bat Configuration');
     // bat copies preset content inline since it doesn't support includes
     expect(content).toContain('--');
   });

@@ -27,7 +27,7 @@ async function testWallpaperList() {
   }
 
   try {
-    const macThemeDir = path.join(os.homedir(), 'Library', 'Application Support', 'MacTheme');
+    const macThemeDir = path.join(os.homedir(), 'Library', 'Application Support', 'Ricekit');
     const customThemesDir = path.join(macThemeDir, 'custom-themes');
 
     console.log('A. Setup - Create test theme with wallpapers');

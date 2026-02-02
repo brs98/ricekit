@@ -10,7 +10,7 @@ async function testImageColorExtraction() {
 
   try {
     // Launch the Electron app
-    console.log('\n📱 Step 1: Launching MacTheme app...');
+    console.log('\n📱 Step 1: Launching Ricekit app...');
     app = await electron.launch({
       args: ['.'],
       env: { ...process.env }

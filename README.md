@@ -10,7 +10,7 @@
 
 ## Overview
 
-Flowstate is inspired by Omarchy's Linux theming system and brings unified theme management to macOS. Using a symlink-based architecture, Flowstate allows you to switch themes across all your favorite applications with a single click.
+Ricekit is inspired by Omarchy's Linux theming system and brings unified theme management to macOS. Using a symlink-based architecture, Ricekit allows you to switch themes across all your favorite applications with a single click.
 
 ### Key Features
 
@@ -62,7 +62,7 @@ Flowstate is inspired by Omarchy's Linux theming system and brings unified theme
 ```bash
 # Clone the repository
 git clone <repository-url>
-cd mactheme
+cd ricekit
 
 # Run setup script
 ./init.sh
@@ -91,7 +91,7 @@ npm run package
 ### Project Structure
 
 ```
-mactheme/
+ricekit/
 ├── src/
 │   ├── main/           # Electron main process
 │   │   ├── main.ts     # Application entry point
@@ -143,10 +143,10 @@ npm test         # Run tests
 
 ### Theming System
 
-Flowstate uses a symlink-based architecture for seamless theme switching:
+Ricekit uses a symlink-based architecture for seamless theme switching:
 
 ```
-~/Library/Application Support/Flowstate/
+~/Library/Application Support/Ricekit/
 ├── themes/              # Built-in themes
 │   ├── tokyo-night/
 │   ├── catppuccin-mocha/
@@ -168,19 +168,19 @@ Flowstate uses a symlink-based architecture for seamless theme switching:
 **Alacritty** (`~/.config/alacritty/alacritty.toml`):
 
 ```toml
-import = ["~/Library/Application Support/Flowstate/current/theme/alacritty.toml"]
+import = ["~/Library/Application Support/Ricekit/current/theme/alacritty.toml"]
 ```
 
 **Kitty** (`~/.config/kitty/kitty.conf`):
 
 ```
-include ~/Library/Application Support/Flowstate/current/theme/kitty.conf
+include ~/Library/Application Support/Ricekit/current/theme/kitty.conf
 ```
 
 **Neovim** (`~/.config/nvim/lua/plugins/theme.lua`):
 
 ```lua
-dofile(vim.fn.expand("~/Library/Application Support/Flowstate/current/theme/neovim.lua"))
+dofile(vim.fn.expand("~/Library/Application Support/Ricekit/current/theme/neovim.lua"))
 ```
 
 ### IPC Channels
@@ -344,6 +344,6 @@ See `feature_list.json` for the complete development roadmap. Major milestones:
 
 Made with 💙 for the macOS theming community
 
-**[⬆ Back to Top](#mactheme---unified-macos-theming-system)**
+**[⬆ Back to Top](#ricekit---unified-macos-theming-system)**
 
 </div>

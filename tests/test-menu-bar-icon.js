@@ -38,9 +38,9 @@ console.log('\n✓ Test 4: Tray icon is created');
 console.log(`  Found: ${trayCreationMatch ? 'YES' : 'NO'}`);
 
 // Test 5: Verify tooltip is set
-const tooltipMatch = mainContent.match(/setToolTip\(['"]MacTheme.*?['"]\)/);
+const tooltipMatch = mainContent.match(/setToolTip\(['"]Ricekit.*?['"]\)/);
 console.log('\n✓ Test 5: Tooltip is set');
-console.log(`  Found: ${tooltipMatch ? 'YES - "MacTheme - Theme Switcher"' : 'NO'}`);
+console.log(`  Found: ${tooltipMatch ? 'YES - "Ricekit - Theme Switcher"' : 'NO'}`);
 
 console.log('\n=====================================');
 console.log('Summary of Test #184 Requirements:');

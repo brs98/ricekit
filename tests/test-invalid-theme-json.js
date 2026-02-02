@@ -188,7 +188,7 @@ console.log('--- Part 4: Manual Verification Steps ---\n');
 
 const customThemesDir = path.join(
   os.homedir(),
-  'Library/Application Support/MacTheme/custom-themes'
+  'Library/Application Support/Ricekit/custom-themes'
 );
 
 console.log('To fully verify this feature:');
@@ -201,7 +201,7 @@ console.log('2. Create test theme with missing theme.json:');
 console.log(`   mkdir -p "${customThemesDir}/test-missing"`);
 console.log(`   touch "${customThemesDir}/test-missing/alacritty.toml"`);
 console.log();
-console.log('3. Restart MacTheme app');
+console.log('3. Restart Ricekit app');
 console.log('4. Check terminal logs for:');
 console.log('   - "Error loading theme test-invalid: <error>"');
 console.log('   - "No theme.json found for test-missing"');

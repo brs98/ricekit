@@ -71,7 +71,7 @@ app.whenReady().then(async () => {
     console.log('✓ Browser window created and loaded\n');
 
     // Get paths
-    const customThemesDir = path.join(os.homedir(), 'Library', 'Application Support', 'MacTheme', 'custom-themes');
+    const customThemesDir = path.join(os.homedir(), 'Library', 'Application Support', 'Ricekit', 'custom-themes');
     const testThemeName = 'test-theme-' + Date.now();
     const testThemeDirName = testThemeName.toLowerCase().replace(/[^a-z0-9-]/g, '-');
     const testThemeDir = path.join(customThemesDir, testThemeDirName);

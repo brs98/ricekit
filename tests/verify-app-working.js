@@ -10,10 +10,10 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
-const MACTHEME_DIR = path.join(os.homedir(), 'Library', 'Application Support', 'MacTheme');
+const MACTHEME_DIR = path.join(os.homedir(), 'Library', 'Application Support', 'Ricekit');
 const CURRENT_LINK = path.join(MACTHEME_DIR, 'current', 'theme');
 
-console.log('🧪 MacTheme Verification Test');
+console.log('🧪 Ricekit Verification Test');
 console.log('=' .repeat(50));
 
 async function runTest() {

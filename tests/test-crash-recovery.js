@@ -16,7 +16,7 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
-const UI_STATE_PATH = path.join(os.homedir(), 'Library/Application Support/MacTheme/ui-state.json');
+const UI_STATE_PATH = path.join(os.homedir(), 'Library/Application Support/Ricekit/ui-state.json');
 
 console.log('============================================================');
 console.log('TEST #159: Crash Recovery Functionality');
@@ -30,7 +30,7 @@ async function waitForApp() {
   console.log('Waiting for app to start...');
   for (let i = 0; i < 30; i++) {
     try {
-      const result = execSync('ps aux | grep -i "electron.*mactheme" | grep -v grep', { encoding: 'utf8' });
+      const result = execSync('ps aux | grep -i "electron.*ricekit" | grep -v grep', { encoding: 'utf8' });
       if (result.trim()) {
         console.log('✓ App is running');
         return true;
@@ -118,7 +118,7 @@ async function runTest() {
   console.log('\nStep 7: Verify app is stopped');
   await sleep(2000);
   try {
-    const result = execSync('ps aux | grep -i "electron.*mactheme" | grep -v grep', { encoding: 'utf8' });
+    const result = execSync('ps aux | grep -i "electron.*ricekit" | grep -v grep', { encoding: 'utf8' });
     if (result.trim()) {
       console.log('⚠ App still running, trying again...');
       await killApp();

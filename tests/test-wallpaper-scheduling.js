@@ -18,8 +18,8 @@ console.log('TEST #150: Wallpaper Scheduling by Time of Day');
 console.log('='.repeat(70));
 console.log('');
 
-const prefsPath = path.join(os.homedir(), 'Library/Application Support/MacTheme/preferences.json');
-const themesPath = path.join(os.homedir(), 'Library/Application Support/MacTheme/themes');
+const prefsPath = path.join(os.homedir(), 'Library/Application Support/Ricekit/preferences.json');
+const themesPath = path.join(os.homedir(), 'Library/Application Support/Ricekit/themes');
 
 // Test 1: Check if preferences file exists
 console.log('Test 1: Checking preferences file...');
@@ -32,7 +32,7 @@ console.log('  ✓ Preferences file exists');
 // Test 2: Get wallpapers from current theme
 console.log('\nTest 2: Getting wallpapers from current theme...');
 const prefs = JSON.parse(fs.readFileSync(prefsPath, 'utf-8'));
-const state = JSON.parse(fs.readFileSync(path.join(os.homedir(), 'Library/Application Support/MacTheme/state.json'), 'utf-8'));
+const state = JSON.parse(fs.readFileSync(path.join(os.homedir(), 'Library/Application Support/Ricekit/state.json'), 'utf-8'));
 const currentTheme = state.currentTheme;
 console.log(`  Current theme: ${currentTheme}`);
 
@@ -179,7 +179,7 @@ console.log('');
 console.log('✓ Wallpaper scheduling feature is ready!');
 console.log('');
 console.log('HOW TO USE:');
-console.log('1. Open MacTheme app');
+console.log('1. Open Ricekit app');
 console.log('2. Navigate to Wallpapers view');
 console.log('3. Click the "Scheduling" toggle to enable');
 console.log('4. Click "Manage Schedules" button');

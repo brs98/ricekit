@@ -9,7 +9,7 @@ import os from 'os';
 console.log('=== Testing Hook Script Execution ===\n');
 
 // Path to hook log file
-const logPath = path.join(os.homedir(), 'Library/Application Support/MacTheme/hook-log.txt');
+const logPath = path.join(os.homedir(), 'Library/Application Support/Ricekit/hook-log.txt');
 
 // Clear any previous log
 if (fs.existsSync(logPath)) {
@@ -18,7 +18,7 @@ if (fs.existsSync(logPath)) {
 }
 
 // Path to preferences
-const prefsPath = path.join(os.homedir(), 'Library/Application Support/MacTheme/preferences.json');
+const prefsPath = path.join(os.homedir(), 'Library/Application Support/Ricekit/preferences.json');
 
 // Verify preferences has hook script configured
 console.log('=== Checking Preferences ===');
@@ -73,7 +73,7 @@ import { exec } from 'child_process';
 // Or we can just manually test through the UI
 
 console.log('\nTo complete the test:');
-console.log('1. Click on any theme in the MacTheme app');
+console.log('1. Click on any theme in the Ricekit app');
 console.log('2. Run this command to check the log:');
 console.log(`   cat "${logPath}"`);
 console.log('\n⏳ Waiting for manual theme application...');

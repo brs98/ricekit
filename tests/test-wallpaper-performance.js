@@ -12,7 +12,7 @@ console.log('================================\n');
 // Test 1: Check if thumbnails directory exists
 console.log('Test 1: Check thumbnail cache directory');
 const homeDir = require('os').homedir();
-const thumbnailDir = path.join(homeDir, 'Library/Application Support/mactheme/thumbnails');
+const thumbnailDir = path.join(homeDir, 'Library/Application Support/ricekit/thumbnails');
 
 if (fs.existsSync(thumbnailDir)) {
   const files = fs.readdirSync(thumbnailDir);
@@ -44,7 +44,7 @@ if (fs.existsSync(thumbnailDir)) {
 
 // Test 2: Check wallpaper directories
 console.log('\n\nTest 2: Check available wallpapers');
-const themesDir = path.join(homeDir, 'Library/Application Support/MacTheme/themes');
+const themesDir = path.join(homeDir, 'Library/Application Support/Ricekit/themes');
 
 if (fs.existsSync(themesDir)) {
   const themes = fs.readdirSync(themesDir);

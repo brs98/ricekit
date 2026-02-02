@@ -10,8 +10,8 @@ const path = require('path');
 const os = require('os');
 const archiver = require('archiver');
 
-const THEMES_DIR = path.join(os.homedir(), 'Library/Application Support/MacTheme/themes');
-const TEST_EXPORT_PATH = path.join(os.tmpdir(), 'tokyo-night-verification.mactheme');
+const THEMES_DIR = path.join(os.homedir(), 'Library/Application Support/Ricekit/themes');
+const TEST_EXPORT_PATH = path.join(os.tmpdir(), 'tokyo-night-verification.ricekit');
 
 console.log('🔍 Automated Theme Export Verification\n');
 
@@ -92,8 +92,8 @@ function verifyExport() {
   console.log('✓ File size is reasonable');
 
   // Check file extension
-  if (!TEST_EXPORT_PATH.endsWith('.mactheme')) {
-    console.log('❌ FAIL: File does not have .mactheme extension');
+  if (!TEST_EXPORT_PATH.endsWith('.ricekit')) {
+    console.log('❌ FAIL: File does not have .ricekit extension');
     process.exit(1);
   }
   console.log('✓ File has correct extension');

@@ -8,11 +8,11 @@
 const fs = require('fs');
 const path = require('path');
 
-const MACTHEME_DIR = path.join(require('os').homedir(), 'Library/Application Support/MacTheme');
+const MACTHEME_DIR = path.join(require('os').homedir(), 'Library/Application Support/Ricekit');
 const THEMES_DIR = path.join(MACTHEME_DIR, 'themes');
 const CURRENT_DIR = path.join(MACTHEME_DIR, 'current');
 
-console.log('🔍 MacTheme Basic Verification Test\n');
+console.log('🔍 Ricekit Basic Verification Test\n');
 
 // Test 1: Check themes directory exists
 console.log('Test 1: Themes directory exists');

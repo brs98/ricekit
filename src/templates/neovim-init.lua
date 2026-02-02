@@ -1,5 +1,5 @@
--- Flowstate Neovim integration
-dofile(vim.fn.expand("~/Library/Application Support/Flowstate/current/theme/neovim.lua"))
+-- Ricekit Neovim integration
+dofile(vim.fn.expand("~/Library/Application Support/Ricekit/current/theme/neovim.lua"))
 
 -- Add your customizations below
 vim.opt.number = true

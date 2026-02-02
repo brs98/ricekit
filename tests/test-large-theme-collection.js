@@ -40,8 +40,8 @@ async function runTest() {
   let window;
 
   try {
-    // Step 1: Launch MacTheme
-    console.log('Step 1: Launching MacTheme...');
+    // Step 1: Launch Ricekit
+    console.log('Step 1: Launching Ricekit...');
     const startTime = Date.now();
 
     electronApp = await electron.launch({

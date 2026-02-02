@@ -1,12 +1,12 @@
 {
-  "name": "flowstate",
+  "name": "ricekit",
   "version": "0.1.0",
   "description": "Unified macOS theming system for terminals, editors, and applications",
   "main": "dist/main/main.js",
   "bin": {
-    "flowstate": "./dist/cli/cli/index.js"
+    "ricekit": "./dist/cli/cli/index.js"
   },
-  "author": "Flowstate Contributors",
+  "author": "Ricekit Contributors",
   "license": "MIT",
   "private": true,
   "scripts": {
@@ -92,8 +92,8 @@
     "wait-on": "^7.2.0"
   },
   "build": {
-    "appId": "com.flowstate.app",
-    "productName": "Flowstate",
+    "appId": "com.ricekit.app",
+    "productName": "Ricekit",
     "directories": {
       "output": "release"
     },

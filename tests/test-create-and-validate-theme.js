@@ -12,7 +12,7 @@ const toml = require('@iarna/toml');
 const yaml = require('js-yaml');
 
 const homeDir = require('os').homedir();
-const customThemesDir = path.join(homeDir, 'Library', 'Application Support', 'MacTheme', 'custom-themes');
+const customThemesDir = path.join(homeDir, 'Library', 'Application Support', 'Ricekit', 'custom-themes');
 
 // Test theme metadata
 const testTheme = {

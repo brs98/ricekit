@@ -6,7 +6,7 @@
  *
  * Steps:
  * 1. Corrupt preferences.json with invalid JSON
- * 2. Launch MacTheme
+ * 2. Launch Ricekit
  * 3. Verify app initializes with default preferences
  * 4. Verify error is logged
  * 5. Verify new valid preferences.json is created
@@ -17,7 +17,7 @@ const path = require('path');
 const os = require('os');
 const { exec, spawn } = require('child_process');
 
-const MACTHEME_DIR = path.join(os.homedir(), 'Library', 'Application Support', 'MacTheme');
+const MACTHEME_DIR = path.join(os.homedir(), 'Library', 'Application Support', 'Ricekit');
 const PREFS_PATH = path.join(MACTHEME_DIR, 'preferences.json');
 
 console.log('🧪 Test #119: Application handles corrupted preference files (E2E)');
@@ -81,7 +81,7 @@ async function runTest() {
     }
 
     // Step 3: Launch app with corrupted preferences
-    console.log('\n🚀 Step 3: Launching MacTheme with corrupted preferences...');
+    console.log('\n🚀 Step 3: Launching Ricekit with corrupted preferences...');
     console.log('  (Watching for error logs...)');
 
     let capturedOutput = '';
@@ -196,7 +196,7 @@ async function runTest() {
     console.log('='.repeat(70));
     console.log('\nAll requirements met:');
     console.log('  ✓ Step 1: Corrupted preferences.json with invalid JSON');
-    console.log('  ✓ Step 2: Launched MacTheme');
+    console.log('  ✓ Step 2: Launched Ricekit');
     console.log('  ✓ Step 3: App initialized with default preferences');
     console.log('  ✓ Step 4: Error was logged');
     console.log('  ✓ Step 5: New valid preferences.json was created');

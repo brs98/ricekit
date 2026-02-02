@@ -103,7 +103,7 @@ async function main() {
   console.log(`✓ AppleScript structures: Valid`);
   console.log('');
   console.log('Next steps:');
-  console.log('1. Launch the MacTheme app');
+  console.log('1. Launch the Ricekit app');
   console.log('2. Navigate to Wallpapers view');
   console.log('3. If you have multiple displays, you should see a dropdown');
   console.log('4. Select a display from the dropdown');

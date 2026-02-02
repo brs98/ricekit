@@ -8,7 +8,7 @@ async function verifyCore() {
 
   try {
     // Test 1: Verify directory structure
-    const macThemeDir = path.join(os.homedir(), 'Library', 'Application Support', 'MacTheme');
+    const macThemeDir = path.join(os.homedir(), 'Library', 'Application Support', 'Ricekit');
     const themesDir = path.join(macThemeDir, 'themes');
     const customThemesDir = path.join(macThemeDir, 'custom-themes');
     const currentDir = path.join(macThemeDir, 'current');

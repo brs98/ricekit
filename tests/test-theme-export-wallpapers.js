@@ -2,7 +2,7 @@
  * Test #127: Theme export includes wallpapers if present
  *
  * This test verifies that:
- * 1. Themes can be exported to .mactheme files
+ * 1. Themes can be exported to .ricekit files
  * 2. Exported archives include wallpapers if present
  * 3. Exported archives can be extracted and validated
  * 4. All theme files are included in export
@@ -48,7 +48,7 @@ async function exportThemeSimulation(themeName, themePath, exportPath) {
 }
 
 async function extractAndValidate(zipPath, expectedThemeName) {
-  const tmpDir = path.join(os.tmpdir(), `mactheme-extract-test-${Date.now()}`);
+  const tmpDir = path.join(os.tmpdir(), `ricekit-extract-test-${Date.now()}`);
   fs.mkdirSync(tmpDir, { recursive: true });
 
   try {
@@ -140,11 +140,11 @@ async function runTest() {
   console.log('='.repeat(70) + colors.reset);
   console.log('');
 
-  const testDir = path.join(os.tmpdir(), `mactheme-export-test-${Date.now()}`);
+  const testDir = path.join(os.tmpdir(), `ricekit-export-test-${Date.now()}`);
   fs.mkdirSync(testDir, { recursive: true });
 
   try {
-    const appSupportPath = path.join(os.homedir(), 'Library/Application Support/MacTheme');
+    const appSupportPath = path.join(os.homedir(), 'Library/Application Support/Ricekit');
     const themesDir = path.join(appSupportPath, 'themes');
 
     // Test 1: Export theme WITH wallpapers
@@ -173,7 +173,7 @@ async function runTest() {
     }
 
     // Export the theme
-    const exportPath1 = path.join(testDir, `${themeWithWallpapers}.mactheme`);
+    const exportPath1 = path.join(testDir, `${themeWithWallpapers}.ricekit`);
     await exportThemeSimulation(themeWithWallpapers, themeWithWallpapersPath, exportPath1);
 
     // Extract and validate
@@ -219,7 +219,7 @@ async function runTest() {
     console.log(`  Has wallpapers directory: ${hasWallpapersSource2 ? colors.green + 'Yes' + colors.reset : colors.yellow + 'No' + colors.reset}`);
 
     // Export the theme
-    const exportPath2 = path.join(testDir, `${themeWithoutWallpapers}.mactheme`);
+    const exportPath2 = path.join(testDir, `${themeWithoutWallpapers}.ricekit`);
     await exportThemeSimulation(themeWithoutWallpapers, themeWithoutWallpapersPath, exportPath2);
 
     // Extract and validate

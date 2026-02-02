@@ -5,7 +5,7 @@
  *
  * Steps:
  * 1. Corrupt preferences.json with invalid JSON
- * 2. Launch MacTheme
+ * 2. Launch Ricekit
  * 3. Verify app initializes with default preferences
  * 4. Verify error is logged
  * 5. Verify new valid preferences.json is created
@@ -16,7 +16,7 @@ const path = require('path');
 const os = require('os');
 const { exec } = require('child_process');
 
-const MACTHEME_DIR = path.join(os.homedir(), 'Library', 'Application Support', 'MacTheme');
+const MACTHEME_DIR = path.join(os.homedir(), 'Library', 'Application Support', 'Ricekit');
 const PREFS_PATH = path.join(MACTHEME_DIR, 'preferences.json');
 
 console.log('🧪 Test #119: Application handles corrupted preference files');

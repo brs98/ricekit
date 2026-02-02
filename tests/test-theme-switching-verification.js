@@ -16,7 +16,7 @@ const os = require('os');
     // Wait for app to be ready
     await page.waitForTimeout(1000);
 
-    console.log('✓ Connected to MacTheme application');
+    console.log('✓ Connected to Ricekit application');
 
     // Navigate to Themes view if not already there
     const themesButton = page.locator('button:has-text("Themes"), a:has-text("Themes")').first();
@@ -59,7 +59,7 @@ const os = require('os');
     console.log('✓ Tokyo Night theme is visible');
 
     // Check current theme symlink exists
-    const symlinkPath = path.join(os.homedir(), 'Library/Application Support/MacTheme/current/theme');
+    const symlinkPath = path.join(os.homedir(), 'Library/Application Support/Ricekit/current/theme');
     const symlinkExists = fs.existsSync(symlinkPath);
 
     if (!symlinkExists) {

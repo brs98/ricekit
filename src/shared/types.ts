@@ -116,7 +116,7 @@ export interface SetupPreview {
 
 // Plugin system types
 export type PluginMode = 'preset' | 'custom';
-export type InstalledBy = 'flowstate' | 'user' | 'unknown';
+export type InstalledBy = 'ricekit' | 'user' | 'unknown';
 
 export interface PluginConfig {
   mode: PluginMode;

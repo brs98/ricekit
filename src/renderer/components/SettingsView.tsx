@@ -378,7 +378,7 @@ export function SettingsView() {
     } catch (err: unknown) {
       console.error('Failed to open help:', err);
       // Fallback to GitHub README if local help file doesn't work
-      const fallbackUrl = 'https://github.com/yourusername/flowstate#readme';
+      const fallbackUrl = 'https://github.com/yourusername/ricekit#readme';
       window.electronAPI.openExternal?.(fallbackUrl).catch((fallbackErr: Error) => {
         console.error('Failed to open fallback URL:', fallbackErr);
         alert('Failed to open help documentation.');
@@ -435,7 +435,7 @@ export function SettingsView() {
       <div className="settings-header">
         <h2 className="text-2xl font-bold tracking-tight">Settings</h2>
         <p className="text-muted-foreground mt-1">
-          Configure Flowstate preferences and behavior
+          Configure Ricekit preferences and behavior
         </p>
       </div>
 
@@ -446,7 +446,7 @@ export function SettingsView() {
 
           <SettingItem
             label="Start at Login"
-            description="Launch Flowstate automatically when you log in"
+            description="Launch Ricekit automatically when you log in"
           >
             <Switch
               checked={preferences.startAtLogin}
@@ -456,7 +456,7 @@ export function SettingsView() {
 
           <SettingItem
             label="Show in Menu Bar"
-            description="Display Flowstate icon in the menu bar for quick access"
+            description="Display Ricekit icon in the menu bar for quick access"
           >
             <Switch
               checked={preferences.showInMenuBar}
@@ -747,7 +747,7 @@ export function SettingsView() {
                   <span>You&apos;re up to date (v{updateInfo.currentVersion})</span>
                 )
               ) : (
-                'Check if a newer version of Flowstate is available'
+                'Check if a newer version of Ricekit is available'
               )
             }
           >
@@ -781,7 +781,7 @@ export function SettingsView() {
           </SettingItem>
 
           <SettingItem
-            label="About Flowstate"
+            label="About Ricekit"
             description="View application information, version, and credits"
           >
             <Button variant="secondary" onClick={() => setShowAboutDialog(true)}>
@@ -803,7 +803,7 @@ export function SettingsView() {
           <DialogHeader>
             <DialogTitle>Export Themes</DialogTitle>
             <DialogDescription>
-              Select themes to export. Each theme will be saved as a .flowstate file.
+              Select themes to export. Each theme will be saved as a .ricekit file.
             </DialogDescription>
           </DialogHeader>
 

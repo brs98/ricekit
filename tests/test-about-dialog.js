@@ -91,7 +91,7 @@ async function runTest() {
 
     // Check for app name
     const appName = await window.locator('.app-name').textContent();
-    if (!appName || !appName.includes('MacTheme')) {
+    if (!appName || !appName.includes('Ricekit')) {
       throw new Error(`App name not found or incorrect: ${appName}`);
     }
     console.log(`✅ App name displayed: ${appName}`);
@@ -156,7 +156,7 @@ async function runTest() {
     console.log('✅ ALL TESTS PASSED - About Dialog Test #130');
     console.log('='.repeat(60));
     console.log('\n✨ About dialog displays all required information:');
-    console.log('   • Application name (MacTheme)');
+    console.log('   • Application name (Ricekit)');
     console.log('   • Version number');
     console.log('   • Application description');
     console.log('   • Credits section');

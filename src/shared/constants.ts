@@ -19,26 +19,26 @@ interface AppConfigShape {
 
 export const APP_CONFIG = {
   /** Display name shown in UI, menus, and notifications */
-  name: 'Flowstate',
+  name: 'Ricekit',
 
   /** CLI command name (lowercase, no spaces) */
-  cliName: 'flowstate',
+  cliName: 'ricekit',
 
   /** Directory name in ~/Library/Application Support/ */
-  dataDirName: 'Flowstate',
+  dataDirName: 'Ricekit',
 
   /** macOS bundle identifier */
-  appId: 'com.flowstate.app',
+  appId: 'com.ricekit.app',
 
   /** Default theme applied on fresh install */
   defaultTheme: 'tokyo-night',
 
   /** Log file name (without extension) */
-  logFileName: 'flowstate',
+  logFileName: 'ricekit',
 
   /** GitHub repository for updates */
   repoOwner: 'your-org',
-  repoName: 'flowstate',
+  repoName: 'ricekit',
 } as const satisfies AppConfigShape;
 
 /** Exit codes for CLI */

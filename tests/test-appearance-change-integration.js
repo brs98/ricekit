@@ -58,7 +58,7 @@ console.log();
 console.log('--- Manual Verification Steps ---\n');
 console.log('To fully verify this feature works end-to-end:');
 console.log();
-console.log('1. Open MacTheme application (should be running)');
+console.log('1. Open Ricekit application (should be running)');
 console.log('2. Open DevTools Console (View → Toggle Developer Tools)');
 console.log('3. Register a callback in the console:');
 console.log();

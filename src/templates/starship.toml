@@ -1,4 +1,4 @@
-"$include" = '~/Library/Application Support/Flowstate/current/theme/starship.toml'
+"$include" = '~/Library/Application Support/Ricekit/current/theme/starship.toml'
 
 # Add your customizations below
 [character]

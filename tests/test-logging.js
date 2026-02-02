@@ -33,8 +33,8 @@ async function testLogging() {
 
     // Step 2: Check if log file was created
     console.log('Step 2: Checking log file creation...');
-    const logDir = path.join(os.homedir(), 'Library', 'Application Support', 'mactheme', 'logs');
-    const logFile = path.join(logDir, 'mactheme.log');
+    const logDir = path.join(os.homedir(), 'Library', 'Application Support', 'ricekit', 'logs');
+    const logFile = path.join(logDir, 'ricekit.log');
 
     if (!fs.existsSync(logDir)) {
       throw new Error(`Log directory not created: ${logDir}`);
@@ -54,7 +54,7 @@ async function testLogging() {
     console.log(`Log file has ${logLines.length} lines`);
 
     // Check for expected log entries
-    const hasStartupLog = logContent.includes('MacTheme Starting');
+    const hasStartupLog = logContent.includes('Ricekit Starting');
     const hasTimestamps = logContent.match(/\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}\]/);
     const hasLogLevels = logContent.includes('[INFO]');
 

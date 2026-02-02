@@ -12,7 +12,7 @@ console.log('🧪 Testing Symlink Fix\n');
 // Import the functions from the compiled JavaScript
 const { initializeApp, initializeAppAfterThemes, ensureThemeSymlink } = require('./dist/main/directories');
 
-const MACTHEME_DIR = path.join(require('os').homedir(), 'Library/Application Support/MacTheme');
+const MACTHEME_DIR = path.join(require('os').homedir(), 'Library/Application Support/Ricekit');
 const CURRENT_DIR = path.join(MACTHEME_DIR, 'current');
 const SYMLINK_PATH = path.join(CURRENT_DIR, 'theme');
 

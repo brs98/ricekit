@@ -31,7 +31,7 @@ async function testWallpaperApply() {
   }
 
   try {
-    const macThemeDir = path.join(os.homedir(), 'Library', 'Application Support', 'MacTheme');
+    const macThemeDir = path.join(os.homedir(), 'Library', 'Application Support', 'Ricekit');
     const currentDir = path.join(macThemeDir, 'current');
     const statePath = path.join(macThemeDir, 'state.json');
 

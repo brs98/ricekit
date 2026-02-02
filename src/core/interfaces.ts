@@ -11,7 +11,7 @@
  * Implementations differ between Electron (uses app.getPath) and CLI (uses os.homedir).
  */
 export interface PathProvider {
-  /** Base app data directory (e.g., ~/Library/Application Support/Flowstate) */
+  /** Base app data directory (e.g., ~/Library/Application Support/Ricekit) */
   getAppDataDir(): string;
 
   /** Directory containing bundled themes */

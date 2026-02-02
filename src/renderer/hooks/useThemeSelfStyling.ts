@@ -2,7 +2,7 @@ import { useEffect, useCallback, useRef } from 'react';
 import { applyThemeColors } from '../utils/themeColors';
 
 // Custom event name for theme changes
-export const THEME_APPLIED_EVENT = 'flowstate:theme-applied';
+export const THEME_APPLIED_EVENT = 'ricekit:theme-applied';
 
 /**
  * Emit a custom event to notify that a theme has been applied.

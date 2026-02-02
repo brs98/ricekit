@@ -100,9 +100,9 @@ console.log('');
 console.log('C. Theme path reference');
 console.log('-'.repeat(70));
 
-test('References MacTheme theme directory', () => {
-  const hasThemePath = ipcHandlersContent.includes('~/Library/Application Support/MacTheme/current/theme') ||
-                       ipcHandlersContent.includes('MacTheme/current/theme');
+test('References Ricekit theme directory', () => {
+  const hasThemePath = ipcHandlersContent.includes('~/Library/Application Support/Ricekit/current/theme') ||
+                       ipcHandlersContent.includes('Ricekit/current/theme');
   if (!hasThemePath) {
     throw new Error('Theme path reference not found');
   }

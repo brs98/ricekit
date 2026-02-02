@@ -1,6 +1,6 @@
-# Flowstate Help & Documentation
+# Ricekit Help & Documentation
 
-Welcome to Flowstate! This guide will help you get the most out of your unified macOS theming experience.
+Welcome to Ricekit! This guide will help you get the most out of your unified macOS theming experience.
 
 ## Table of Contents
 
@@ -16,7 +16,7 @@ Welcome to Flowstate! This guide will help you get the most out of your unified 
 
 ## Getting Started
 
-Flowstate provides a unified way to theme multiple applications on macOS. When you apply a theme, it updates:
+Ricekit provides a unified way to theme multiple applications on macOS. When you apply a theme, it updates:
 - Terminal emulators (Alacritty, Kitty, iTerm2, Warp, Hyper)
 - Code editors (VS Code, Neovim, Sublime Text)
 - CLI tools (bat, delta, starship, zsh-syntax-highlighting)
@@ -25,8 +25,8 @@ Flowstate provides a unified way to theme multiple applications on macOS. When y
 
 ### First Launch
 
-On first launch, Flowstate will:
-1. Create its configuration directory at `~/Library/Application Support/Flowstate`
+On first launch, Ricekit will:
+1. Create its configuration directory at `~/Library/Application Support/Ricekit`
 2. Install 11 bundled themes
 3. Set Tokyo Night as the default theme
 4. Create a symlink system for easy theme switching
@@ -50,7 +50,7 @@ Press **Cmd+Shift+T** (or your custom shortcut) to open the Quick Switcher:
 
 ### From the Menu Bar
 
-Click the Flowstate icon in your menu bar to:
+Click the Ricekit icon in your menu bar to:
 - See the current theme
 - Access recently used themes
 - Toggle between your last two themes
@@ -97,19 +97,19 @@ Click the ⭐ star icon on any theme card to mark it as a favorite.
 
 ### Theme Structure
 
-Each theme contains configuration files for all supported applications. When you create a custom theme, Flowstate generates all these files automatically from your color palette.
+Each theme contains configuration files for all supported applications. When you create a custom theme, Ricekit generates all these files automatically from your color palette.
 
 ### Exporting & Importing
 
-- **Export**: Share your custom themes as `.flowstate` files
-- **Import**: Load themes from `.flowstate` files or URLs
+- **Export**: Share your custom themes as `.ricekit` files
+- **Import**: Load themes from `.ricekit` files or URLs
 
 ## Managing Applications
 
 ### Application Setup
 
 1. Navigate to the **Apps** tab
-2. Flowstate will detect installed supported applications
+2. Ricekit will detect installed supported applications
 3. For each app, you'll see:
    - Installation status (Installed / Not Found)
    - Integration status (Configured / Needs Setup)
@@ -117,16 +117,16 @@ Each theme contains configuration files for all supported applications. When you
 
 ### Setup Process
 
-Flowstate will guide you through adding import statements to your application config files. For example:
+Ricekit will guide you through adding import statements to your application config files. For example:
 
 **Alacritty** (`~/.config/alacritty/alacritty.toml`):
 ```toml
-import = ["~/Library/Application Support/Flowstate/current/theme/alacritty.toml"]
+import = ["~/Library/Application Support/Ricekit/current/theme/alacritty.toml"]
 ```
 
 **Kitty** (`~/.config/kitty/kitty.conf`):
 ```
-include ~/Library/Application Support/Flowstate/current/theme/kitty.conf
+include ~/Library/Application Support/Ricekit/current/theme/kitty.conf
 ```
 
 ## Wallpapers
@@ -155,7 +155,7 @@ Enable auto-switching to match macOS appearance:
 3. Select your preferred light theme
 4. Select your preferred dark theme
 
-When you change macOS appearance (Light/Dark mode), Flowstate will automatically apply the corresponding theme.
+When you change macOS appearance (Light/Dark mode), Ricekit will automatically apply the corresponding theme.
 
 ### Scheduled Switching
 
@@ -168,11 +168,11 @@ Switch themes based on time of day:
 
 ### Sunrise/Sunset
 
-Let Flowstate switch based on your location's sunrise and sunset times:
+Let Ricekit switch based on your location's sunrise and sunset times:
 
 1. Go to **Settings** → **Auto-Switching**
 2. Select **Sunrise/Sunset** mode
-3. Flowstate will automatically determine your location's times
+3. Ricekit will automatically determine your location's times
 4. Light theme applies at sunrise
 5. Dark theme applies at sunset
 
@@ -194,14 +194,14 @@ Default shortcuts (customizable in Settings):
 1. Make sure you've set up the application (see Managing Applications)
 2. Restart the application to reload its configuration
 3. Check that the import statement is correct in your config file
-4. Verify the symlink exists: `ls -la ~/Library/Application Support/Flowstate/current/theme`
+4. Verify the symlink exists: `ls -la ~/Library/Application Support/Ricekit/current/theme`
 
 ### Symlink Missing
 
 **Problem**: The current theme symlink is missing.
 
-**Solution**: Flowstate should automatically recreate it on startup. If not:
-1. Restart Flowstate
+**Solution**: Ricekit should automatically recreate it on startup. If not:
+1. Restart Ricekit
 2. Apply any theme from the Themes view
 3. Check logs in Console.app for errors
 
@@ -210,27 +210,27 @@ Default shortcuts (customizable in Settings):
 **Problem**: Theme grid shows "Failed to load themes."
 
 **Solutions**:
-1. Check that themes directory exists: `~/Library/Application Support/Flowstate/themes`
-2. Verify permissions on the Flowstate directory
+1. Check that themes directory exists: `~/Library/Application Support/Ricekit/themes`
+2. Verify permissions on the Ricekit directory
 3. Restart the application
 4. Check Console.app for error messages
 
 ### Application Not Detected
 
-**Problem**: Flowstate says an application isn't installed, but it is.
+**Problem**: Ricekit says an application isn't installed, but it is.
 
 **Solutions**:
-1. Flowstate checks common installation paths
+1. Ricekit checks common installation paths
 2. Some applications installed via non-standard methods may not be detected
 3. You can still manually set up the application by adding the import statement
 
 ### Performance Issues
 
-**Problem**: Flowstate is slow or unresponsive.
+**Problem**: Ricekit is slow or unresponsive.
 
 **Solutions**:
 1. Check how many themes you have installed (50+ themes may slow things down)
-2. Restart Flowstate
+2. Restart Ricekit
 3. Check Console.app for errors or warnings
 4. Ensure you have sufficient disk space
 
@@ -250,7 +250,7 @@ Default shortcuts (customizable in Settings):
 
 **Solutions**:
 1. Check System Preferences → Desktop & Screen Saver permissions
-2. Grant Flowstate permission to change wallpaper if prompted
+2. Grant Ricekit permission to change wallpaper if prompted
 3. Some themes may not include wallpapers
 4. Check that wallpaper files exist in the theme directory
 
@@ -258,10 +258,10 @@ Default shortcuts (customizable in Settings):
 
 If you encounter issues not covered here:
 
-1. Check the [GitHub Issues](https://github.com/yourusername/flowstate/issues)
+1. Check the [GitHub Issues](https://github.com/yourusername/ricekit/issues)
 2. Search for similar problems
 3. Create a new issue with:
-   - Flowstate version (see Settings → About)
+   - Ricekit version (see Settings → About)
    - macOS version
    - Description of the problem
    - Steps to reproduce
@@ -301,4 +301,4 @@ Use the menu bar to quickly toggle between your last two themes.
 
 ---
 
-**Need More Help?** Visit the [Flowstate Documentation](https://github.com/yourusername/flowstate#readme) or open an issue on GitHub.
+**Need More Help?** Visit the [Ricekit Documentation](https://github.com/yourusername/ricekit#readme) or open an issue on GitHub.

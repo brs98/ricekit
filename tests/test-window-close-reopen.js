@@ -6,10 +6,10 @@
  * This script tests Test #123: Application window is closeable and reopenable
  *
  * Test Steps:
- * 1. Launch MacTheme (manual - app should already be running)
+ * 1. Launch Ricekit (manual - app should already be running)
  * 2. Close window via close button (simulated via AppleScript)
  * 3. Verify app remains running in background/menu bar
- * 4. Click menu bar icon and select 'Open MacTheme' (menu bar interaction)
+ * 4. Click menu bar icon and select 'Open Ricekit' (menu bar interaction)
  * 5. Verify window reopens with previous state
  */
 
@@ -32,30 +32,30 @@ async function runTest() {
   console.log('=== Test #123: Window Close/Reopen Functionality ===\n');
 
   // Step 1: Verify app is running
-  console.log('Step 1: Verifying MacTheme is running...');
+  console.log('Step 1: Verifying Ricekit is running...');
   const processes = exec('ps aux | grep "Electron \\." | grep -v grep');
-  if (!processes || !processes.includes('mactheme')) {
-    console.log('❌ FAIL: MacTheme is not running');
+  if (!processes || !processes.includes('ricekit')) {
+    console.log('❌ FAIL: Ricekit is not running');
     process.exit(1);
   }
-  console.log('✅ PASS: MacTheme is running\n');
+  console.log('✅ PASS: Ricekit is running\n');
 
   // Step 2: Get current window count
   console.log('Step 2: Checking initial window state...');
   const initialWindows = exec('osascript -e \'tell application "System Events" to tell process "Electron" to get name of windows\'');
   console.log(`   Initial windows: ${initialWindows || '(none)'}`);
 
-  if (!initialWindows || !initialWindows.includes('MacTheme')) {
-    console.log('⚠️  WARNING: MacTheme window not visible. Showing it first...');
+  if (!initialWindows || !initialWindows.includes('Ricekit')) {
+    console.log('⚠️  WARNING: Ricekit window not visible. Showing it first...');
     // Try to show the window
     exec('osascript -e \'tell application "System Events" to tell process "Electron" to set visible to true\'');
     await sleep(1000);
   }
 
   // Step 3: Close the window
-  console.log('\nStep 3: Closing MacTheme window...');
+  console.log('\nStep 3: Closing Ricekit window...');
   try {
-    exec('osascript -e \'tell application "System Events" to tell process "Electron" to click button 1 of window "MacTheme"\'');
+    exec('osascript -e \'tell application "System Events" to tell process "Electron" to click button 1 of window "Ricekit"\'');
     await sleep(500);
     console.log('✅ PASS: Close button clicked\n');
   } catch (error) {
@@ -67,7 +67,7 @@ async function runTest() {
   // Step 4: Verify window is hidden but app is still running
   console.log('Step 4: Verifying app remains running after window close...');
   const processesAfterClose = exec('ps aux | grep "Electron \\." | grep -v grep');
-  if (!processesAfterClose || !processesAfterClose.includes('mactheme')) {
+  if (!processesAfterClose || !processesAfterClose.includes('ricekit')) {
     console.log('❌ FAIL: App quit after window close (should stay running)');
     process.exit(1);
   }
@@ -78,7 +78,7 @@ async function runTest() {
   const windowsAfterClose = exec('osascript -e \'tell application "System Events" to tell process "Electron" to get name of windows\'');
   console.log(`   Windows after close: ${windowsAfterClose || '(none)'}`);
 
-  if (windowsAfterClose && windowsAfterClose.includes('MacTheme')) {
+  if (windowsAfterClose && windowsAfterClose.includes('Ricekit')) {
     console.log('❌ FAIL: Window still visible (should be hidden)');
     process.exit(1);
   }
@@ -101,7 +101,7 @@ async function runTest() {
   console.log('✅ PASS: Implementation verified:\n');
   console.log('   - Window.on(close) prevents actual close and calls hide()');
   console.log('   - mainWindow variable remains set (not null)');
-  console.log('   - Menu bar "Open MacTheme" calls mainWindow.show()');
+  console.log('   - Menu bar "Open Ricekit" calls mainWindow.show()');
   console.log('   - This pattern is standard for menu bar apps\n');
 
   console.log('=== TEST SUMMARY ===');
@@ -110,7 +110,7 @@ async function runTest() {
   console.log('✅ App remains in background/menu bar');
   console.log('✅ Menu bar handler code verified');
   console.log('\n📝 MANUAL VERIFICATION REQUIRED:');
-  console.log('   Please manually click the menu bar icon and select "Open MacTheme"');
+  console.log('   Please manually click the menu bar icon and select "Open Ricekit"');
   console.log('   to verify the window reopens correctly.\n');
 
   process.exit(0);

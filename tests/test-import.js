@@ -1,7 +1,7 @@
 /**
  * Test theme import functionality
  * This script:
- * 1. Exports a theme to create a .mactheme file
+ * 1. Exports a theme to create a .ricekit file
  * 2. Imports the theme back
  * 3. Verifies the imported theme exists
  */
@@ -13,22 +13,22 @@ const os = require('os');
 async function testThemeImport() {
   console.log('\n=== Testing Theme Import Functionality ===\n');
 
-  const customThemesDir = path.join(os.homedir(), 'Library', 'Application Support', 'MacTheme', 'custom-themes');
+  const customThemesDir = path.join(os.homedir(), 'Library', 'Application Support', 'Ricekit', 'custom-themes');
 
   // Step 1: Check available themes
-  const themesDir = path.join(os.homedir(), 'Library', 'Application Support', 'MacTheme', 'themes');
+  const themesDir = path.join(os.homedir(), 'Library', 'Application Support', 'Ricekit', 'themes');
   const themes = fs.readdirSync(themesDir);
   console.log(`Available themes: ${themes.join(', ')}\n`);
 
-  // Step 2: Export a theme (this creates a .mactheme file)
+  // Step 2: Export a theme (this creates a .ricekit file)
   console.log('To test import:');
-  console.log('1. Open MacTheme app');
+  console.log('1. Open Ricekit app');
   console.log('2. Go to Settings > Backup & Restore');
   console.log('3. Click "Export..." button');
   console.log('4. Select a theme (e.g., tokyo-night)');
-  console.log('5. Save the .mactheme file to your Desktop');
+  console.log('5. Save the .ricekit file to your Desktop');
   console.log('6. Click "Import..." button');
-  console.log('7. Select the exported .mactheme file');
+  console.log('7. Select the exported .ricekit file');
   console.log('8. Verify the theme is imported successfully');
   console.log('');
 

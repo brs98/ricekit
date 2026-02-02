@@ -24,7 +24,7 @@ const fs = require('fs');
 const path = require('path');
 const prefsPath = path.join(
   process.env.HOME,
-  'Library/Application Support/MacTheme/preferences.json'
+  'Library/Application Support/Ricekit/preferences.json'
 );
 
 console.log('\n✓ Test 2: Preferences File');
@@ -54,7 +54,7 @@ console.log('   - Letter spacing for readability');
 // Test 5: Manual verification steps
 console.log('\n✓ Test 5: Manual Verification Steps');
 console.log('   To verify in the running app:');
-console.log('   1. Open MacTheme application');
+console.log('   1. Open Ricekit application');
 console.log('   2. Navigate to Settings');
 console.log('   3. Find "Keyboard Shortcuts" section');
 console.log('   4. Look at "Quick Switcher" input field');

@@ -1,6 +1,6 @@
 # AeroSpace Minimal Preset
 # Simple tiling configuration with basic keybindings
-# Window borders are managed by JankyBorders (sourced from Flowstate)
+# Window borders are managed by JankyBorders (sourced from Ricekit)
 
 # Start aerospace with login and after-login commands
 start-at-login = true

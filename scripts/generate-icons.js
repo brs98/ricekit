@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Generate app icons for Flowstate
+ * Generate app icons for Ricekit
  * Creates icon.icns (macOS) and icon.ico (Windows) from a generated SVG
  */
 
@@ -69,7 +69,7 @@ const ICON_SVG = `
 `;
 
 async function generateIcons() {
-  console.log('Generating Flowstate icons...\n');
+  console.log('Generating Ricekit icons...\n');
 
   // Ensure directories exist
   if (!fs.existsSync(BUILD_DIR)) {

@@ -15,7 +15,7 @@ console.log('E2E TEST: Missing Directories Graceful Handling');
 console.log('='.repeat(80));
 console.log();
 
-const appDataDir = path.join(os.homedir(), 'Library/Application Support/MacTheme');
+const appDataDir = path.join(os.homedir(), 'Library/Application Support/Ricekit');
 
 console.log('Test Overview:');
 console.log('1. Check current state');
@@ -70,23 +70,23 @@ console.log('4. Also calls ensurePreferences() and ensureState() to create files
 console.log();
 
 console.log('Protected directories:');
-console.log('  - ~/Library/Application Support/MacTheme/');
-console.log('  - ~/Library/Application Support/MacTheme/themes/');
-console.log('  - ~/Library/Application Support/MacTheme/custom-themes/');
-console.log('  - ~/Library/Application Support/MacTheme/current/');
+console.log('  - ~/Library/Application Support/Ricekit/');
+console.log('  - ~/Library/Application Support/Ricekit/themes/');
+console.log('  - ~/Library/Application Support/Ricekit/custom-themes/');
+console.log('  - ~/Library/Application Support/Ricekit/current/');
 console.log();
 
 console.log('Protected files:');
-console.log('  - ~/Library/Application Support/MacTheme/preferences.json');
-console.log('  - ~/Library/Application Support/MacTheme/state.json');
+console.log('  - ~/Library/Application Support/Ricekit/preferences.json');
+console.log('  - ~/Library/Application Support/Ricekit/state.json');
 console.log();
 
 console.log('--- Part 3: Test Scenario ---\n');
 
-console.log('Scenario: User manually deletes ~/Library/Application Support/MacTheme');
+console.log('Scenario: User manually deletes ~/Library/Application Support/Ricekit');
 console.log();
 console.log('What happens:');
-console.log('  1. User opens MacTheme app');
+console.log('  1. User opens Ricekit app');
 console.log('  2. User clicks "Apply" on a theme');
 console.log('  3. handleApplyTheme() is called');
 console.log('  4. ensureDirectories() runs FIRST');
@@ -101,7 +101,7 @@ console.log();
 console.log('--- Part 4: Current Directory Status ---\n');
 
 if (fs.existsSync(appDataDir)) {
-  console.log(`✅ MacTheme directory exists: ${appDataDir}`);
+  console.log(`✅ Ricekit directory exists: ${appDataDir}`);
 
   const subdirs = ['themes', 'custom-themes', 'current'];
   subdirs.forEach(subdir => {
@@ -123,7 +123,7 @@ if (fs.existsSync(appDataDir)) {
     }
   });
 } else {
-  console.log(`⚠️  MacTheme directory does not exist: ${appDataDir}`);
+  console.log(`⚠️  Ricekit directory does not exist: ${appDataDir}`);
   console.log('   This is normal if app hasn\'t been run yet.');
   console.log('   The app will create it on first launch.');
 }

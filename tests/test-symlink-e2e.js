@@ -13,7 +13,7 @@ const path = require('path');
 const os = require('os');
 
 const homeDir = os.homedir();
-const currentDir = path.join(homeDir, 'Library', 'Application Support', 'MacTheme', 'current');
+const currentDir = path.join(homeDir, 'Library', 'Application Support', 'Ricekit', 'current');
 const symlinkPath = path.join(currentDir, 'theme');
 
 async function runTest() {

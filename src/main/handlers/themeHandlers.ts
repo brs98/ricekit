@@ -61,7 +61,7 @@ function decodeDataUrl(dataUrl: string): { buffer: Buffer; extension: string } {
 
 /**
  * Theme name mapping for VS Code and Cursor
- * Maps Flowstate internal names to VS Code/Cursor theme extension names
+ * Maps Ricekit internal names to VS Code/Cursor theme extension names
  */
 const editorThemeNameMapping: Record<string, string> = {
   'tokyo-night': 'Tokyo Night',
@@ -303,7 +303,7 @@ async function notifyTerminalsToReload(themePath: string): Promise<void> {
   // We write the theme content to a fixed location that WezTerm watches
   try {
     const weztermThemeSrc = path.join(themePath, 'wezterm.lua');
-    const weztermThemeDest = path.join(os.homedir(), 'Library', 'Application Support', 'Flowstate', 'wezterm-colors.lua');
+    const weztermThemeDest = path.join(os.homedir(), 'Library', 'Application Support', 'Ricekit', 'wezterm-colors.lua');
 
     if (existsSync(weztermThemeSrc)) {
       // Copy theme content to the fixed location (this triggers WezTerm's file watcher)
@@ -563,7 +563,7 @@ export async function handleApplyTheme(_event: IpcMainInvokeEvent | null, name: 
       if (isNodeError(err) && (err.code === 'EACCES' || err.code === 'EPERM')) {
         throw createError(
           'PERMISSION_ERROR',
-          "Flowstate doesn't have permission to modify theme files. Please check folder permissions."
+          "Ricekit doesn't have permission to modify theme files. Please check folder permissions."
         );
       }
       throw err;
@@ -579,7 +579,7 @@ export async function handleApplyTheme(_event: IpcMainInvokeEvent | null, name: 
         if (err.code === 'EACCES' || err.code === 'EPERM') {
           throw createError(
             'PERMISSION_ERROR',
-            'Cannot create theme link due to insufficient permissions. Please check folder permissions in ~/Library/Application Support/Flowstate.'
+            'Cannot create theme link due to insufficient permissions. Please check folder permissions in ~/Library/Application Support/Ricekit.'
           );
         } else if (err.code === 'EEXIST') {
           throw createError(
@@ -603,7 +603,7 @@ export async function handleApplyTheme(_event: IpcMainInvokeEvent | null, name: 
       if (isNodeError(err) && (err.code === 'EACCES' || err.code === 'EPERM')) {
         throw createError(
           'PERMISSION_ERROR',
-          'Cannot read app state file. Please check permissions for ~/Library/Application Support/Flowstate.'
+          'Cannot read app state file. Please check permissions for ~/Library/Application Support/Ricekit.'
         );
       }
       throw err;
@@ -619,7 +619,7 @@ export async function handleApplyTheme(_event: IpcMainInvokeEvent | null, name: 
         if (err.code === 'EACCES' || err.code === 'EPERM') {
           throw createError(
             'PERMISSION_ERROR',
-            'Cannot save app state. Please check write permissions for ~/Library/Application Support/Flowstate.'
+            'Cannot save app state. Please check write permissions for ~/Library/Application Support/Ricekit.'
           );
         } else if (err.code === 'ENOSPC') {
           throw createError('NO_SPACE', 'Not enough disk space to save theme state.');
@@ -637,7 +637,7 @@ export async function handleApplyTheme(_event: IpcMainInvokeEvent | null, name: 
       if (isNodeError(err) && (err.code === 'EACCES' || err.code === 'EPERM')) {
         throw createError(
           'PERMISSION_ERROR',
-          'Cannot read preferences. Please check permissions for ~/Library/Application Support/Flowstate.'
+          'Cannot read preferences. Please check permissions for ~/Library/Application Support/Ricekit.'
         );
       }
       throw err;
@@ -1068,9 +1068,9 @@ async function handleExportTheme(_event: IpcMainInvokeEvent, name: string, expor
 
       const result = await dialog.showSaveDialog(mainWindow, {
         title: 'Export Theme',
-        defaultPath: `${name}.flowstate`,
+        defaultPath: `${name}.ricekit`,
         filters: [
-          { name: 'Flowstate Files', extensions: ['flowstate', 'zip'] },
+          { name: 'Ricekit Files', extensions: ['ricekit', 'zip'] },
           { name: 'All Files', extensions: ['*'] },
         ],
         properties: ['createDirectory', 'showOverwriteConfirmation'],
@@ -1084,8 +1084,8 @@ async function handleExportTheme(_event: IpcMainInvokeEvent, name: string, expor
     }
 
     // Ensure the export path has an extension
-    if (!exportPath.endsWith('.flowstate') && !exportPath.endsWith('.zip')) {
-      exportPath += '.flowstate';
+    if (!exportPath.endsWith('.ricekit') && !exportPath.endsWith('.zip')) {
+      exportPath += '.ricekit';
     }
 
     // Capture final path before entering callback (TypeScript can't track narrowing across async closures)
@@ -1145,7 +1145,7 @@ async function handleImportTheme(_event: IpcMainInvokeEvent, importPath?: string
       const result = await dialog.showOpenDialog(mainWindow, {
         title: 'Import Theme',
         filters: [
-          { name: 'Flowstate Files', extensions: ['flowstate', 'zip'] },
+          { name: 'Ricekit Files', extensions: ['ricekit', 'zip'] },
           { name: 'All Files', extensions: ['*'] },
         ],
         properties: ['openFile'],
@@ -1165,7 +1165,7 @@ async function handleImportTheme(_event: IpcMainInvokeEvent, importPath?: string
     }
 
     // Create temporary directory for extraction
-    const tmpDir = path.join(os.tmpdir(), `flowstate-import-${Date.now()}`);
+    const tmpDir = path.join(os.tmpdir(), `ricekit-import-${Date.now()}`);
     await ensureDir(tmpDir);
 
     try {
@@ -1271,7 +1271,7 @@ async function handleImportThemeFromUrl(_event: IpcMainInvokeEvent, url: string)
     }
 
     // Create temporary directory for download
-    const tmpDir = path.join(os.tmpdir(), `flowstate-url-import-${Date.now()}`);
+    const tmpDir = path.join(os.tmpdir(), `ricekit-url-import-${Date.now()}`);
     await ensureDir(tmpDir);
 
     try {

@@ -17,7 +17,7 @@ async function testGlobalShortcut() {
   console.log('\n=== Testing Global Keyboard Shortcut (Test #89) ===\n');
 
   console.log('Test Requirements:');
-  console.log('  1. Launch MacTheme application');
+  console.log('  1. Launch Ricekit application');
   console.log('  2. Minimize the window or close it to tray');
   console.log('  3. Press Cmd+Shift+T');
   console.log('  4. Verify quick switcher appears');
@@ -30,14 +30,14 @@ async function testGlobalShortcut() {
 
   console.log('Testing Steps:\n');
 
-  // Step 1: Check if MacTheme/Electron is running
-  console.log('Step 1: Verify MacTheme is running...');
+  // Step 1: Check if Ricekit/Electron is running
+  console.log('Step 1: Verify Ricekit is running...');
   try {
     const { stdout } = await execPromise(`osascript -e 'tell application "System Events" to get name of every process whose name contains "Electron"'`);
     if (stdout.includes('Electron')) {
-      console.log('  ✓ MacTheme (Electron) is running\n');
+      console.log('  ✓ Ricekit (Electron) is running\n');
     } else {
-      console.log('  ✗ MacTheme is not running\n');
+      console.log('  ✗ Ricekit is not running\n');
       return;
     }
   } catch (err) {
@@ -46,7 +46,7 @@ async function testGlobalShortcut() {
   }
 
   // Step 2: Close/hide the main window
-  console.log('Step 2: Hiding main MacTheme window...');
+  console.log('Step 2: Hiding main Ricekit window...');
   try {
     // Try to hide the window using AppleScript
     await execPromise(`osascript -e 'tell application "Electron" to set visible of every window to false'`);
@@ -75,7 +75,7 @@ async function testGlobalShortcut() {
     const { stdout } = await execPromise(`osascript -e 'tell application "System Events" to get properties of every window of process "Electron"'`);
     console.log('  Window count:', stdout.split('name:').length - 1);
 
-    if (stdout.includes('MacTheme Quick Switcher')) {
+    if (stdout.includes('Ricekit Quick Switcher')) {
       console.log('  ✓ Quick switcher window is visible!\n');
     } else {
       console.log('  ⚠ Quick switcher window may be open (check manually)\n');

@@ -31,9 +31,9 @@ console.log('Step 5: Click Export');
 console.log('  → The dialog will show "Exporting..." while processing');
 console.log('  → Wait for completion\n');
 
-console.log('Step 6: Verify .mactheme or .zip file is created');
+console.log('Step 6: Verify .ricekit or .zip file is created');
 console.log('  → Check the chosen location');
-console.log('  → You should see a file like "tokyo-night.mactheme"\n');
+console.log('  → You should see a file like "tokyo-night.ricekit"\n');
 
 console.log('Step 7: Verify exported file contains theme directories and metadata');
 console.log('  → Rename the file to .zip if needed');
@@ -46,7 +46,7 @@ console.log('Expected Results:');
 console.log('=================');
 console.log('✓ Export dialog opens with theme selection');
 console.log('✓ Native save dialog appears when clicking Export');
-console.log('✓ .mactheme file is created at chosen location');
+console.log('✓ .ricekit file is created at chosen location');
 console.log('✓ Archive contains theme directory with all config files');
 console.log('✓ Success message appears after export\n');
 

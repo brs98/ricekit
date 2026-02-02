@@ -12,7 +12,7 @@ const fs = require('fs');
 const { generateThemeConfigFiles } = require('./dist/main/themeInstaller.js');
 
 const homeDir = require('os').homedir();
-const testThemeDir = path.join(homeDir, 'Library', 'Application Support', 'MacTheme', 'custom-themes', 'config-validation-test');
+const testThemeDir = path.join(homeDir, 'Library', 'Application Support', 'Ricekit', 'custom-themes', 'config-validation-test');
 
 // Test theme metadata
 const testTheme = {

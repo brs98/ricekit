@@ -211,7 +211,7 @@ export async function handleDetectApps(): Promise<AppInfo[]> {
         process.env.HOME || '',
         'Library',
         'Application Support',
-        'Flowstate',
+        'Ricekit',
         'current',
         'theme',
         'slack-theme.txt'
@@ -272,7 +272,7 @@ async function setupEditorApp(appName: string, displayName: string, settingsPath
 
   // Create backup if settings file exists
   if (existsSync(settingsPath)) {
-    const backupPath = `${settingsPath}.flowstate-backup`;
+    const backupPath = `${settingsPath}.ricekit-backup`;
     await copyFile(settingsPath, backupPath);
     logger.info(`Created backup at: ${backupPath}`);
   }
@@ -354,7 +354,7 @@ export async function handleSetupApp(_event: IpcMainInvokeEvent | null, appName:
         homeDir,
         'Library',
         'Application Support',
-        'Flowstate',
+        'Ricekit',
         'current',
         'theme',
         'slack-theme.txt'
@@ -485,7 +485,7 @@ export async function handlePreviewSetup(
       fileExists,
       hasExistingIntegration: false,
       currentContent,
-      message: 'Cursor will be configured to use Flowstate themes. Themes will be applied automatically when you switch themes.',
+      message: 'Cursor will be configured to use Ricekit themes. Themes will be applied automatically when you switch themes.',
     };
   }
 
@@ -519,7 +519,7 @@ export async function handlePreviewSetup(
       fileExists,
       hasExistingIntegration: false,
       currentContent,
-      message: 'VS Code will be configured to use Flowstate themes. Themes will be applied automatically when you switch themes.',
+      message: 'VS Code will be configured to use Ricekit themes. Themes will be applied automatically when you switch themes.',
     };
   }
 
@@ -637,12 +637,12 @@ export async function handleRefreshApp(_event: IpcMainInvokeEvent | null, appNam
             os.homedir(),
             'Library',
             'Application Support',
-            'Flowstate',
+            'Ricekit',
             'current',
             'theme'
           );
           const weztermThemeSrc = path.join(currentThemePath, 'wezterm.lua');
-          const weztermThemeDest = path.join(os.homedir(), 'Library', 'Application Support', 'Flowstate', 'wezterm-colors.lua');
+          const weztermThemeDest = path.join(os.homedir(), 'Library', 'Application Support', 'Ricekit', 'wezterm-colors.lua');
 
           if (existsSync(weztermThemeSrc)) {
             await copyFile(weztermThemeSrc, weztermThemeDest);
@@ -692,7 +692,7 @@ export async function handleRefreshApp(_event: IpcMainInvokeEvent | null, appNam
             os.homedir(),
             'Library',
             'Application Support',
-            'Flowstate',
+            'Ricekit',
             'current',
             'theme'
           );

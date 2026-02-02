@@ -18,7 +18,7 @@ console.log('============================================================\n');
 
 const appSupportPath = path.join(
   os.homedir(),
-  'Library/Application Support/MacTheme'
+  'Library/Application Support/Ricekit'
 );
 
 // Test with tokyo-night theme
