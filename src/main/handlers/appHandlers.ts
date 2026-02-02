@@ -19,7 +19,7 @@ import {
 } from '../utils/asyncFs';
 import { handleGetPreferences, handleSetPreferences } from './preferencesHandlers';
 import { handleGetState } from './stateHandlers';
-import { setupApp as coreSetupApp, type SetupResult } from '../../core/apps/setup';
+import { setupApp as coreSetupApp, previewSetup as corePreviewSetup, type SetupResult, type SetupPreview } from '../../core/apps/setup';
 
 // Forward declarations - will be set to avoid circular deps
 let getThemeHandler: ((event: IpcMainInvokeEvent | null, name: string) => Promise<Theme | null>) | null = null;
@@ -442,6 +442,98 @@ async function addAppToEnabledApps(appName: string): Promise<void> {
 }
 
 /**
+ * Preview what setup would do without making changes
+ * Returns information about what files would be created/modified
+ */
+export async function handlePreviewSetup(
+  _event: IpcMainInvokeEvent | null,
+  appName: string
+): Promise<SetupPreview> {
+  logger.info(`Previewing setup for: ${appName}`);
+
+  const homeDir = os.homedir();
+
+  // Handle Cursor and VS Code specially - they don't use file imports
+  if (appName === 'cursor') {
+    const settingsPath = path.join(
+      homeDir,
+      'Library',
+      'Application Support',
+      'Cursor',
+      'User',
+      'settings.json'
+    );
+    const fileExists = existsSync(settingsPath);
+    let currentContent: string | undefined;
+
+    if (fileExists) {
+      try {
+        currentContent = await readFile(settingsPath);
+        // Truncate for preview
+        const lines = currentContent.split('\n');
+        if (lines.length > 50) {
+          currentContent = lines.slice(0, 50).join('\n') + `\n\n... (${lines.length - 50} more lines)`;
+        }
+      } catch {
+        // Ignore read errors
+      }
+    }
+
+    return {
+      action: 'special',
+      configPath: settingsPath,
+      fileExists,
+      hasExistingIntegration: false,
+      currentContent,
+      message: 'Cursor will be configured to use Flowstate themes. Themes will be applied automatically when you switch themes.',
+    };
+  }
+
+  if (appName === 'vscode') {
+    const settingsPath = path.join(
+      homeDir,
+      'Library',
+      'Application Support',
+      'Code',
+      'User',
+      'settings.json'
+    );
+    const fileExists = existsSync(settingsPath);
+    let currentContent: string | undefined;
+
+    if (fileExists) {
+      try {
+        currentContent = await readFile(settingsPath);
+        const lines = currentContent.split('\n');
+        if (lines.length > 50) {
+          currentContent = lines.slice(0, 50).join('\n') + `\n\n... (${lines.length - 50} more lines)`;
+        }
+      } catch {
+        // Ignore read errors
+      }
+    }
+
+    return {
+      action: 'special',
+      configPath: settingsPath,
+      fileExists,
+      hasExistingIntegration: false,
+      currentContent,
+      message: 'VS Code will be configured to use Flowstate themes. Themes will be applied automatically when you switch themes.',
+    };
+  }
+
+  // Use core preview logic for other apps
+  const result = await corePreviewSetup(appName);
+
+  if (!result.success) {
+    throw result.error;
+  }
+
+  return result.data;
+}
+
+/**
  * Refresh an application's theme
  * Sends reload signal to supported applications
  */
@@ -639,5 +731,6 @@ export async function handleRefreshApp(_event: IpcMainInvokeEvent | null, appNam
 export function registerAppHandlers(): void {
   ipcMain.handle('apps:detect', handleDetectApps);
   ipcMain.handle('apps:setup', handleSetupApp);
+  ipcMain.handle('apps:previewSetup', handlePreviewSetup);
   ipcMain.handle('apps:refresh', handleRefreshApp);
 }

@@ -98,6 +98,22 @@ export interface AppInfo {
   configPath?: string;
 }
 
+// Setup preview for transparent app configuration
+export interface SetupPreview {
+  action: 'create' | 'modify' | 'already_setup' | 'special';
+  configPath: string;
+  fileExists: boolean;
+  hasExistingIntegration: boolean;
+  /** For 'create' action - full template content */
+  newContent?: string;
+  /** For 'modify' action - snippet to add */
+  snippet?: string;
+  instructions?: string;
+  /** Current file content (truncated for large files) */
+  currentContent?: string;
+  message: string;
+}
+
 // Plugin system types
 export type PluginMode = 'preset' | 'custom';
 export type InstalledBy = 'flowstate' | 'user' | 'unknown';
@@ -228,6 +244,7 @@ export interface ElectronAPI {
   getThumbnailCacheStats: () => Promise<{ count: number; sizeBytes: number; sizeMB: number }>;
   detectApps: () => Promise<AppInfo[]>;
   setupApp: (appName: string) => Promise<void>;
+  previewSetupApp: (appName: string) => Promise<SetupPreview>;
   refreshApp: (appName: string) => Promise<void>;
   getPreferences: () => Promise<Preferences>;
   setPreferences: (prefs: Preferences) => Promise<void>;

@@ -36,6 +36,24 @@ export interface SetupResult {
 }
 
 /**
+ * Preview of what setup would do (without making changes)
+ */
+export interface SetupPreview {
+  action: 'create' | 'modify' | 'already_setup' | 'special';
+  configPath: string;
+  fileExists: boolean;
+  hasExistingIntegration: boolean;
+  /** For 'create' action - full template content */
+  newContent?: string;
+  /** For 'modify' action - snippet to add */
+  snippet?: string;
+  instructions?: string;
+  /** Current file content (truncated for large files) */
+  currentContent?: string;
+  message: string;
+}
+
+/**
  * App configuration definitions
  */
 const APP_CONFIGS = {
@@ -242,6 +260,165 @@ export function getAppConfigPath(appName: string): string | undefined {
  */
 export function supportsClipboardSetup(appName: string): boolean {
   return hasSnippet(appName);
+}
+
+/**
+ * Preview what setup would do without making changes
+ *
+ * Returns information about what files would be created/modified,
+ * allowing the UI to show the user exactly what will happen.
+ */
+export async function previewSetup(
+  appName: string
+): Promise<Result<SetupPreview, Error>> {
+  const normalizedName = appName.toLowerCase();
+
+  // Handle special apps that need different treatment
+  if (normalizedName === 'vscode') {
+    const settingsPath = path.join(
+      homeDir,
+      'Library',
+      'Application Support',
+      'Code',
+      'User',
+      'settings.json'
+    );
+    const fileExists = existsSync(settingsPath);
+    let currentContent: string | undefined;
+
+    if (fileExists) {
+      const content = await readFile(settingsPath);
+      currentContent = truncateContent(content);
+    }
+
+    return ok({
+      action: 'special',
+      configPath: settingsPath,
+      fileExists,
+      hasExistingIntegration: false, // VS Code doesn't use file imports
+      currentContent,
+      message: 'VS Code integration is automatic. Flowstate will update settings.json with the current theme colors.',
+    });
+  }
+
+  if (normalizedName === 'cursor') {
+    const settingsPath = path.join(
+      homeDir,
+      'Library',
+      'Application Support',
+      'Cursor',
+      'User',
+      'settings.json'
+    );
+    const fileExists = existsSync(settingsPath);
+    let currentContent: string | undefined;
+
+    if (fileExists) {
+      const content = await readFile(settingsPath);
+      currentContent = truncateContent(content);
+    }
+
+    return ok({
+      action: 'special',
+      configPath: settingsPath,
+      fileExists,
+      hasExistingIntegration: false,
+      currentContent,
+      message: 'Cursor integration is automatic. Flowstate will update settings.json with the current theme colors.',
+    });
+  }
+
+  if (normalizedName === 'slack') {
+    const slackThemePath = path.join(
+      homeDir,
+      'Library',
+      'Application Support',
+      APP_CONFIG.dataDirName,
+      'current',
+      'theme',
+      'slack-theme.txt'
+    );
+
+    return ok({
+      action: 'special',
+      configPath: slackThemePath,
+      fileExists: existsSync(slackThemePath),
+      hasExistingIntegration: false,
+      message: 'Slack requires manual setup. Apply a theme, then copy the contents of slack-theme.txt to Slack Preferences > Themes > Custom theme.',
+    });
+  }
+
+  // Check if app is supported
+  const config = APP_CONFIGS[normalizedName as AppConfigKey];
+  if (!config) {
+    const supportedApps = typedKeys(APP_CONFIGS).join(', ');
+    return err(new Error(`Unsupported app: ${appName}. Supported: ${supportedApps}`));
+  }
+
+  const { configPath } = config;
+  const fileExists = existsSync(configPath);
+
+  // Check if config already exists
+  if (fileExists) {
+    const content = await readFile(configPath);
+    const hasIntegration = hasFlowstateIntegration(content);
+
+    if (hasIntegration) {
+      return ok({
+        action: 'already_setup',
+        configPath,
+        fileExists: true,
+        hasExistingIntegration: true,
+        currentContent: truncateContent(content),
+        message: `${appName} is already configured with Flowstate integration.`,
+      });
+    }
+
+    // Config exists but no Flowstate - return snippet info
+    const snippetInfo = getSnippet(normalizedName);
+    if (snippetInfo) {
+      return ok({
+        action: 'modify',
+        configPath,
+        fileExists: true,
+        hasExistingIntegration: false,
+        snippet: snippetInfo.snippet,
+        instructions: snippetInfo.instructions,
+        currentContent: truncateContent(content),
+        message: `${appName} config exists. The integration snippet will be added.`,
+      });
+    }
+
+    // Fallback error if no snippet defined
+    return err(new Error(`No integration snippet defined for ${appName}`));
+  }
+
+  // No config exists - would create from template
+  const template = await getTemplate(normalizedName);
+  if (!template) {
+    return err(new Error(`Template not found for ${appName}. Please create the config manually.`));
+  }
+
+  return ok({
+    action: 'create',
+    configPath,
+    fileExists: false,
+    hasExistingIntegration: false,
+    newContent: template,
+    message: `A new ${appName} config file will be created.`,
+  });
+}
+
+/**
+ * Truncate content for preview display
+ * Keeps first portion of file to avoid overwhelming UI
+ */
+function truncateContent(content: string, maxLines = 50): string {
+  const lines = content.split('\n');
+  if (lines.length <= maxLines) {
+    return content;
+  }
+  return lines.slice(0, maxLines).join('\n') + `\n\n... (${lines.length - maxLines} more lines)`;
 }
 
 // Re-export snippet utilities
