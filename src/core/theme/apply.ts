@@ -223,10 +223,13 @@ async function executeHookScript(
 
 /**
  * Check if an app is enabled for auto-refresh
- * Empty enabledApps means no apps are enabled (explicit opt-in required)
+ * Empty enabledApps means all apps are enabled (matches UI default)
  */
 function isAppEnabled(prefs: Preferences | null, appName: string): boolean {
-  return prefs?.enabledApps?.includes(appName) ?? false;
+  if (!prefs?.enabledApps || prefs.enabledApps.length === 0) {
+    return true;
+  }
+  return prefs.enabledApps.includes(appName);
 }
 
 /**

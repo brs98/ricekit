@@ -470,7 +470,7 @@ async function refreshActiveThemeApps(themeName: string, themePath: string): Pro
 
   // Update VS Code settings if enabled
   try {
-    if (prefs.enabledApps && prefs.enabledApps.includes('vscode')) {
+    if (!prefs.enabledApps || prefs.enabledApps.length === 0 || prefs.enabledApps.includes('vscode')) {
       await updateVSCodeSettings(themeName, themePath);
     }
   } catch (err: unknown) {
@@ -479,7 +479,7 @@ async function refreshActiveThemeApps(themeName: string, themePath: string): Pro
 
   // Update Cursor settings if enabled
   try {
-    if (prefs.enabledApps && prefs.enabledApps.includes('cursor')) {
+    if (!prefs.enabledApps || prefs.enabledApps.length === 0 || prefs.enabledApps.includes('cursor')) {
       await updateCursorSettings(themeName, themePath);
     }
   } catch (err: unknown) {
@@ -697,7 +697,7 @@ export async function handleApplyTheme(_event: IpcMainInvokeEvent | null, name: 
 
     // Update VS Code settings if enabled
     try {
-      if (prefs.enabledApps && prefs.enabledApps.includes('vscode')) {
+      if (!prefs.enabledApps || prefs.enabledApps.length === 0 || prefs.enabledApps.includes('vscode')) {
         await updateVSCodeSettings(name, theme.path);
       } else {
         logger.info('VS Code integration disabled in preferences');
@@ -708,7 +708,7 @@ export async function handleApplyTheme(_event: IpcMainInvokeEvent | null, name: 
 
     // Update Cursor settings if enabled
     try {
-      if (prefs.enabledApps && prefs.enabledApps.includes('cursor')) {
+      if (!prefs.enabledApps || prefs.enabledApps.length === 0 || prefs.enabledApps.includes('cursor')) {
         await updateCursorSettings(name, theme.path);
       } else {
         logger.info('Cursor integration disabled in preferences');
