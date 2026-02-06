@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { Palette, Image, FileCode, ChevronRight, Loader2 } from 'lucide-react';
 import type { ThemeColors } from '../../shared/types';
 import { deriveAllColors, getDefaultLockState, enforceBackgroundLightness } from '../../shared/colorDerivation';
+import { assignSwatchesToAnsiSlots, type SwatchInput } from '../../shared/hueMapping';
 import {
   Dialog,
   DialogContent,
@@ -170,30 +171,22 @@ export function StarterPickerModal({ open, onOpenChange, onSelect }: StarterPick
         }
       }
 
-      // Use vibrant colors for ANSI colors
-      if (palette.Vibrant) {
-        baseColors.blue = palette.Vibrant.hex;
+      // Hue-aware ANSI color assignment
+      const swatchEntries: SwatchInput[] = [];
+      for (const name of ['Vibrant', 'Muted', 'DarkVibrant', 'DarkMuted', 'LightVibrant', 'LightMuted'] as const) {
+        const swatch = palette[name];
+        if (swatch) {
+          swatchEntries.push({ hex: swatch.hex, population: swatch.population });
+        }
       }
 
-      // Try to find distinct colors for other ANSI slots
-      // Shift hue from the main vibrant to create variety
-      const swatches = [
-        palette.Vibrant,
-        palette.LightVibrant,
-        palette.DarkVibrant,
-        palette.Muted,
-        palette.LightMuted,
-        palette.DarkMuted,
-      ].filter(Boolean);
-
-      // Assign colors based on what we have
-      if (swatches.length > 0) {
-        baseColors.red = swatches[0]?.hex ?? '#ff5555';
-        baseColors.green = swatches[1]?.hex ?? swatches[0]?.hex ?? '#50fa7b';
-        baseColors.yellow = swatches[2]?.hex ?? swatches[0]?.hex ?? '#f1fa8c';
-        baseColors.magenta = swatches[3]?.hex ?? swatches[0]?.hex ?? '#ff79c6';
-        baseColors.cyan = swatches[4]?.hex ?? swatches[1]?.hex ?? '#8be9fd';
-      }
+      const ansiColors = assignSwatchesToAnsiSlots(swatchEntries);
+      baseColors.red = ansiColors.red;
+      baseColors.green = ansiColors.green;
+      baseColors.yellow = ansiColors.yellow;
+      baseColors.blue = ansiColors.blue;
+      baseColors.magenta = ansiColors.magenta;
+      baseColors.cyan = ansiColors.cyan;
 
       // Enforce background lightness constraints
       // node-vibrant extracts colors relative to image content, not absolute thresholds
