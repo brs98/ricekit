@@ -1,3 +1,7 @@
+// Prevent EPIPE crashes when parent process closes stdout/stderr
+process.stdout?.on('error', () => {});
+process.stderr?.on('error', () => {});
+
 import { app, BrowserWindow, nativeTheme, Tray, Menu, nativeImage, globalShortcut, protocol, net, screen } from 'electron';
 import path from 'path';
 import { initializeApp, initializeAppAfterThemes, getPreferencesPath, getStatePath } from './directories';

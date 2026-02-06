@@ -63,8 +63,8 @@ class Logger {
           fs.renameSync(currentLog, nextLog);
         }
       }
-    } catch (error: unknown) {
-      console.error('Failed to rotate logs:', error);
+    } catch {
+      // Rotation failed — silently ignore to avoid EPIPE loops
     }
   }
 
@@ -96,23 +96,27 @@ class Logger {
     logMessage += '\n';
 
     try {
-      // Also write to console for development
-      const consoleMessage = `[${level}] ${message}`;
-      switch (level) {
-        case LogLevel.ERROR:
-          console.error(consoleMessage, data || '');
-          break;
-        case LogLevel.WARN:
-          console.warn(consoleMessage, data || '');
-          break;
-        case LogLevel.INFO:
-          console.info(consoleMessage, data || '');
-          break;
-        case LogLevel.DEBUG:
-          if (this.#debugEnabled) {
-            console.log(consoleMessage, data || '');
-          }
-          break;
+      // Console output (best-effort, may fail if pipe is broken)
+      try {
+        const consoleMessage = `[${level}] ${message}`;
+        switch (level) {
+          case LogLevel.ERROR:
+            console.error(consoleMessage, data || '');
+            break;
+          case LogLevel.WARN:
+            console.warn(consoleMessage, data || '');
+            break;
+          case LogLevel.INFO:
+            console.info(consoleMessage, data || '');
+            break;
+          case LogLevel.DEBUG:
+            if (this.#debugEnabled) {
+              console.log(consoleMessage, data || '');
+            }
+            break;
+        }
+      } catch {
+        // Silently ignore EPIPE / broken pipe errors
       }
 
       // Write to log file
@@ -120,8 +124,8 @@ class Logger {
 
       // Check if we need to rotate after writing
       this.#rotateLogsIfNeeded();
-    } catch (error: unknown) {
-      console.error('Failed to write log:', error);
+    } catch {
+      // File write failed — nothing safe to do here (don't call console)
     }
   }
 
@@ -185,8 +189,8 @@ class Logger {
       }
 
       this.info('Logs cleared');
-    } catch (error: unknown) {
-      console.error('Failed to clear logs:', error);
+    } catch {
+      // Clear failed — silently ignore to avoid EPIPE loops
     }
   }
 }
