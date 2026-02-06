@@ -3,13 +3,10 @@
  */
 
 import path from 'path';
-import { exec } from 'child_process';
-import { promisify } from 'util';
 import type { State } from '../../shared/types';
 import { existsSync, readDir, readJson, writeJson, unlink, createSymlink } from '../utils/fs';
 import { getPathProvider } from '../paths';
-
-const execAsync = promisify(exec);
+import { applyWallpaperToDesktops } from './apply';
 
 /**
  * List wallpapers for a theme
@@ -53,28 +50,7 @@ export async function applyWallpaper(
     throw new Error(`Wallpaper file not found: ${wallpaperPath}`);
   }
 
-  // Use osascript to set the wallpaper
-  let script: string;
-
-  if (displayIndex !== undefined && displayIndex !== null) {
-    // Set wallpaper for specific display (1-indexed)
-    script = `
-      tell application "System Events"
-        set picture of desktop ${displayIndex} to "${wallpaperPath}"
-      end tell
-    `;
-  } else {
-    // Set wallpaper for all displays
-    script = `
-      tell application "System Events"
-        tell every desktop
-          set picture to "${wallpaperPath}"
-        end tell
-      end tell
-    `;
-  }
-
-  await execAsync(`osascript -e '${script}'`);
+  await applyWallpaperToDesktops(wallpaperPath, { displayIndex });
 
   // Create symlink to current wallpaper
   const paths = getPathProvider();

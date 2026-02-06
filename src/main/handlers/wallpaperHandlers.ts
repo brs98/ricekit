@@ -10,6 +10,7 @@ import { getThemesDir, getCustomThemesDir, getStatePath, getCurrentDir } from '.
 import type { State } from '../../shared/types';
 import { getErrorMessage, isNodeError } from '../../shared/errors';
 import { logger } from '../logger';
+import { applyWallpaperToDesktops } from '../../core/wallpaper/apply';
 import { generateThumbnails, clearOldThumbnails, getThumbnailCacheStats } from '../thumbnails';
 import {
   readJson,
@@ -149,35 +150,16 @@ export async function handleApplyWallpaper(
   );
 
   try {
-    const execAsync = promisify(exec);
-
     // Check if wallpaper file exists
     if (!existsSync(wallpaperPath)) {
       throw new Error(`Wallpaper file not found: ${wallpaperPath}`);
     }
 
-    // Use osascript to set the wallpaper
-    let script: string;
-
-    if (displayIndex !== undefined && displayIndex !== null) {
-      // Set wallpaper for specific display (1-indexed)
-      script = `
-        tell application "System Events"
-          set picture of desktop ${displayIndex} to "${wallpaperPath}"
-        end tell
-      `;
-    } else {
-      // Set wallpaper for all displays
-      script = `
-        tell application "System Events"
-          tell every desktop
-            set picture to "${wallpaperPath}"
-          end tell
-        end tell
-      `;
-    }
-
-    await execAsync(`osascript -e '${script}'`);
+    // Apply wallpaper using dual-strategy (desktoppr + AppleScript)
+    await applyWallpaperToDesktops(wallpaperPath, {
+      displayIndex,
+      onLog: (level, message) => logger[level](message),
+    });
 
     // Create symlink to current wallpaper
     const currentDir = getCurrentDir();

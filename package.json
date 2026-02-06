@@ -108,6 +108,11 @@
       {
         "from": "src/templates",
         "to": "templates"
+      },
+      {
+        "from": "resources/bin",
+        "to": "bin",
+        "filter": ["desktoppr"]
       }
     ],
     "asarUnpack": [
