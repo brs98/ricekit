@@ -233,7 +233,7 @@ describe('pluginHandlers', () => {
         startAtLogin: false,
         showInMenuBar: true,
         showNotifications: true,
-        notifications: { onScheduledSwitch: true },
+        notifications: { onThemeChange: true, onScheduledSwitch: true },
         onboardingCompleted: false,
       });
 
@@ -263,7 +263,7 @@ describe('pluginHandlers', () => {
         startAtLogin: false,
         showInMenuBar: true,
         showNotifications: true,
-        notifications: { onScheduledSwitch: true },
+        notifications: { onThemeChange: true, onScheduledSwitch: true },
         onboardingCompleted: false,
       });
 
@@ -345,7 +345,7 @@ describe('pluginHandlers - generateWrapperConfig', () => {
       startAtLogin: false,
       showInMenuBar: true,
       showNotifications: true,
-      notifications: { onScheduledSwitch: true },
+      notifications: { onThemeChange: true, onScheduledSwitch: true },
       onboardingCompleted: false,
     });
 
@@ -389,7 +389,7 @@ describe('pluginHandlers - generateWrapperConfig', () => {
       startAtLogin: false,
       showInMenuBar: true,
       showNotifications: true,
-      notifications: { onScheduledSwitch: true },
+      notifications: { onThemeChange: true, onScheduledSwitch: true },
       onboardingCompleted: false,
     });
 
@@ -417,7 +417,7 @@ describe('pluginHandlers - generateWrapperConfig', () => {
       startAtLogin: false,
       showInMenuBar: true,
       showNotifications: true,
-      notifications: { onScheduledSwitch: true },
+      notifications: { onThemeChange: true, onScheduledSwitch: true },
       onboardingCompleted: false,
     });
 
@@ -459,7 +459,7 @@ describe('pluginHandlers - generateWrapperConfig', () => {
       startAtLogin: false,
       showInMenuBar: true,
       showNotifications: true,
-      notifications: { onScheduledSwitch: true },
+      notifications: { onThemeChange: true, onScheduledSwitch: true },
       onboardingCompleted: false,
     });
 
@@ -521,7 +521,7 @@ describe('pluginHandlers - generateWrapperConfig', () => {
       startAtLogin: false,
       showInMenuBar: true,
       showNotifications: true,
-      notifications: { onScheduledSwitch: true },
+      notifications: { onThemeChange: true, onScheduledSwitch: true },
       onboardingCompleted: false,
     });
 
