@@ -7,18 +7,19 @@
 
 import path from 'path';
 import os from 'os';
-import { exec, execSync } from 'child_process';
-import type { ThemeColors, ThemeMetadata, State, Preferences } from '../../shared/types';
+import { execSync } from 'child_process';
+import type { State, Preferences } from '../../shared/types';
 import {
   existsSync,
   readJson,
   writeJson,
+  copyFile,
+  touch,
   isSymlink,
   isDirectory,
   unlink,
   rmdir,
   createSymlink,
-  copyFile,
   isExecutable,
 } from '../utils/fs';
 import { getPathProvider } from '../paths';
@@ -26,6 +27,7 @@ import { getTheme } from './list';
 import { listWallpapers, applyWallpaper } from '../wallpaper';
 import type { Result } from '../interfaces';
 import { ok, err } from '../interfaces';
+import { createErrorWithHint } from '../../shared/errors';
 
 /**
  * Options for theme application
@@ -51,54 +53,6 @@ export interface ApplyThemeResult {
 }
 
 /**
- * Notify Kitty terminal to reload colors
- */
-async function notifyKitty(themeColors: ThemeColors, onLog?: (msg: string) => void): Promise<boolean> {
-  const colorArgs: string[] = [];
-
-  // Map theme colors to Kitty color names
-  if (themeColors.background) colorArgs.push(`background=${themeColors.background}`);
-  if (themeColors.foreground) colorArgs.push(`foreground=${themeColors.foreground}`);
-  if (themeColors.cursor) colorArgs.push(`cursor=${themeColors.cursor}`);
-  if (themeColors.selection) colorArgs.push(`selection_background=${themeColors.selection}`);
-
-  // ANSI colors
-  if (themeColors.black) colorArgs.push(`color0=${themeColors.black}`);
-  if (themeColors.red) colorArgs.push(`color1=${themeColors.red}`);
-  if (themeColors.green) colorArgs.push(`color2=${themeColors.green}`);
-  if (themeColors.yellow) colorArgs.push(`color3=${themeColors.yellow}`);
-  if (themeColors.blue) colorArgs.push(`color4=${themeColors.blue}`);
-  if (themeColors.magenta) colorArgs.push(`color5=${themeColors.magenta}`);
-  if (themeColors.cyan) colorArgs.push(`color6=${themeColors.cyan}`);
-  if (themeColors.white) colorArgs.push(`color7=${themeColors.white}`);
-
-  // Bright colors
-  if (themeColors.brightBlack) colorArgs.push(`color8=${themeColors.brightBlack}`);
-  if (themeColors.brightRed) colorArgs.push(`color9=${themeColors.brightRed}`);
-  if (themeColors.brightGreen) colorArgs.push(`color10=${themeColors.brightGreen}`);
-  if (themeColors.brightYellow) colorArgs.push(`color11=${themeColors.brightYellow}`);
-  if (themeColors.brightBlue) colorArgs.push(`color12=${themeColors.brightBlue}`);
-  if (themeColors.brightMagenta) colorArgs.push(`color13=${themeColors.brightMagenta}`);
-  if (themeColors.brightCyan) colorArgs.push(`color14=${themeColors.brightCyan}`);
-  if (themeColors.brightWhite) colorArgs.push(`color15=${themeColors.brightWhite}`);
-
-  if (colorArgs.length === 0) return false;
-
-  return new Promise((resolve) => {
-    const kittyCommand = `kitty @ set-colors ${colorArgs.join(' ')}`;
-    exec(kittyCommand, (error) => {
-      if (error) {
-        onLog?.('Kitty not available or remote control disabled');
-        resolve(false);
-      } else {
-        onLog?.('✓ Kitty terminal reloaded');
-        resolve(true);
-      }
-    });
-  });
-}
-
-/**
  * Notify WezTerm by updating the theme file
  */
 async function notifyWezTerm(themePath: string, onLog?: (msg: string) => void): Promise<boolean> {
@@ -113,7 +67,21 @@ async function notifyWezTerm(themePath: string, onLog?: (msg: string) => void): 
     );
 
     if (existsSync(weztermThemeSrc)) {
+      // copyFile is atomic (no truncation race unlike writeFile)
       await copyFile(weztermThemeSrc, weztermThemeDest);
+
+      // Touch WezTerm's primary config to force reload (more reliable than watch list)
+      const weztermConfigPaths = [
+        path.join(os.homedir(), '.wezterm.lua'),
+        path.join(os.homedir(), '.config', 'wezterm', 'wezterm.lua'),
+      ];
+      for (const configPath of weztermConfigPaths) {
+        if (existsSync(configPath)) {
+          await touch(configPath);
+          break;
+        }
+      }
+
       onLog?.('✓ WezTerm theme file updated');
       return true;
     }
@@ -243,16 +211,6 @@ export async function notifyApps(
   const notifiedApps: string[] = [];
   const onLog = options?.onLog;
 
-  // Read theme colors
-  let themeColors: ThemeColors | null = null;
-  try {
-    const themeJsonPath = path.join(themePath, 'theme.json');
-    const themeData = await readJson<ThemeMetadata>(themeJsonPath);
-    themeColors = themeData.colors;
-  } catch {
-    // Continue without colors
-  }
-
   // Read preferences for enabled apps and hook script
   const paths = getPathProvider();
   let prefs: Preferences | null = null;
@@ -260,15 +218,6 @@ export async function notifyApps(
     prefs = await readJson<Preferences>(paths.getPreferencesPath());
   } catch {
     // Continue with defaults
-  }
-
-  // Notify Kitty (only if enabled)
-  if (isAppEnabled(prefs, 'kitty')) {
-    if (themeColors && existsSync(path.join(themePath, 'kitty.conf'))) {
-      if (await notifyKitty(themeColors, onLog)) {
-        notifiedApps.push('kitty');
-      }
-    }
   }
 
   // Notify WezTerm (only if enabled)
@@ -325,7 +274,11 @@ export async function applyTheme(
     // Find the theme
     const theme = await getTheme(themeName);
     if (!theme) {
-      return err(new Error(`Theme "${themeName}" not found`));
+      return err(createErrorWithHint(
+        'THEME_NOT_FOUND',
+        `Theme "${themeName}" not found`,
+        `Run 'ricekit theme list' to see available themes.`
+      ));
     }
 
     // Get previous theme

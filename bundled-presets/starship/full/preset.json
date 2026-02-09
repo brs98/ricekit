@@ -1,6 +1,0 @@
-{
-  "name": "full",
-  "displayName": "Full",
-  "description": "Everything - kubernetes, docker, cloud, time, and more",
-  "features": ["directory", "git", "languages", "kubernetes", "docker", "aws", "gcloud", "time", "battery"]
-}

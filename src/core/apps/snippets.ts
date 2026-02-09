@@ -26,21 +26,6 @@ config.colors = dofile(colors_path)`,
     instructions: 'Add this after your `config = wezterm.config_builder()` line:',
   },
 
-  alacritty: {
-    snippet: `import = ["${themeBasePath}/alacritty.toml"]`,
-    instructions: 'Add this at the top of your alacritty.toml:',
-  },
-
-  kitty: {
-    snippet: `include ${themeBasePath}/kitty.conf`,
-    instructions: 'Add this at the top of your kitty.conf:',
-  },
-
-  starship: {
-    snippet: `"$include" = '${themeBasePath}/starship.toml'`,
-    instructions: 'Add this at the top of your starship.toml:',
-  },
-
   sketchybar: {
     snippet: `# Ricekit SketchyBar integration
 source "$HOME/Library/Application Support/${APP_CONFIG.dataDirName}/current/theme/sketchybar-colors.sh"`,

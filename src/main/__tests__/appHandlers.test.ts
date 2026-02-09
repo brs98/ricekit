@@ -97,16 +97,20 @@ vi.mock('../../core/apps/setup', () => ({
   setupApp: vi.fn(),
 }));
 
+// Mock the core apps module
+vi.mock('../../core/apps', () => ({
+  detectApps: vi.fn(() => Promise.resolve([])),
+}));
+
 // Import after mocks are set up
 import {
   existsSync as mockExistsSync,
 } from '../utils/asyncFs';
 import { handleGetPreferences, handleSetPreferences } from '../handlers/preferencesHandlers';
-import { shell, clipboard } from 'electron';
+import { clipboard } from 'electron';
 import {
   handleDetectApps,
   handleSetupApp,
-  setThemeHandlers,
 } from '../handlers/appHandlers';
 import { setupApp as coreSetupApp } from '../../core/apps/setup';
 
@@ -117,58 +121,12 @@ describe('appHandlers', () => {
   beforeEach(() => {
     // Create test directories
     fs.mkdirSync(path.join(testDir, 'appdata', 'Ricekit', 'current', 'theme'), { recursive: true });
-    fs.mkdirSync(path.join(mockHomeDir, '.config', 'alacritty'), { recursive: true });
-    fs.mkdirSync(path.join(mockHomeDir, '.config', 'kitty'), { recursive: true });
     fs.mkdirSync(path.join(mockHomeDir, '.config', 'nvim'), { recursive: true });
     fs.mkdirSync(path.join(mockHomeDir, '.config'), { recursive: true });
-    fs.mkdirSync(path.join(mockHomeDir, 'Library', 'Application Support', 'Code', 'User'), { recursive: true });
-    fs.mkdirSync(path.join(mockHomeDir, 'Library', 'Application Support', 'Cursor', 'User'), { recursive: true });
     fs.mkdirSync(path.join(mockHomeDir, 'Library', 'Application Support', 'Ricekit', 'current', 'theme'), { recursive: true });
 
     // Reset mocks
     vi.clearAllMocks();
-
-    // Set up theme handlers mock
-    setThemeHandlers({
-      getTheme: vi.fn(() => Promise.resolve({
-        name: 'test-theme',
-        path: '/test/path',
-        metadata: {
-          name: 'test-theme',
-          author: 'Test',
-          description: 'Test theme',
-          version: '1.0.0',
-          colors: {
-            background: '#1a1b26',
-            foreground: '#c0caf5',
-            cursor: '#c0caf5',
-            selection: '#33467c',
-            black: '#15161e',
-            red: '#f7768e',
-            green: '#9ece6a',
-            yellow: '#e0af68',
-            blue: '#7aa2f7',
-            magenta: '#bb9af7',
-            cyan: '#7dcfff',
-            white: '#a9b1d6',
-            brightBlack: '#414868',
-            brightRed: '#f7768e',
-            brightGreen: '#9ece6a',
-            brightYellow: '#e0af68',
-            brightBlue: '#7aa2f7',
-            brightMagenta: '#bb9af7',
-            brightCyan: '#7dcfff',
-            brightWhite: '#c0caf5',
-            accent: '#7aa2f7',
-            border: '#414868',
-          },
-        },
-        isCustom: false,
-        isLight: false,
-      })),
-      updateVSCodeSettings: vi.fn(() => Promise.resolve()),
-      updateCursorSettings: vi.fn(() => Promise.resolve()),
-    });
 
     // Configure default existsSync behavior
     vi.mocked(mockExistsSync).mockImplementation((filePath) => {
@@ -195,36 +153,36 @@ describe('appHandlers', () => {
         success: true,
         data: {
           action: 'created',
-          configPath: path.join(mockHomeDir, '.config', 'alacritty', 'alacritty.toml'),
-          message: 'Created alacritty config',
+          configPath: path.join(mockHomeDir, '.config', 'wezterm', 'wezterm.lua'),
+          message: 'Created wezterm config',
         },
       });
 
-      const result = await handleSetupApp(null, 'alacritty');
+      const result = await handleSetupApp(null, 'wezterm');
 
       expect(result.action).toBe('created');
-      expect(result.configPath).toContain('alacritty.toml');
+      expect(result.configPath).toContain('wezterm.lua');
 
       // Should have added to enabledApps
       expect(handleSetPreferences).toHaveBeenCalled();
     });
 
     it('should copy snippet to clipboard when config exists', async () => {
-      const snippet = 'import = ["~/Library/Application Support/Ricekit/current/theme/alacritty.toml"]';
+      const snippet = '-- Ricekit WezTerm integration\nlocal colors_path = ...';
 
       // Mock core setupApp to return 'clipboard' action
       vi.mocked(coreSetupApp).mockResolvedValue({
         success: true,
         data: {
           action: 'clipboard',
-          configPath: path.join(mockHomeDir, '.config', 'kitty', 'kitty.conf'),
+          configPath: path.join(mockHomeDir, '.config', 'wezterm', 'wezterm.lua'),
           snippet,
-          instructions: 'Add this at the top of your kitty.conf:',
-          message: 'kitty config exists. Add the integration snippet to your config.',
+          instructions: 'Add this after your config = wezterm.config_builder() line:',
+          message: 'wezterm config exists. Add the integration snippet to your config.',
         },
       });
 
-      const result = await handleSetupApp(null, 'kitty');
+      const result = await handleSetupApp(null, 'wezterm');
 
       expect(result.action).toBe('clipboard');
       expect(result.snippet).toBe(snippet);
@@ -242,12 +200,12 @@ describe('appHandlers', () => {
         success: true,
         data: {
           action: 'already_setup',
-          configPath: path.join(mockHomeDir, '.config', 'alacritty', 'alacritty.toml'),
-          message: 'alacritty is already configured with Ricekit integration.',
+          configPath: path.join(mockHomeDir, '.config', 'wezterm', 'wezterm.lua'),
+          message: 'wezterm is already configured with Ricekit integration.',
         },
       });
 
-      const result = await handleSetupApp(null, 'alacritty');
+      const result = await handleSetupApp(null, 'wezterm');
 
       expect(result.action).toBe('already_setup');
 
@@ -267,65 +225,5 @@ describe('appHandlers', () => {
       );
     });
 
-    it('should open slack theme file and show notification for slack setup', async () => {
-      // Create the slack theme file
-      const themePath = path.join(
-        mockHomeDir,
-        'Library',
-        'Application Support',
-        'Ricekit',
-        'current',
-        'theme',
-        'slack-theme.txt'
-      );
-      fs.mkdirSync(path.dirname(themePath), { recursive: true });
-      fs.writeFileSync(themePath, '#FFFFFF,#FFFFFF,#FFFFFF,#FFFFFF');
-
-      vi.mocked(mockExistsSync).mockImplementation((filePath) => {
-        const filePathStr = String(filePath);
-        if (filePathStr.includes('slack-theme.txt')) {
-          return true;
-        }
-        return false;
-      });
-
-      const result = await handleSetupApp(null, 'slack');
-
-      expect(result.action).toBe('special');
-
-      // Should have opened the theme file
-      expect(shell.openPath).toHaveBeenCalled();
-
-      // Should have added slack to enabledApps
-      expect(handleSetPreferences).toHaveBeenCalled();
-    });
-
-    it('should throw error for slack if theme file does not exist', async () => {
-      vi.mocked(mockExistsSync).mockReturnValue(false);
-
-      await expect(handleSetupApp(null, 'slack')).rejects.toThrow(
-        'Slack theme file not found. Please apply a theme first.'
-      );
-    });
-
-    it('should return special action for vscode', async () => {
-      const result = await handleSetupApp(null, 'vscode');
-
-      expect(result.action).toBe('special');
-      expect(result.message).toContain('VS Code');
-
-      // Should have added to enabledApps
-      expect(handleSetPreferences).toHaveBeenCalled();
-    });
-
-    it('should return special action for cursor', async () => {
-      const result = await handleSetupApp(null, 'cursor');
-
-      expect(result.action).toBe('special');
-      expect(result.message).toContain('Cursor');
-
-      // Should have added to enabledApps
-      expect(handleSetPreferences).toHaveBeenCalled();
-    });
   });
 });

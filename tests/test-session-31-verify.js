@@ -8,10 +8,10 @@ async function verifyCore() {
 
   try {
     // Test 1: Verify directory structure
-    const macThemeDir = path.join(os.homedir(), 'Library', 'Application Support', 'Ricekit');
-    const themesDir = path.join(macThemeDir, 'themes');
-    const customThemesDir = path.join(macThemeDir, 'custom-themes');
-    const currentDir = path.join(macThemeDir, 'current');
+    const ricekitDir = path.join(os.homedir(), 'Library', 'Application Support', 'Ricekit');
+    const themesDir = path.join(ricekitDir, 'themes');
+    const customThemesDir = path.join(ricekitDir, 'custom-themes');
+    const currentDir = path.join(ricekitDir, 'current');
 
     console.log('✓ Checking directory structure...');
     if (!fs.existsSync(themesDir)) throw new Error('themes directory missing');
@@ -33,7 +33,7 @@ async function verifyCore() {
 
     // Test 3: Check state.json
     console.log('✓ Checking state.json...');
-    const stateFile = path.join(macThemeDir, 'state.json');
+    const stateFile = path.join(ricekitDir, 'state.json');
     if (!fs.existsSync(stateFile)) throw new Error('state.json missing');
     const state = JSON.parse(fs.readFileSync(stateFile, 'utf-8'));
     console.log(`  ✓ Current theme: ${state.currentTheme}\n`);

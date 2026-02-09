@@ -36,11 +36,11 @@ describe('Plugin Types', () => {
     });
 
     it('should accept all installedBy values', () => {
-      const byMactheme: InstalledBy = 'ricekit';
+      const byRicekit: InstalledBy = 'ricekit';
       const byUser: InstalledBy = 'user';
       const byUnknown: InstalledBy = 'unknown';
 
-      expect(byMactheme).toBe('ricekit');
+      expect(byRicekit).toBe('ricekit');
       expect(byUser).toBe('user');
       expect(byUnknown).toBe('unknown');
     });

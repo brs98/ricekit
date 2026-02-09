@@ -40,6 +40,7 @@ import {
   isExecutable,
   stat,
   createSymlink,
+  touch,
 } from '../utils/asyncFs';
 import { handleListWallpapers, handleApplyWallpaper } from './wallpaperHandlers';
 import type { ApplyOptions } from './systemHandlers';
@@ -306,8 +307,21 @@ async function notifyTerminalsToReload(themePath: string): Promise<void> {
     const weztermThemeDest = path.join(os.homedir(), 'Library', 'Application Support', 'Ricekit', 'wezterm-colors.lua');
 
     if (existsSync(weztermThemeSrc)) {
-      // Copy theme content to the fixed location (this triggers WezTerm's file watcher)
+      // copyFile is atomic (no truncation race unlike writeFile)
       await copyFile(weztermThemeSrc, weztermThemeDest);
+
+      // Touch WezTerm's primary config to force reload (more reliable than watch list)
+      const weztermConfigPaths = [
+        path.join(os.homedir(), '.wezterm.lua'),
+        path.join(os.homedir(), '.config', 'wezterm', 'wezterm.lua'),
+      ];
+      for (const configPath of weztermConfigPaths) {
+        if (existsSync(configPath)) {
+          await touch(configPath);
+          break;
+        }
+      }
+
       logger.info('✓ WezTerm theme file updated - will auto-reload');
     }
   } catch (err: unknown) {
@@ -898,6 +912,7 @@ async function handleUpdateTheme(_event: IpcMainInvokeEvent, name: string, data:
       'iterm2.itermcolors',
       'warp.yaml',
       'hyper.js',
+      'wezterm.lua',
       'vscode.json',
       'cursor.json',
       'neovim.lua',
@@ -906,6 +921,10 @@ async function handleUpdateTheme(_event: IpcMainInvokeEvent, name: string, data:
       'delta.gitconfig',
       'starship.toml',
       'zsh-theme.zsh',
+      'sketchybar-colors.sh',
+      'slack-theme.txt',
+      'aerospace-borders.sh',
+      'tmux-colors.conf',
       'theme.json',
     ];
 

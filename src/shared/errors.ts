@@ -45,6 +45,14 @@ export function createError(code: ErrorCode, message: string): Error {
 }
 
 /**
+ * Create a structured error with a code prefix and actionable hint
+ * Format: "ERROR_CODE: Human-readable message\nHint: actionable suggestion"
+ */
+export function createErrorWithHint(code: ErrorCode, message: string, hint: string): Error {
+  return new Error(`${code}: ${message}\nHint: ${hint}`);
+}
+
+/**
  * Parse a structured error message into code and message components
  * Returns UNEXPECTED_ERROR if the error doesn't match the expected format
  */

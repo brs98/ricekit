@@ -8,9 +8,9 @@
 const fs = require('fs');
 const path = require('path');
 
-const MACTHEME_DIR = path.join(require('os').homedir(), 'Library/Application Support/Ricekit');
-const THEMES_DIR = path.join(MACTHEME_DIR, 'themes');
-const CURRENT_DIR = path.join(MACTHEME_DIR, 'current');
+const RICEKIT_DIR = path.join(require('os').homedir(), 'Library/Application Support/Ricekit');
+const THEMES_DIR = path.join(RICEKIT_DIR, 'themes');
+const CURRENT_DIR = path.join(RICEKIT_DIR, 'current');
 
 console.log('🔍 Ricekit Basic Verification Test\n');
 

@@ -32,8 +32,8 @@ async function testThemeExport() {
   }
 
   try {
-    const macThemeDir = path.join(os.homedir(), 'Library', 'Application Support', 'Ricekit');
-    const exportDir = path.join(macThemeDir, 'exports');
+    const ricekitDir = path.join(os.homedir(), 'Library', 'Application Support', 'Ricekit');
+    const exportDir = path.join(ricekitDir, 'exports');
 
     // Create exports directory if it doesn't exist
     if (!fs.existsSync(exportDir)) {
@@ -62,7 +62,7 @@ async function testThemeExport() {
     // 1. Checking that the handler is registered
     // 2. Creating a manual export using the same logic
 
-    const themesDir = path.join(macThemeDir, 'themes');
+    const themesDir = path.join(ricekitDir, 'themes');
     const themeName = 'tokyo-night';
     const themePath = path.join(themesDir, themeName);
 

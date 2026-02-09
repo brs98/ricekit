@@ -1,6 +1,0 @@
-{
-  "name": "developer",
-  "displayName": "Developer",
-  "description": "Git status, language versions, and command duration",
-  "features": ["directory", "git-branch", "git-status", "nodejs", "python", "rust", "golang", "cmd-duration"]
-}

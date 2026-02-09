@@ -65,7 +65,7 @@ export function createAppsCommand(): Command {
     .option('--configured', 'Show only configured apps')
     .action(async (options) => {
       try {
-        let appList = detectApps();
+        let appList = await detectApps();
 
         if (options.installed) {
           appList = appList.filter((a) => a.isInstalled);
@@ -82,6 +82,7 @@ export function createAppsCommand(): Command {
               category: a.category,
               isInstalled: a.isInstalled,
               isConfigured: a.isConfigured,
+              hasRicekitIntegration: a.hasRicekitIntegration,
             })),
           };
           output(jsonOutput);
@@ -175,10 +176,6 @@ export function createAppsCommand(): Command {
           case 'already_setup':
             info(`${chalk.bold(appName)} is already configured with Ricekit`);
             console.log(chalk.gray(`  ${setupResult.configPath}`));
-            break;
-
-          case 'special':
-            info(setupResult.message);
             break;
         }
 

@@ -92,15 +92,16 @@ export interface Theme {
 export interface AppInfo {
   name: string;
   displayName: string;
-  category: 'terminal' | 'editor' | 'cli' | 'launcher' | 'system' | 'communication' | 'tiling';
+  category: 'terminal' | 'editor' | 'system' | 'tiling';
   isInstalled: boolean;
   isConfigured: boolean;
+  hasRicekitIntegration: boolean;
   configPath?: string;
 }
 
 // Setup preview for transparent app configuration
 export interface SetupPreview {
-  action: 'create' | 'modify' | 'already_setup' | 'special';
+  action: 'create' | 'modify' | 'already_setup';
   configPath: string;
   fileExists: boolean;
   hasExistingIntegration: boolean;

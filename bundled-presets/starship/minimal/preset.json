@@ -1,6 +1,0 @@
-{
-  "name": "minimal",
-  "displayName": "Minimal",
-  "description": "Directory and git branch only - clean and fast",
-  "features": ["directory", "git-branch", "character"]
-}

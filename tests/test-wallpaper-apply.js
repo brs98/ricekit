@@ -31,9 +31,9 @@ async function testWallpaperApply() {
   }
 
   try {
-    const macThemeDir = path.join(os.homedir(), 'Library', 'Application Support', 'Ricekit');
-    const currentDir = path.join(macThemeDir, 'current');
-    const statePath = path.join(macThemeDir, 'state.json');
+    const ricekitDir = path.join(os.homedir(), 'Library', 'Application Support', 'Ricekit');
+    const currentDir = path.join(ricekitDir, 'current');
+    const statePath = path.join(ricekitDir, 'state.json');
 
     console.log('A. Setup - Get current wallpaper (to restore later)');
     console.log('---------------------------------------------------');
@@ -60,7 +60,7 @@ async function testWallpaperApply() {
     console.log('B. Setup - Create test wallpaper image');
     console.log('---------------------------------------');
 
-    const testWallpaperDir = path.join(macThemeDir, 'test-wallpapers');
+    const testWallpaperDir = path.join(ricekitDir, 'test-wallpapers');
     if (!fs.existsSync(testWallpaperDir)) {
       fs.mkdirSync(testWallpaperDir, { recursive: true });
     }

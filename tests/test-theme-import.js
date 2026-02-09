@@ -32,9 +32,9 @@ async function testThemeImport() {
   }
 
   try {
-    const macThemeDir = path.join(os.homedir(), 'Library', 'Application Support', 'Ricekit');
-    const customThemesDir = path.join(macThemeDir, 'custom-themes');
-    const exportDir = path.join(macThemeDir, 'exports');
+    const ricekitDir = path.join(os.homedir(), 'Library', 'Application Support', 'Ricekit');
+    const customThemesDir = path.join(ricekitDir, 'custom-themes');
+    const exportDir = path.join(ricekitDir, 'exports');
 
     // Create exports directory if it doesn't exist
     if (!fs.existsSync(exportDir)) {

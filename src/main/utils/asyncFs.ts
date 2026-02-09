@@ -28,5 +28,6 @@ export {
   isExecutable,
   rename,
   appendFile,
+  touch,
   getFileSize,
 } from '../../core/utils/fs';

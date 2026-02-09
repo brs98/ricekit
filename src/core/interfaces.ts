@@ -161,6 +161,7 @@ export interface CLIAppsListOutput {
     category: string;
     isInstalled: boolean;
     isConfigured: boolean;
+    hasRicekitIntegration: boolean;
   }>;
 }
 

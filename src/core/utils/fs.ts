@@ -243,6 +243,15 @@ export async function appendFile(filePath: string, content: string): Promise<voi
 }
 
 /**
+ * Touch a file (update its mtime) without modifying content.
+ * Useful for triggering file watchers on config files.
+ */
+export async function touch(filePath: string): Promise<void> {
+  const now = new Date();
+  await fs.utimes(filePath, now, now);
+}
+
+/**
  * Get file size in bytes
  */
 export async function getFileSize(filePath: string): Promise<number> {

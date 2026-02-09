@@ -14,10 +14,10 @@ const path = require('path');
 const os = require('os');
 
 const homeDir = os.homedir();
-const macThemeDir = path.join(homeDir, 'Library', 'Application Support', 'Ricekit');
-const currentDir = path.join(macThemeDir, 'current');
+const ricekitDir = path.join(homeDir, 'Library', 'Application Support', 'Ricekit');
+const currentDir = path.join(ricekitDir, 'current');
 const symlinkPath = path.join(currentDir, 'theme');
-const themesDir = path.join(macThemeDir, 'themes');
+const themesDir = path.join(ricekitDir, 'themes');
 
 console.log('Test #116: Symlink operations handle existing symlinks correctly');
 console.log('='.repeat(70));

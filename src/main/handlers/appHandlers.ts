@@ -2,309 +2,30 @@
  * Application IPC Handlers
  * Handles application detection, setup, and refresh
  */
-import { ipcMain, shell, clipboard, IpcMainInvokeEvent } from 'electron';
+import { ipcMain, clipboard, IpcMainInvokeEvent } from 'electron';
 import path from 'path';
 import os from 'os';
-import fs from 'fs';
 import { execSync } from 'child_process';
-import type { Theme, AppInfo } from '../../shared/types';
+import type { AppInfo } from '../../shared/types';
 import { getErrorMessage } from '../../shared/errors';
 import { logger } from '../logger';
 import {
-  readFile,
-  writeFile,
   existsSync,
-  ensureDir,
   copyFile,
+  touch,
 } from '../utils/asyncFs';
 import { handleGetPreferences, handleSetPreferences } from './preferencesHandlers';
-import { handleGetState } from './stateHandlers';
 import { setupApp as coreSetupApp, previewSetup as corePreviewSetup, type SetupResult, type SetupPreview } from '../../core/apps/setup';
-
-// Forward declarations - will be set to avoid circular deps
-let getThemeHandler: ((event: IpcMainInvokeEvent | null, name: string) => Promise<Theme | null>) | null = null;
-let updateVSCodeSettingsHandler: ((themeName: string, themePath: string) => Promise<void>) | null = null;
-let updateCursorSettingsHandler: ((themeName: string, themePath: string) => Promise<void>) | null = null;
-
-/**
- * Set theme handlers (called by themeHandlers to avoid circular deps)
- */
-export function setThemeHandlers(handlers: {
-  getTheme: (event: IpcMainInvokeEvent | null, name: string) => Promise<Theme | null>;
-  updateVSCodeSettings: (themeName: string, themePath: string) => Promise<void>;
-  updateCursorSettings: (themeName: string, themePath: string) => Promise<void>;
-}): void {
-  getThemeHandler = handlers.getTheme;
-  updateVSCodeSettingsHandler = handlers.updateVSCodeSettings;
-  updateCursorSettingsHandler = handlers.updateCursorSettings;
-}
+import { detectApps } from '../../core/apps';
 
 /**
  * Detect installed applications
  */
 export async function handleDetectApps(): Promise<AppInfo[]> {
   logger.info('Detecting installed applications');
-
-  const apps = [
-    // Terminals
-    {
-      name: 'alacritty',
-      displayName: 'Alacritty',
-      category: 'terminal',
-      paths: ['/Applications/Alacritty.app', path.join(process.env.HOME || '', 'Applications', 'Alacritty.app')],
-      configPath: path.join(process.env.HOME || '', '.config', 'alacritty', 'alacritty.toml'),
-    },
-    {
-      name: 'kitty',
-      displayName: 'Kitty',
-      category: 'terminal',
-      paths: ['/Applications/kitty.app', path.join(process.env.HOME || '', 'Applications', 'kitty.app')],
-      configPath: path.join(process.env.HOME || '', '.config', 'kitty', 'kitty.conf'),
-    },
-    {
-      name: 'iterm2',
-      displayName: 'iTerm2',
-      category: 'terminal',
-      paths: ['/Applications/iTerm.app', path.join(process.env.HOME || '', 'Applications', 'iTerm.app')],
-      configPath: path.join(process.env.HOME || '', 'Library', 'Preferences', 'com.googlecode.iterm2.plist'),
-    },
-    {
-      name: 'warp',
-      displayName: 'Warp',
-      category: 'terminal',
-      paths: ['/Applications/Warp.app', path.join(process.env.HOME || '', 'Applications', 'Warp.app')],
-      configPath: path.join(process.env.HOME || '', '.warp', 'themes'),
-    },
-    {
-      name: 'hyper',
-      displayName: 'Hyper',
-      category: 'terminal',
-      paths: ['/Applications/Hyper.app', path.join(process.env.HOME || '', 'Applications', 'Hyper.app')],
-      configPath: path.join(process.env.HOME || '', '.hyper.js'),
-    },
-    {
-      name: 'wezterm',
-      displayName: 'WezTerm',
-      category: 'terminal',
-      paths: ['/Applications/WezTerm.app', path.join(process.env.HOME || '', 'Applications', 'WezTerm.app')],
-      configPath: path.join(process.env.HOME || '', '.wezterm.lua'),
-    },
-
-    // Editors
-    {
-      name: 'vscode',
-      displayName: 'Visual Studio Code',
-      category: 'editor',
-      paths: [
-        '/Applications/Visual Studio Code.app',
-        path.join(process.env.HOME || '', 'Applications', 'Visual Studio Code.app'),
-      ],
-      configPath: path.join(process.env.HOME || '', 'Library', 'Application Support', 'Code', 'User', 'settings.json'),
-    },
-    {
-      name: 'cursor',
-      displayName: 'Cursor',
-      category: 'editor',
-      paths: ['/Applications/Cursor.app', path.join(process.env.HOME || '', 'Applications', 'Cursor.app')],
-      configPath: path.join(
-        process.env.HOME || '',
-        'Library',
-        'Application Support',
-        'Cursor',
-        'User',
-        'settings.json'
-      ),
-    },
-    {
-      name: 'neovim',
-      displayName: 'Neovim',
-      category: 'editor',
-      paths: ['/usr/local/bin/nvim', '/opt/homebrew/bin/nvim'],
-      configPath: path.join(process.env.HOME || '', '.config', 'nvim'),
-    },
-    {
-      name: 'sublime',
-      displayName: 'Sublime Text',
-      category: 'editor',
-      paths: ['/Applications/Sublime Text.app', path.join(process.env.HOME || '', 'Applications', 'Sublime Text.app')],
-      configPath: path.join(
-        process.env.HOME || '',
-        'Library',
-        'Application Support',
-        'Sublime Text',
-        'Packages',
-        'User'
-      ),
-    },
-
-    // CLI Tools
-    {
-      name: 'bat',
-      displayName: 'bat',
-      category: 'cli',
-      paths: ['/usr/local/bin/bat', '/opt/homebrew/bin/bat'],
-      configPath: path.join(process.env.HOME || '', '.config', 'bat', 'config'),
-    },
-    {
-      name: 'delta',
-      displayName: 'delta',
-      category: 'cli',
-      paths: ['/usr/local/bin/delta', '/opt/homebrew/bin/delta'],
-      configPath: path.join(process.env.HOME || '', '.gitconfig'),
-    },
-    {
-      name: 'starship',
-      displayName: 'Starship',
-      category: 'cli',
-      paths: ['/usr/local/bin/starship', '/opt/homebrew/bin/starship'],
-      configPath: path.join(process.env.HOME || '', '.config', 'starship.toml'),
-    },
-    {
-      name: 'fzf',
-      displayName: 'fzf',
-      category: 'cli',
-      paths: ['/usr/local/bin/fzf', '/opt/homebrew/bin/fzf'],
-      configPath: path.join(process.env.HOME || '', '.fzf.bash'),
-    },
-    {
-      name: 'lazygit',
-      displayName: 'lazygit',
-      category: 'cli',
-      paths: ['/usr/local/bin/lazygit', '/opt/homebrew/bin/lazygit'],
-      configPath: path.join(process.env.HOME || '', '.config', 'lazygit', 'config.yml'),
-    },
-    {
-      name: 'sketchybar',
-      displayName: 'SketchyBar',
-      category: 'system',
-      paths: ['/usr/local/bin/sketchybar', '/opt/homebrew/bin/sketchybar'],
-      configPath: path.join(process.env.HOME || '', '.config', 'sketchybar', 'sketchybarrc'),
-    },
-
-    // Launchers
-    {
-      name: 'raycast',
-      displayName: 'Raycast',
-      category: 'launcher',
-      paths: ['/Applications/Raycast.app', path.join(process.env.HOME || '', 'Applications', 'Raycast.app')],
-      configPath: path.join(process.env.HOME || '', 'Library', 'Application Support', 'Raycast'),
-    },
-    {
-      name: 'alfred',
-      displayName: 'Alfred',
-      category: 'launcher',
-      paths: [
-        '/Applications/Alfred 5.app',
-        '/Applications/Alfred 4.app',
-        path.join(process.env.HOME || '', 'Applications', 'Alfred 5.app'),
-      ],
-      configPath: path.join(process.env.HOME || '', 'Library', 'Application Support', 'Alfred'),
-    },
-
-    // Communication
-    {
-      name: 'slack',
-      displayName: 'Slack',
-      category: 'communication',
-      paths: ['/Applications/Slack.app', path.join(process.env.HOME || '', 'Applications', 'Slack.app')],
-      configPath: path.join(
-        process.env.HOME || '',
-        'Library',
-        'Application Support',
-        'Ricekit',
-        'current',
-        'theme',
-        'slack-theme.txt'
-      ),
-    },
-
-    // Tiling Managers
-    {
-      name: 'aerospace',
-      displayName: 'AeroSpace',
-      category: 'tiling',
-      paths: [
-        '/Applications/AeroSpace.app',
-        path.join(process.env.HOME || '', 'Applications', 'AeroSpace.app'),
-        '/opt/homebrew/bin/aerospace',
-        '/usr/local/bin/aerospace',
-      ],
-      configPath: path.join(process.env.HOME || '', '.config', 'aerospace', 'aerospace.toml'),
-    },
-  ];
-
-  // Check which apps are installed and configured
-  const detectedApps = apps.map((app) => {
-    // Check if app is installed
-    const isInstalled = app.paths.some((p) => existsSync(p));
-
-    // Check if config file exists (means it might be configured)
-    const isConfigured = existsSync(app.configPath);
-
-    return {
-      name: app.name,
-      displayName: app.displayName,
-      category: app.category as AppInfo['category'],
-      isInstalled,
-      isConfigured: isInstalled && isConfigured,
-      configPath: app.configPath,
-    };
-  });
-
+  const detectedApps = await detectApps();
   logger.info(`Detected ${detectedApps.filter((a) => a.isInstalled).length} installed apps`);
   return detectedApps;
-}
-
-/**
- * Setup Cursor or VS Code for theming
- * These editors don't support file imports, so we directly configure them
- * and add them to enabledApps for automatic theme switching
- */
-async function setupEditorApp(appName: string, displayName: string, settingsPath: string): Promise<void> {
-  logger.info(`Setting up ${displayName}...`);
-
-  const settingsDir = path.dirname(settingsPath);
-
-  // Create settings directory if it doesn't exist
-  if (!existsSync(settingsDir)) {
-    await ensureDir(settingsDir);
-  }
-
-  // Create backup if settings file exists
-  if (existsSync(settingsPath)) {
-    const backupPath = `${settingsPath}.ricekit-backup`;
-    await copyFile(settingsPath, backupPath);
-    logger.info(`Created backup at: ${backupPath}`);
-  }
-
-  // Get current theme to apply
-  const state = await handleGetState();
-  const currentThemeName = state.currentTheme;
-
-  if (currentThemeName && getThemeHandler) {
-    // Apply current theme to the editor
-    const theme = await getThemeHandler(null, currentThemeName);
-    if (theme) {
-      if (appName === 'cursor' && updateCursorSettingsHandler) {
-        await updateCursorSettingsHandler(currentThemeName, theme.path);
-      } else if (appName === 'vscode' && updateVSCodeSettingsHandler) {
-        await updateVSCodeSettingsHandler(currentThemeName, theme.path);
-      }
-    }
-  }
-
-  // Add to enabledApps in preferences so future theme changes update this app
-  const prefs = await handleGetPreferences();
-  if (!prefs.enabledApps) {
-    prefs.enabledApps = [];
-  }
-  if (!prefs.enabledApps.includes(appName)) {
-    prefs.enabledApps.push(appName);
-    await handleSetPreferences(null, prefs);
-    logger.info(`Added ${appName} to enabled apps`);
-  }
-
-  logger.info(`Successfully configured ${displayName}`);
 }
 
 /**
@@ -317,74 +38,7 @@ async function setupEditorApp(appName: string, displayName: string, settingsPath
 export async function handleSetupApp(_event: IpcMainInvokeEvent | null, appName: string): Promise<SetupResult> {
   logger.info(`Setting up app: ${appName}`);
 
-  const homeDir = os.homedir();
-
   try {
-    // Handle Cursor and VS Code specially - they don't support file imports
-    if (appName === 'cursor') {
-      const cursorSettingsPath = path.join(
-        homeDir,
-        'Library',
-        'Application Support',
-        'Cursor',
-        'User',
-        'settings.json'
-      );
-      await setupEditorApp('cursor', 'Cursor', cursorSettingsPath);
-
-      return {
-        action: 'special',
-        message: 'Cursor has been configured. Themes will be applied automatically when you switch themes.',
-      };
-    }
-
-    if (appName === 'vscode') {
-      const vscodeSettingsPath = path.join(homeDir, 'Library', 'Application Support', 'Code', 'User', 'settings.json');
-      await setupEditorApp('vscode', 'Visual Studio Code', vscodeSettingsPath);
-
-      return {
-        action: 'special',
-        message: 'VS Code has been configured. Themes will be applied automatically when you switch themes.',
-      };
-    }
-
-    // Handle Slack specially - it requires manual theme application
-    if (appName === 'slack') {
-      const slackThemePath = path.join(
-        homeDir,
-        'Library',
-        'Application Support',
-        'Ricekit',
-        'current',
-        'theme',
-        'slack-theme.txt'
-      );
-
-      // Check if theme file exists
-      if (existsSync(slackThemePath)) {
-        // Open the theme file in the default text editor
-        await shell.openPath(slackThemePath);
-      } else {
-        throw new Error('Slack theme file not found. Please apply a theme first.');
-      }
-
-      // Add to enabledApps
-      const prefs = await handleGetPreferences();
-      if (!prefs.enabledApps) {
-        prefs.enabledApps = [];
-      }
-      if (!prefs.enabledApps.includes('slack')) {
-        prefs.enabledApps.push('slack');
-        await handleSetPreferences(null, prefs);
-      }
-
-      return {
-        action: 'special',
-        message: 'Slack requires manual setup. Copy the theme string from the opened file to Slack Preferences > Themes > Custom theme.',
-      };
-    }
-
-    // Use the refactored core setup logic for other apps
     const result = await coreSetupApp(appName);
 
     if (!result.success) {
@@ -451,79 +105,6 @@ export async function handlePreviewSetup(
 ): Promise<SetupPreview> {
   logger.info(`Previewing setup for: ${appName}`);
 
-  const homeDir = os.homedir();
-
-  // Handle Cursor and VS Code specially - they don't use file imports
-  if (appName === 'cursor') {
-    const settingsPath = path.join(
-      homeDir,
-      'Library',
-      'Application Support',
-      'Cursor',
-      'User',
-      'settings.json'
-    );
-    const fileExists = existsSync(settingsPath);
-    let currentContent: string | undefined;
-
-    if (fileExists) {
-      try {
-        currentContent = await readFile(settingsPath);
-        // Truncate for preview
-        const lines = currentContent.split('\n');
-        if (lines.length > 50) {
-          currentContent = lines.slice(0, 50).join('\n') + `\n\n... (${lines.length - 50} more lines)`;
-        }
-      } catch {
-        // Ignore read errors
-      }
-    }
-
-    return {
-      action: 'special',
-      configPath: settingsPath,
-      fileExists,
-      hasExistingIntegration: false,
-      currentContent,
-      message: 'Cursor will be configured to use Ricekit themes. Themes will be applied automatically when you switch themes.',
-    };
-  }
-
-  if (appName === 'vscode') {
-    const settingsPath = path.join(
-      homeDir,
-      'Library',
-      'Application Support',
-      'Code',
-      'User',
-      'settings.json'
-    );
-    const fileExists = existsSync(settingsPath);
-    let currentContent: string | undefined;
-
-    if (fileExists) {
-      try {
-        currentContent = await readFile(settingsPath);
-        const lines = currentContent.split('\n');
-        if (lines.length > 50) {
-          currentContent = lines.slice(0, 50).join('\n') + `\n\n... (${lines.length - 50} more lines)`;
-        }
-      } catch {
-        // Ignore read errors
-      }
-    }
-
-    return {
-      action: 'special',
-      configPath: settingsPath,
-      fileExists,
-      hasExistingIntegration: false,
-      currentContent,
-      message: 'VS Code will be configured to use Ricekit themes. Themes will be applied automatically when you switch themes.',
-    };
-  }
-
-  // Use core preview logic for other apps
   const result = await corePreviewSetup(appName);
 
   if (!result.success) {
@@ -542,93 +123,6 @@ export async function handleRefreshApp(_event: IpcMainInvokeEvent | null, appNam
 
   try {
     switch (appName.toLowerCase()) {
-      case 'kitty':
-        // Kitty supports remote control via socket
-        // Send reload config command to all running Kitty instances
-        try {
-          execSync('kitty @ --to unix:/tmp/kitty set-colors --all --configured', {
-            stdio: 'pipe',
-            timeout: 5000,
-          });
-          logger.info('Kitty theme refreshed successfully');
-        } catch (error: unknown) {
-          // If socket doesn't exist or kitty isn't running, that's ok
-          const message = error instanceof Error ? error.message : String(error);
-          if (message.includes('No such file') || message.includes('Connection refused')) {
-            logger.info('Kitty is not running or remote control is not enabled');
-          } else {
-            throw error;
-          }
-        }
-        break;
-
-      case 'iterm2':
-        // iTerm2 can be refreshed via AppleScript
-        try {
-          execSync(`osascript -e 'tell application "iTerm2" to tell current session of current window to reload profile'`, {
-            stdio: 'pipe',
-            timeout: 5000,
-          });
-          logger.info('iTerm2 theme refreshed successfully');
-        } catch (error: unknown) {
-          const message = error instanceof Error ? error.message : String(error);
-          if (message.includes('not running')) {
-            logger.info('iTerm2 is not running');
-          } else {
-            throw error;
-          }
-        }
-        break;
-
-      case 'alacritty': {
-        // Alacritty watches config file, so just touching it triggers reload
-        const alacrittyConfig = path.join(os.homedir(), '.config', 'alacritty', 'alacritty.toml');
-        if (existsSync(alacrittyConfig)) {
-          const now = new Date();
-          fs.utimesSync(alacrittyConfig, now, now);
-          logger.info('Alacritty config touched - will auto-reload');
-        } else {
-          logger.info('Alacritty config not found');
-        }
-        break;
-      }
-
-      case 'vscode':
-        // Re-apply the current theme settings to VS Code
-        try {
-          const state = await handleGetState();
-          if (state.currentTheme && getThemeHandler && updateVSCodeSettingsHandler) {
-            const theme = await getThemeHandler(null, state.currentTheme);
-            if (theme) {
-              await updateVSCodeSettingsHandler(state.currentTheme, theme.path);
-              logger.info('VS Code theme settings refreshed');
-            }
-          }
-        } catch (err: unknown) {
-          logger.info('Could not refresh VS Code:', getErrorMessage(err));
-        }
-        break;
-
-      case 'cursor':
-        // Re-apply the current theme settings to Cursor
-        try {
-          const state = await handleGetState();
-          if (state.currentTheme && getThemeHandler && updateCursorSettingsHandler) {
-            const theme = await getThemeHandler(null, state.currentTheme);
-            if (theme) {
-              await updateCursorSettingsHandler(state.currentTheme, theme.path);
-              logger.info('Cursor theme settings refreshed');
-            }
-          }
-        } catch (err: unknown) {
-          logger.info('Could not refresh Cursor:', getErrorMessage(err));
-        }
-        break;
-
-      case 'neovim':
-        logger.info('Neovim requires manual reload (:source $MYVIMRC) to apply theme changes');
-        break;
-
       case 'wezterm':
         // WezTerm watches the wezterm-colors.lua file we manage
         // Re-copy the current theme to trigger a reload
@@ -645,7 +139,21 @@ export async function handleRefreshApp(_event: IpcMainInvokeEvent | null, appNam
           const weztermThemeDest = path.join(os.homedir(), 'Library', 'Application Support', 'Ricekit', 'wezterm-colors.lua');
 
           if (existsSync(weztermThemeSrc)) {
+            // copyFile is atomic (no truncation race unlike writeFile)
             await copyFile(weztermThemeSrc, weztermThemeDest);
+
+            // Touch WezTerm's primary config to force reload (more reliable than watch list)
+            const weztermConfigPaths = [
+              path.join(os.homedir(), '.wezterm.lua'),
+              path.join(os.homedir(), '.config', 'wezterm', 'wezterm.lua'),
+            ];
+            for (const configPath of weztermConfigPaths) {
+              if (existsSync(configPath)) {
+                await touch(configPath);
+                break;
+              }
+            }
+
             logger.info('WezTerm theme file updated - will auto-reload');
           } else {
             logger.info('WezTerm theme source not found');
@@ -675,14 +183,6 @@ export async function handleRefreshApp(_event: IpcMainInvokeEvent | null, appNam
         }
         break;
       }
-
-      case 'slack':
-        // Slack doesn't support automatic theme refresh
-        // Users need to manually paste the theme string from the theme file
-        logger.info(
-          'Slack requires manual theme application. Open Preferences → Themes → Create custom theme and paste the theme string from the slack-theme.txt file.'
-        );
-        break;
 
       case 'aerospace':
         // AeroSpace uses JankyBorders for window borders

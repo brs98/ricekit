@@ -20,6 +20,7 @@ import {
 } from '../utils/fs';
 import { APP_CONFIG } from '../../shared/constants';
 import { typedKeys } from '../../shared/types';
+import { createErrorWithHint } from '../../shared/errors';
 import { getSnippet, hasSnippet, type AppSnippet } from './snippets';
 
 const homeDir = os.homedir();
@@ -28,7 +29,7 @@ const homeDir = os.homedir();
  * Result of app setup operation
  */
 export interface SetupResult {
-  action: 'created' | 'clipboard' | 'already_setup' | 'special';
+  action: 'created' | 'clipboard' | 'already_setup';
   configPath?: string;
   snippet?: string;
   instructions?: string;
@@ -39,7 +40,7 @@ export interface SetupResult {
  * Preview of what setup would do (without making changes)
  */
 export interface SetupPreview {
-  action: 'create' | 'modify' | 'already_setup' | 'special';
+  action: 'create' | 'modify' | 'already_setup';
   configPath: string;
   fileExists: boolean;
   hasExistingIntegration: boolean;
@@ -57,21 +58,9 @@ export interface SetupPreview {
  * App configuration definitions
  */
 const APP_CONFIGS = {
-  alacritty: {
-    configPath: path.join(homeDir, '.config', 'alacritty', 'alacritty.toml'),
-    templateFile: 'alacritty.toml',
-  },
-  kitty: {
-    configPath: path.join(homeDir, '.config', 'kitty', 'kitty.conf'),
-    templateFile: 'kitty.conf',
-  },
   neovim: {
     configPath: path.join(homeDir, '.config', 'nvim', 'init.lua'),
     templateFile: 'neovim-init.lua',
-  },
-  starship: {
-    configPath: path.join(homeDir, '.config', 'starship.toml'),
-    templateFile: 'starship.toml',
   },
   wezterm: {
     configPath: path.join(homeDir, '.config', 'wezterm', 'wezterm.lua'),
@@ -158,33 +147,21 @@ export async function getTemplate(appName: string): Promise<string | null> {
  * - 'created': Created new config from template
  * - 'clipboard': Existing config, snippet ready for clipboard
  * - 'already_setup': Config already has Ricekit integration
- * - 'special': App requires special handling (VS Code, Cursor, Slack)
  */
 export async function setupApp(
   appName: string
 ): Promise<Result<SetupResult, Error>> {
   const normalizedName = appName.toLowerCase();
 
-  // Handle special apps that need different treatment
-  if (normalizedName === 'vscode' || normalizedName === 'cursor') {
-    return ok({
-      action: 'special',
-      message: `${appName} integration is automatic. Apply a theme and ${appName} settings will be updated.`,
-    });
-  }
-
-  if (normalizedName === 'slack') {
-    return ok({
-      action: 'special',
-      message: 'Slack requires manual setup. Apply a theme, then copy the contents of slack-theme.txt to Slack Preferences > Themes > Custom theme.',
-    });
-  }
-
   // Check if app is supported
   const config = APP_CONFIGS[normalizedName as AppConfigKey];
   if (!config) {
     const supportedApps = typedKeys(APP_CONFIGS).join(', ');
-    return err(new Error(`Unsupported app: ${appName}. Supported: ${supportedApps}`));
+    return err(createErrorWithHint(
+      'UNEXPECTED_ERROR',
+      `Unsupported app: ${appName}`,
+      `Supported apps: ${supportedApps}. Run 'ricekit apps list' to see all options.`
+    ));
   }
 
   const { configPath } = config;
@@ -222,7 +199,11 @@ export async function setupApp(
   // No config exists - create from template
   const template = await getTemplate(normalizedName);
   if (!template) {
-    return err(new Error(`Template not found for ${appName}. Please create the config manually.`));
+    return err(createErrorWithHint(
+      'FILE_NOT_FOUND',
+      `Template not found for ${appName}`,
+      `Create the config manually at: ${configPath}`
+    ));
   }
 
   // Ensure config directory exists
@@ -273,86 +254,15 @@ export async function previewSetup(
 ): Promise<Result<SetupPreview, Error>> {
   const normalizedName = appName.toLowerCase();
 
-  // Handle special apps that need different treatment
-  if (normalizedName === 'vscode') {
-    const settingsPath = path.join(
-      homeDir,
-      'Library',
-      'Application Support',
-      'Code',
-      'User',
-      'settings.json'
-    );
-    const fileExists = existsSync(settingsPath);
-    let currentContent: string | undefined;
-
-    if (fileExists) {
-      const content = await readFile(settingsPath);
-      currentContent = truncateContent(content);
-    }
-
-    return ok({
-      action: 'special',
-      configPath: settingsPath,
-      fileExists,
-      hasExistingIntegration: false, // VS Code doesn't use file imports
-      currentContent,
-      message: 'VS Code integration is automatic. Ricekit will update settings.json with the current theme colors.',
-    });
-  }
-
-  if (normalizedName === 'cursor') {
-    const settingsPath = path.join(
-      homeDir,
-      'Library',
-      'Application Support',
-      'Cursor',
-      'User',
-      'settings.json'
-    );
-    const fileExists = existsSync(settingsPath);
-    let currentContent: string | undefined;
-
-    if (fileExists) {
-      const content = await readFile(settingsPath);
-      currentContent = truncateContent(content);
-    }
-
-    return ok({
-      action: 'special',
-      configPath: settingsPath,
-      fileExists,
-      hasExistingIntegration: false,
-      currentContent,
-      message: 'Cursor integration is automatic. Ricekit will update settings.json with the current theme colors.',
-    });
-  }
-
-  if (normalizedName === 'slack') {
-    const slackThemePath = path.join(
-      homeDir,
-      'Library',
-      'Application Support',
-      APP_CONFIG.dataDirName,
-      'current',
-      'theme',
-      'slack-theme.txt'
-    );
-
-    return ok({
-      action: 'special',
-      configPath: slackThemePath,
-      fileExists: existsSync(slackThemePath),
-      hasExistingIntegration: false,
-      message: 'Slack requires manual setup. Apply a theme, then copy the contents of slack-theme.txt to Slack Preferences > Themes > Custom theme.',
-    });
-  }
-
   // Check if app is supported
   const config = APP_CONFIGS[normalizedName as AppConfigKey];
   if (!config) {
     const supportedApps = typedKeys(APP_CONFIGS).join(', ');
-    return err(new Error(`Unsupported app: ${appName}. Supported: ${supportedApps}`));
+    return err(createErrorWithHint(
+      'UNEXPECTED_ERROR',
+      `Unsupported app: ${appName}`,
+      `Supported apps: ${supportedApps}. Run 'ricekit apps list' to see all options.`
+    ));
   }
 
   const { configPath } = config;
@@ -396,7 +306,11 @@ export async function previewSetup(
   // No config exists - would create from template
   const template = await getTemplate(normalizedName);
   if (!template) {
-    return err(new Error(`Template not found for ${appName}. Please create the config manually.`));
+    return err(createErrorWithHint(
+      'FILE_NOT_FOUND',
+      `Template not found for ${appName}`,
+      `Create the config manually at: ${configPath}`
+    ));
   }
 
   return ok({

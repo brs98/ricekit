@@ -26,8 +26,8 @@ export function createStatusCommand(): Command {
         const currentTheme = await getCurrentTheme();
         const state = await getState();
         const prefs = await getPreferences();
-        const installedApps = getInstalledApps();
-        const configuredApps = getConfiguredApps();
+        const installedApps = await getInstalledApps();
+        const configuredApps = await getConfiguredApps();
         const paths = getPathProvider();
 
         const customThemes = themes.filter((t) => t.isCustom);

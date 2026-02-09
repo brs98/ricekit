@@ -11,11 +11,11 @@ const os = require('os');
 
 console.log('🧪 Testing Symlink Creation Logic\n');
 
-const MACTHEME_DIR = path.join(os.homedir(), 'Library/Application Support/Ricekit');
-const THEMES_DIR = path.join(MACTHEME_DIR, 'themes');
-const CURRENT_DIR = path.join(MACTHEME_DIR, 'current');
+const RICEKIT_DIR = path.join(os.homedir(), 'Library/Application Support/Ricekit');
+const THEMES_DIR = path.join(RICEKIT_DIR, 'themes');
+const CURRENT_DIR = path.join(RICEKIT_DIR, 'current');
 const SYMLINK_PATH = path.join(CURRENT_DIR, 'theme');
-const STATE_PATH = path.join(MACTHEME_DIR, 'state.json');
+const STATE_PATH = path.join(RICEKIT_DIR, 'state.json');
 
 console.log('Step 1: Check initial state');
 const symlinkExists = fs.existsSync(SYMLINK_PATH);

@@ -15,12 +15,12 @@ const path = require('path');
 const os = require('os');
 
 const homeDir = os.homedir();
-const macThemeDir = path.join(homeDir, 'Library', 'Application Support', 'Ricekit');
-const themesDir = path.join(macThemeDir, 'themes');
-const currentDir = path.join(macThemeDir, 'current');
+const ricekitDir = path.join(homeDir, 'Library', 'Application Support', 'Ricekit');
+const themesDir = path.join(ricekitDir, 'themes');
+const currentDir = path.join(ricekitDir, 'current');
 const symlinkPath = path.join(currentDir, 'theme');
-const statePath = path.join(macThemeDir, 'state.json');
-const prefsPath = path.join(macThemeDir, 'preferences.json');
+const statePath = path.join(ricekitDir, 'state.json');
+const prefsPath = path.join(ricekitDir, 'preferences.json');
 
 async function simulateFullThemeSwitch(themeName, themePath) {
   // Simulate the full handleApplyTheme logic

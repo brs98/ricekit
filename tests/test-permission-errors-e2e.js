@@ -18,8 +18,8 @@ const { execSync } = require('child_process');
 const { spawn } = require('child_process');
 
 const TEST_NAME = 'Permission Error Handling - End-to-End';
-const MACTHEME_DIR = path.join(os.homedir(), 'Library/Application Support/Ricekit');
-const CURRENT_DIR = path.join(MACTHEME_DIR, 'current');
+const RICEKIT_DIR = path.join(os.homedir(), 'Library/Application Support/Ricekit');
+const CURRENT_DIR = path.join(RICEKIT_DIR, 'current');
 
 console.log(`[TEST] ========================================`);
 console.log(`[TEST] TEST: ${TEST_NAME}`);
@@ -79,10 +79,10 @@ async function runTest() {
   try {
     // Test 1: Verify Ricekit directory exists
     log(`Step 1: Verifying Ricekit directory exists...`);
-    if (fs.existsSync(MACTHEME_DIR)) {
-      pass(`Ricekit directory exists: ${MACTHEME_DIR}`);
+    if (fs.existsSync(RICEKIT_DIR)) {
+      pass(`Ricekit directory exists: ${RICEKIT_DIR}`);
     } else {
-      fail(`Ricekit directory does not exist: ${MACTHEME_DIR}`);
+      fail(`Ricekit directory does not exist: ${RICEKIT_DIR}`);
       throw new Error('Ricekit directory not found');
     }
 

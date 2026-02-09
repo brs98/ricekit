@@ -1,6 +1,0 @@
-{
-  "name": "minimal",
-  "displayName": "Minimal",
-  "description": "Clean unified diff view",
-  "features": ["syntax-highlighting", "unified"]
-}

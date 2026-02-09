@@ -19,8 +19,8 @@ const os = require('os');
 
 // Get paths
 const homeDir = os.homedir();
-const macThemeDir = path.join(homeDir, 'Library', 'Application Support', 'Ricekit');
-const customThemesDir = path.join(macThemeDir, 'custom-themes');
+const ricekitDir = path.join(homeDir, 'Library', 'Application Support', 'Ricekit');
+const customThemesDir = path.join(ricekitDir, 'custom-themes');
 
 // Test theme name
 const testThemeName = 'test-update-theme';
@@ -332,7 +332,7 @@ async function runTests() {
     log('\n--- Test 8: Verify bundled theme update protection ---');
     try {
       // Try to update a bundled theme (should fail)
-      const themesDir = path.join(macThemeDir, 'themes');
+      const themesDir = path.join(ricekitDir, 'themes');
       const tokyoNightDir = path.join(themesDir, 'tokyo-night');
 
       if (fs.existsSync(tokyoNightDir)) {

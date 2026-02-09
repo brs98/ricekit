@@ -13,8 +13,8 @@ const os = require('os');
 const { execSync } = require('child_process');
 
 const TEST_NAME = 'Permission Error Handling - Validation';
-const MACTHEME_DIR = path.join(os.homedir(), 'Library/Application Support/Ricekit');
-const CURRENT_DIR = path.join(MACTHEME_DIR, 'current');
+const RICEKIT_DIR = path.join(os.homedir(), 'Library/Application Support/Ricekit');
+const CURRENT_DIR = path.join(RICEKIT_DIR, 'current');
 
 console.log(`[TEST] ========================================`);
 console.log(`[TEST] TEST: ${TEST_NAME}`);
@@ -93,7 +93,7 @@ try {
 
   // Test 3: Verify Ricekit directories exist
   log(`\nStep 3: Verifying Ricekit directories...`);
-  if (fs.existsSync(MACTHEME_DIR)) {
+  if (fs.existsSync(RICEKIT_DIR)) {
     pass(`Ricekit directory exists`);
   } else {
     fail(`Ricekit directory does not exist`);

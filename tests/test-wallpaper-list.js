@@ -27,8 +27,8 @@ async function testWallpaperList() {
   }
 
   try {
-    const macThemeDir = path.join(os.homedir(), 'Library', 'Application Support', 'Ricekit');
-    const customThemesDir = path.join(macThemeDir, 'custom-themes');
+    const ricekitDir = path.join(os.homedir(), 'Library', 'Application Support', 'Ricekit');
+    const customThemesDir = path.join(ricekitDir, 'custom-themes');
 
     console.log('A. Setup - Create test theme with wallpapers');
     console.log('---------------------------------------------');
@@ -158,7 +158,7 @@ async function testWallpaperList() {
     console.log('E. Test with bundled theme (tokyo-night)');
     console.log('-----------------------------------------');
 
-    const themesDir = path.join(macThemeDir, 'themes');
+    const themesDir = path.join(ricekitDir, 'themes');
     const tokyoNightPath = path.join(themesDir, 'tokyo-night');
     const tokyoWallpapersPath = path.join(tokyoNightPath, 'wallpapers');
 

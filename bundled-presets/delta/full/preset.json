@@ -1,6 +1,0 @@
-{
-  "name": "full",
-  "displayName": "Full",
-  "description": "Side-by-side with decorations and enhanced styling",
-  "features": ["syntax-highlighting", "side-by-side", "line-numbers", "decorations", "word-diff"]
-}

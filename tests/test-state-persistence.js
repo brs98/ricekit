@@ -15,10 +15,10 @@ const path = require('path');
 const os = require('os');
 
 const homeDir = os.homedir();
-const macThemeDir = path.join(homeDir, 'Library', 'Application Support', 'Ricekit');
-const statePath = path.join(macThemeDir, 'state.json');
-const themesDir = path.join(macThemeDir, 'themes');
-const currentDir = path.join(macThemeDir, 'current');
+const ricekitDir = path.join(homeDir, 'Library', 'Application Support', 'Ricekit');
+const statePath = path.join(ricekitDir, 'state.json');
+const themesDir = path.join(ricekitDir, 'themes');
+const currentDir = path.join(ricekitDir, 'current');
 const symlinkPath = path.join(currentDir, 'theme');
 
 console.log('Test #124: Application state persists across restarts');

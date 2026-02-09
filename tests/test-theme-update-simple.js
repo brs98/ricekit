@@ -15,8 +15,8 @@ const os = require('os');
 
 // Get paths
 const homeDir = os.homedir();
-const macThemeDir = path.join(homeDir, 'Library', 'Application Support', 'Ricekit');
-const customThemesDir = path.join(macThemeDir, 'custom-themes');
+const ricekitDir = path.join(homeDir, 'Library', 'Application Support', 'Ricekit');
+const customThemesDir = path.join(ricekitDir, 'custom-themes');
 
 // Test theme name
 const testThemeName = 'test-update-simple';

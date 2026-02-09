@@ -12,8 +12,8 @@ console.log('🧪 Testing Symlink Fix\n');
 // Import the functions from the compiled JavaScript
 const { initializeApp, initializeAppAfterThemes, ensureThemeSymlink } = require('./dist/main/directories');
 
-const MACTHEME_DIR = path.join(require('os').homedir(), 'Library/Application Support/Ricekit');
-const CURRENT_DIR = path.join(MACTHEME_DIR, 'current');
+const RICEKIT_DIR = path.join(require('os').homedir(), 'Library/Application Support/Ricekit');
+const CURRENT_DIR = path.join(RICEKIT_DIR, 'current');
 const SYMLINK_PATH = path.join(CURRENT_DIR, 'theme');
 
 console.log('Step 1: Check initial state');

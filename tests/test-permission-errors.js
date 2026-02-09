@@ -15,7 +15,7 @@ const os = require('os');
 const { execSync } = require('child_process');
 
 const TEST_NAME = 'Permission Error Handling';
-const MACTHEME_DIR = path.join(os.homedir(), 'Library/Application Support/Ricekit');
+const RICEKIT_DIR = path.join(os.homedir(), 'Library/Application Support/Ricekit');
 
 console.log(`[TEST] ========================================`);
 console.log(`[TEST] TEST: ${TEST_NAME}`);
@@ -40,11 +40,11 @@ function fail(message) {
 }
 
 function restorePermissions() {
-  if (originalPermissions && fs.existsSync(MACTHEME_DIR)) {
+  if (originalPermissions && fs.existsSync(RICEKIT_DIR)) {
     log(`Restoring original permissions...`);
     try {
       // Restore to writable
-      execSync(`chmod -R u+w "${MACTHEME_DIR}"`);
+      execSync(`chmod -R u+w "${RICEKIT_DIR}"`);
       log(`✓ Permissions restored`);
     } catch (err) {
       log(`⚠ Warning: Could not restore permissions: ${err.message}`);
@@ -65,17 +65,17 @@ process.on('SIGINT', () => {
 try {
   // Test 1: Verify Ricekit directory exists
   log(`Step 1: Verifying Ricekit directory exists...`);
-  if (fs.existsSync(MACTHEME_DIR)) {
-    pass(`Ricekit directory exists: ${MACTHEME_DIR}`);
+  if (fs.existsSync(RICEKIT_DIR)) {
+    pass(`Ricekit directory exists: ${RICEKIT_DIR}`);
   } else {
-    fail(`Ricekit directory does not exist: ${MACTHEME_DIR}`);
+    fail(`Ricekit directory does not exist: ${RICEKIT_DIR}`);
     throw new Error('Ricekit directory not found');
   }
 
   // Test 2: Get original permissions
   log(`\nStep 2: Recording original permissions...`);
   try {
-    const stats = fs.statSync(MACTHEME_DIR);
+    const stats = fs.statSync(RICEKIT_DIR);
     originalPermissions = stats.mode;
     pass(`Original permissions recorded: ${(originalPermissions & parseInt('777', 8)).toString(8)}`);
   } catch (err) {
@@ -87,7 +87,7 @@ try {
   log(`\nStep 3: Making directory read-only to simulate permission error...`);
   try {
     // Make the themes directory read-only
-    const themesDir = path.join(MACTHEME_DIR, 'themes');
+    const themesDir = path.join(RICEKIT_DIR, 'themes');
     if (fs.existsSync(themesDir)) {
       execSync(`chmod -R u-w "${themesDir}"`);
       pass(`Made themes directory read-only`);
@@ -102,7 +102,7 @@ try {
   // Test 4: Verify directory is now read-only
   log(`\nStep 4: Verifying directory is read-only...`);
   try {
-    const testFile = path.join(MACTHEME_DIR, 'themes', 'test-write.txt');
+    const testFile = path.join(RICEKIT_DIR, 'themes', 'test-write.txt');
     try {
       fs.writeFileSync(testFile, 'test');
       fail(`Directory is still writable (should be read-only)`);

@@ -10,8 +10,8 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
-const MACTHEME_DIR = path.join(os.homedir(), 'Library', 'Application Support', 'Ricekit');
-const CURRENT_LINK = path.join(MACTHEME_DIR, 'current', 'theme');
+const RICEKIT_DIR = path.join(os.homedir(), 'Library', 'Application Support', 'Ricekit');
+const CURRENT_LINK = path.join(RICEKIT_DIR, 'current', 'theme');
 
 console.log('🧪 Ricekit Verification Test');
 console.log('=' .repeat(50));
@@ -43,7 +43,7 @@ async function runTest() {
 
     // Step 3: Verify themes directory exists and has themes
     console.log('\n✓ Step 3: Checking themes directory...');
-    const themesDir = path.join(MACTHEME_DIR, 'themes');
+    const themesDir = path.join(RICEKIT_DIR, 'themes');
     if (!fs.existsSync(themesDir)) {
       throw new Error('Themes directory does not exist');
     }

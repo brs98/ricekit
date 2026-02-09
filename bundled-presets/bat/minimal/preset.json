@@ -1,6 +1,0 @@
-{
-  "name": "minimal",
-  "displayName": "Minimal",
-  "description": "Plain output with syntax highlighting only",
-  "features": ["syntax-highlighting"]
-}

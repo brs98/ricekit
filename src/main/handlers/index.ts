@@ -6,9 +6,9 @@ import { ipcMain, BrowserWindow } from 'electron';
 import { logger } from '../logger';
 
 // Import handler registration functions
-import { registerThemeHandlers, handleApplyTheme, handleGetTheme, updateVSCodeSettings, updateCursorSettings } from './themeHandlers';
+import { registerThemeHandlers, handleApplyTheme } from './themeHandlers';
 import { registerWallpaperHandlers, handleApplyWallpaper } from './wallpaperHandlers';
-import { registerAppHandlers, setThemeHandlers } from './appHandlers';
+import { registerAppHandlers } from './appHandlers';
 import { registerPreferencesHandlers, setSchedulerCallbacks } from './preferencesHandlers';
 import {
   registerSystemHandlers,
@@ -30,13 +30,6 @@ export function setupIpcHandlers(): void {
   // System handlers need theme and wallpaper apply functions
   setThemeApplyHandler(handleApplyTheme);
   setWallpaperApplyHandler(handleApplyWallpaper);
-
-  // App handlers need theme-related functions
-  setThemeHandlers({
-    getTheme: handleGetTheme,
-    updateVSCodeSettings,
-    updateCursorSettings,
-  });
 
   // Preferences handlers need scheduler functions
   setSchedulerCallbacks({

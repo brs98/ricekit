@@ -16,8 +16,8 @@ const path = require('path');
 const os = require('os');
 const { exec } = require('child_process');
 
-const MACTHEME_DIR = path.join(os.homedir(), 'Library', 'Application Support', 'Ricekit');
-const PREFS_PATH = path.join(MACTHEME_DIR, 'preferences.json');
+const RICEKIT_DIR = path.join(os.homedir(), 'Library', 'Application Support', 'Ricekit');
+const PREFS_PATH = path.join(RICEKIT_DIR, 'preferences.json');
 
 console.log('🧪 Test #119: Application handles corrupted preference files');
 console.log('='.repeat(70));
@@ -103,7 +103,7 @@ async function runTest() {
 
     // Step 6: Check for backup file
     console.log('\n💾 Step 6: Checking for backup of corrupted file...');
-    const backupFiles = fs.readdirSync(MACTHEME_DIR).filter(f =>
+    const backupFiles = fs.readdirSync(RICEKIT_DIR).filter(f =>
       f.startsWith('preferences.json.corrupted') && f.endsWith('.backup')
     );
 
@@ -122,7 +122,7 @@ async function runTest() {
 
     // Clean up backup files
     for (const backupFile of backupFiles) {
-      const backupPath = path.join(MACTHEME_DIR, backupFile);
+      const backupPath = path.join(RICEKIT_DIR, backupFile);
       fs.unlinkSync(backupPath);
       console.log(`  ✓ Cleaned up backup: ${backupFile}`);
     }

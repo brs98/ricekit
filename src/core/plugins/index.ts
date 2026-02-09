@@ -38,33 +38,12 @@ const PLUGIN_DEFINITIONS = {
     dependencies: ['FelixKratz/formulae/borders'],
     description: 'AeroSpace is an i3-like tiling window manager for macOS',
   },
-  starship: {
-    displayName: 'Starship',
-    binaryPaths: ['/opt/homebrew/bin/starship', '/usr/local/bin/starship'],
-    configPath: path.join(homeDir, '.config', 'starship.toml'),
-    brewPackage: 'starship',
-    description: 'The minimal, blazing-fast, and customizable prompt',
-  },
   tmux: {
     displayName: 'tmux',
     binaryPaths: ['/opt/homebrew/bin/tmux', '/usr/local/bin/tmux'],
     configPath: path.join(homeDir, '.tmux.conf'),
     brewPackage: 'tmux',
     description: 'Terminal multiplexer',
-  },
-  bat: {
-    displayName: 'bat',
-    binaryPaths: ['/opt/homebrew/bin/bat', '/usr/local/bin/bat'],
-    configPath: path.join(homeDir, '.config', 'bat', 'config'),
-    brewPackage: 'bat',
-    description: 'A cat clone with syntax highlighting',
-  },
-  delta: {
-    displayName: 'delta',
-    binaryPaths: ['/opt/homebrew/bin/delta', '/usr/local/bin/delta'],
-    configPath: path.join(homeDir, '.gitconfig'),
-    brewPackage: 'git-delta',
-    description: 'A syntax-highlighting pager for git',
   },
 } as const;
 

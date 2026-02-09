@@ -17,13 +17,13 @@ function testThemeDirectories() {
   log('Testing theme directory structure...');
 
   const homeDir = os.homedir();
-  const macThemeDir = path.join(homeDir, 'Library', 'Application Support', 'Ricekit');
-  const themesDir = path.join(macThemeDir, 'themes');
-  const customThemesDir = path.join(macThemeDir, 'custom-themes');
-  const currentDir = path.join(macThemeDir, 'current');
+  const ricekitDir = path.join(homeDir, 'Library', 'Application Support', 'Ricekit');
+  const themesDir = path.join(ricekitDir, 'themes');
+  const customThemesDir = path.join(ricekitDir, 'custom-themes');
+  const currentDir = path.join(ricekitDir, 'current');
 
   // Check directories exist
-  if (!fs.existsSync(macThemeDir)) {
+  if (!fs.existsSync(ricekitDir)) {
     log('✗ FAIL: Ricekit directory does not exist');
     return false;
   }
@@ -57,7 +57,7 @@ function testThemeDirectories() {
   }
 
   // Check state.json
-  const statePath = path.join(macThemeDir, 'state.json');
+  const statePath = path.join(ricekitDir, 'state.json');
   if (!fs.existsSync(statePath)) {
     log('✗ FAIL: state.json does not exist');
     return false;
@@ -83,7 +83,7 @@ function testThemeDirectories() {
   log(`✓ theme symlink exists and points to: ${path.basename(linkTarget)}`);
 
   // Check preferences.json
-  const prefsPath = path.join(macThemeDir, 'preferences.json');
+  const prefsPath = path.join(ricekitDir, 'preferences.json');
   if (!fs.existsSync(prefsPath)) {
     log('✗ FAIL: preferences.json does not exist');
     return false;

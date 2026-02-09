@@ -5,14 +5,15 @@
 import path from 'path';
 import os from 'os';
 import type { AppInfo } from '../../shared/types';
-import { existsSync } from '../utils/fs';
+import { existsSync, readFile } from '../utils/fs';
+import { hasRicekitIntegration } from './setup';
 
 // Re-export setup functions and types
 export * from './setup';
 export type { SetupResult } from './setup';
 
 /** App category types matching AppInfo */
-type AppCategory = 'terminal' | 'editor' | 'cli' | 'launcher' | 'system' | 'communication' | 'tiling';
+type AppCategory = 'terminal' | 'editor' | 'system' | 'tiling';
 
 /** Shape for app definition entries */
 interface AppDefinition {
@@ -29,34 +30,6 @@ interface AppDefinition {
 const APP_DEFINITIONS: readonly AppDefinition[] = [
   // Terminals
   {
-    name: 'alacritty',
-    displayName: 'Alacritty',
-    category: 'terminal',
-    paths: ['/Applications/Alacritty.app', path.join(os.homedir(), 'Applications', 'Alacritty.app')],
-    configPath: path.join(os.homedir(), '.config', 'alacritty', 'alacritty.toml'),
-  },
-  {
-    name: 'kitty',
-    displayName: 'Kitty',
-    category: 'terminal',
-    paths: ['/Applications/kitty.app', path.join(os.homedir(), 'Applications', 'kitty.app')],
-    configPath: path.join(os.homedir(), '.config', 'kitty', 'kitty.conf'),
-  },
-  {
-    name: 'iterm2',
-    displayName: 'iTerm2',
-    category: 'terminal',
-    paths: ['/Applications/iTerm.app', path.join(os.homedir(), 'Applications', 'iTerm.app')],
-    configPath: path.join(os.homedir(), 'Library', 'Preferences', 'com.googlecode.iterm2.plist'),
-  },
-  {
-    name: 'warp',
-    displayName: 'Warp',
-    category: 'terminal',
-    paths: ['/Applications/Warp.app', path.join(os.homedir(), 'Applications', 'Warp.app')],
-    configPath: path.join(os.homedir(), '.warp', 'themes'),
-  },
-  {
     name: 'wezterm',
     displayName: 'WezTerm',
     category: 'terminal',
@@ -66,23 +39,6 @@ const APP_DEFINITIONS: readonly AppDefinition[] = [
 
   // Editors
   {
-    name: 'vscode',
-    displayName: 'Visual Studio Code',
-    category: 'editor',
-    paths: [
-      '/Applications/Visual Studio Code.app',
-      path.join(os.homedir(), 'Applications', 'Visual Studio Code.app'),
-    ],
-    configPath: path.join(os.homedir(), 'Library', 'Application Support', 'Code', 'User', 'settings.json'),
-  },
-  {
-    name: 'cursor',
-    displayName: 'Cursor',
-    category: 'editor',
-    paths: ['/Applications/Cursor.app', path.join(os.homedir(), 'Applications', 'Cursor.app')],
-    configPath: path.join(os.homedir(), 'Library', 'Application Support', 'Cursor', 'User', 'settings.json'),
-  },
-  {
     name: 'neovim',
     displayName: 'Neovim',
     category: 'editor',
@@ -90,36 +46,13 @@ const APP_DEFINITIONS: readonly AppDefinition[] = [
     configPath: path.join(os.homedir(), '.config', 'nvim'),
   },
 
-  // CLI Tools
-  {
-    name: 'bat',
-    displayName: 'bat',
-    category: 'cli',
-    paths: ['/usr/local/bin/bat', '/opt/homebrew/bin/bat'],
-    configPath: path.join(os.homedir(), '.config', 'bat', 'config'),
-  },
-  {
-    name: 'starship',
-    displayName: 'Starship',
-    category: 'cli',
-    paths: ['/usr/local/bin/starship', '/opt/homebrew/bin/starship'],
-    configPath: path.join(os.homedir(), '.config', 'starship.toml'),
-  },
+  // System
   {
     name: 'sketchybar',
     displayName: 'SketchyBar',
     category: 'system',
     paths: ['/usr/local/bin/sketchybar', '/opt/homebrew/bin/sketchybar'],
     configPath: path.join(os.homedir(), '.config', 'sketchybar', 'sketchybarrc'),
-  },
-
-  // Launchers
-  {
-    name: 'raycast',
-    displayName: 'Raycast',
-    category: 'launcher',
-    paths: ['/Applications/Raycast.app', path.join(os.homedir(), 'Applications', 'Raycast.app')],
-    configPath: path.join(os.homedir(), 'Library', 'Application Support', 'Raycast'),
   },
 
   // Tiling Managers
@@ -137,35 +70,78 @@ const APP_DEFINITIONS: readonly AppDefinition[] = [
   },
 ];
 
+/** Apps whose configPath is a directory, not a file */
+const DIRECTORY_CONFIG_APPS = new Set<string>();
+
+/**
+ * Check if an app's config has Ricekit integration
+ */
+async function checkIntegration(app: AppDefinition): Promise<boolean> {
+  if (!existsSync(app.configPath)) return false;
+
+  // Neovim: check init.lua inside the config directory
+  if (app.name === 'neovim') {
+    const initLua = path.join(app.configPath, 'init.lua');
+    if (!existsSync(initLua)) return false;
+    try {
+      const content = await readFile(initLua);
+      return hasRicekitIntegration(content);
+    } catch {
+      return false;
+    }
+  }
+
+  // Directory-based configs: can't read as file
+  if (DIRECTORY_CONFIG_APPS.has(app.name)) {
+    return false;
+  }
+
+  // File-based configs: read and check content
+  try {
+    const content = await readFile(app.configPath);
+    return hasRicekitIntegration(content);
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Detect installed applications
  */
-export function detectApps(): AppInfo[] {
-  return APP_DEFINITIONS.map((app) => {
-    const isInstalled = app.paths.some((p) => existsSync(p));
-    const isConfigured = existsSync(app.configPath);
+export async function detectApps(): Promise<AppInfo[]> {
+  return Promise.all(
+    APP_DEFINITIONS.map(async (app) => {
+      const isInstalled = app.paths.some((p) => existsSync(p));
+      const isConfigured = existsSync(app.configPath);
+      const hasIntegration = isInstalled && isConfigured
+        ? await checkIntegration(app)
+        : false;
 
-    return {
-      name: app.name,
-      displayName: app.displayName,
-      category: app.category,
-      isInstalled,
-      isConfigured: isInstalled && isConfigured,
-      configPath: app.configPath,
-    };
-  });
+      return {
+        name: app.name,
+        displayName: app.displayName,
+        category: app.category,
+        isInstalled,
+        isConfigured: isInstalled && isConfigured,
+        hasRicekitIntegration: hasIntegration,
+        configPath: app.configPath,
+      };
+    }),
+  );
 }
 
 /**
  * Get installed apps only
  */
-export function getInstalledApps(): AppInfo[] {
-  return detectApps().filter((app) => app.isInstalled);
+export async function getInstalledApps(): Promise<AppInfo[]> {
+  const apps = await detectApps();
+  return apps.filter((app) => app.isInstalled);
 }
 
 /**
  * Get configured apps only
  */
-export function getConfiguredApps(): AppInfo[] {
-  return detectApps().filter((app) => app.isConfigured);
+export async function getConfiguredApps(): Promise<AppInfo[]> {
+  const apps = await detectApps();
+  return apps.filter((app) => app.isConfigured);
 }

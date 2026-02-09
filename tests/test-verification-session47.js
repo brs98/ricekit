@@ -10,7 +10,7 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 
-const MACTHEME_DIR = path.join(os.homedir(), 'Library/Application Support/Ricekit');
+const RICEKIT_DIR = path.join(os.homedir(), 'Library/Application Support/Ricekit');
 
 async function runVerificationTest() {
   console.log('🔍 Session 47 - Verification Test\n');
@@ -54,7 +54,7 @@ async function runVerificationTest() {
     console.log('Test 2: Test theme application');
 
     // Get current theme from state
-    const statePath = path.join(MACTHEME_DIR, 'state.json');
+    const statePath = path.join(RICEKIT_DIR, 'state.json');
     const initialState = JSON.parse(fs.readFileSync(statePath, 'utf8'));
     const initialTheme = initialState.currentTheme;
     console.log(`   Current theme: ${initialTheme}`);
@@ -83,7 +83,7 @@ async function runVerificationTest() {
     await window.waitForTimeout(1500);
 
     // Verify symlink was updated
-    const symlinkPath = path.join(MACTHEME_DIR, 'current', 'theme');
+    const symlinkPath = path.join(RICEKIT_DIR, 'current', 'theme');
     const symlinkTarget = fs.readlinkSync(symlinkPath);
     console.log(`   Symlink now points to: ${symlinkTarget}`);
 
