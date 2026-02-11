@@ -535,8 +535,11 @@ if (!gotTheLock) {
   }
 
   app.on('activate', () => {
-    // On macOS, re-create window when dock icon is clicked and no windows are open
-    if (BrowserWindow.getAllWindows().length === 0) {
+    // On macOS, show the hidden window when dock icon is clicked, or create a new one
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.show();
+      mainWindow.focus();
+    } else {
       createWindow();
     }
   });
