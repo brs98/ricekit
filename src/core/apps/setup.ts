@@ -22,6 +22,7 @@ import { APP_CONFIG } from '../../shared/constants';
 import { typedKeys } from '../../shared/types';
 import { createErrorWithHint } from '../../shared/errors';
 import { getSnippet, hasSnippet, type AppSnippet } from './snippets';
+import { AEROSPACE_CONFIG_PATHS } from './constants';
 
 const homeDir = os.homedir();
 
@@ -77,6 +78,18 @@ const APP_CONFIGS = {
 } as const satisfies Record<string, { readonly configPath: string; readonly templateFile: string }>;
 
 type AppConfigKey = keyof typeof APP_CONFIGS;
+
+/**
+ * Resolve the effective config path for an app.
+ * For aerospace, checks the priority path list and returns the first existing path,
+ * falling back to the XDG default for new config creation.
+ */
+function resolveConfigPath(normalizedName: string, defaultPath: string): string {
+  if (normalizedName === 'aerospace') {
+    return AEROSPACE_CONFIG_PATHS.find((p) => existsSync(p)) ?? defaultPath;
+  }
+  return defaultPath;
+}
 
 /**
  * Detection patterns for Ricekit integration
@@ -164,7 +177,7 @@ export async function setupApp(
     ));
   }
 
-  const { configPath } = config;
+  const configPath = resolveConfigPath(normalizedName, config.configPath);
   const configDir = path.dirname(configPath);
 
   // Check if config already exists
@@ -196,28 +209,30 @@ export async function setupApp(
     return err(new Error(`No integration snippet defined for ${appName}`));
   }
 
-  // No config exists - create from template
+  // No config exists - create from template (always use XDG default path)
+  const createPath = config.configPath;
+  const createDir = path.dirname(createPath);
   const template = await getTemplate(normalizedName);
   if (!template) {
     return err(createErrorWithHint(
       'FILE_NOT_FOUND',
       `Template not found for ${appName}`,
-      `Create the config manually at: ${configPath}`
+      `Create the config manually at: ${createPath}`
     ));
   }
 
   // Ensure config directory exists
-  if (!existsSync(configDir)) {
-    await ensureDir(configDir);
+  if (!existsSync(createDir)) {
+    await ensureDir(createDir);
   }
 
   // Write template to config path
-  await writeFile(configPath, template);
+  await writeFile(createPath, template);
 
   return ok({
     action: 'created',
-    configPath,
-    message: `Created ${appName} config at ${configPath}`,
+    configPath: createPath,
+    message: `Created ${appName} config at ${createPath}`,
   });
 }
 
@@ -265,7 +280,7 @@ export async function previewSetup(
     ));
   }
 
-  const { configPath } = config;
+  const configPath = resolveConfigPath(normalizedName, config.configPath);
   const fileExists = existsSync(configPath);
 
   // Check if config already exists
@@ -303,19 +318,20 @@ export async function previewSetup(
     return err(new Error(`No integration snippet defined for ${appName}`));
   }
 
-  // No config exists - would create from template
+  // No config exists - would create from template (always use XDG default path)
+  const createPath = config.configPath;
   const template = await getTemplate(normalizedName);
   if (!template) {
     return err(createErrorWithHint(
       'FILE_NOT_FOUND',
       `Template not found for ${appName}`,
-      `Create the config manually at: ${configPath}`
+      `Create the config manually at: ${createPath}`
     ));
   }
 
   return ok({
     action: 'create',
-    configPath,
+    configPath: createPath,
     fileExists: false,
     hasExistingIntegration: false,
     newContent: template,

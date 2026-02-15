@@ -25,6 +25,7 @@ import {
   RECOMMENDED_NERD_FONT,
 } from '../utils/fontDetection';
 import { getErrorMessage } from '../../shared/errors';
+import { AEROSPACE_CONFIG_PATHS } from '../../core/apps/constants';
 
 /** Shape for plugin definition entries */
 interface PluginDefinition {
@@ -86,6 +87,24 @@ function isPluginName(name: string): name is PluginName {
 }
 
 /**
+ * Resolve the effective config directory and full config path for a plugin.
+ * For aerospace, checks the priority path list (~/.aerospace.toml first).
+ */
+function resolvePluginConfigPath(appName: PluginName): { configDir: string; configPath: string } {
+  const plugin = PLUGIN_DEFINITIONS[appName];
+  if (appName === 'aerospace') {
+    const existingPath = AEROSPACE_CONFIG_PATHS.find((p) => existsSync(p));
+    if (existingPath) {
+      return { configDir: path.dirname(existingPath), configPath: existingPath };
+    }
+  }
+  return {
+    configDir: plugin.configDir,
+    configPath: path.join(plugin.configDir, plugin.mainConfigFile),
+  };
+}
+
+/**
  * Check if Homebrew is installed
  */
 function isHomebrewInstalled(): boolean {
@@ -112,10 +131,11 @@ export async function handleGetPluginStatus(
     throw new Error(`Unknown plugin: ${appName}`);
   }
   const plugin = PLUGIN_DEFINITIONS[appName];
+  const { configDir, configPath } = resolvePluginConfigPath(appName);
 
   const binaryPath = plugin.binaryPaths.find((p) => existsSync(p));
-  const configExists = existsSync(plugin.configDir);
-  const mainConfigExists = existsSync(path.join(plugin.configDir, plugin.mainConfigFile));
+  const configExists = existsSync(configDir);
+  const mainConfigExists = existsSync(configPath);
 
   let version: string | undefined;
   if (binaryPath && !binaryPath.endsWith('.app') && !binaryPath.includes('.app/')) {
@@ -136,7 +156,7 @@ export async function handleGetPluginStatus(
     binaryPath,
     version,
     hasExistingConfig: configExists && mainConfigExists,
-    configPath: plugin.configDir,
+    configPath: configDir,
   };
 }
 
@@ -263,9 +283,7 @@ export async function handleSetPreset(
     throw new Error(`Unknown plugin: ${appName}`);
   }
   const plugin = PLUGIN_DEFINITIONS[appName];
-
-  const configDir = plugin.configDir;
-  const mainConfigPath = path.join(configDir, plugin.mainConfigFile);
+  const { configDir, configPath: mainConfigPath } = resolvePluginConfigPath(appName);
 
   // Ensure config directory exists
   await ensureDir(configDir);
@@ -290,7 +308,7 @@ export async function handleSetPreset(
   await setActivePreset(appName, presetName);
 
   // Generate the wrapper config file
-  await generateWrapperConfig(appName, plugin, configDir);
+  await generateWrapperConfig(appName, plugin, configDir, mainConfigPath);
 
   // Update preferences
   const prefs = await handleGetPreferences();
@@ -325,7 +343,8 @@ export async function handleSetPreset(
 async function generateWrapperConfig(
   appName: string,
   plugin: (typeof PLUGIN_DEFINITIONS)[PluginName],
-  configDir: string
+  configDir: string,
+  configPath?: string
 ): Promise<void> {
   const homeDir = os.homedir();
   const currentPresetPath = `${homeDir}/Library/Application Support/Ricekit/current/presets/${appName}`;
@@ -379,7 +398,8 @@ after-startup-command = [
           content = bordersCommand + content;
         }
 
-        await writeFile(path.join(configDir, 'aerospace.toml'), content);
+        const writePath = configPath ?? path.join(configDir, 'aerospace.toml');
+        await writeFile(writePath, content);
         logger.info('Generated AeroSpace config with borders integration');
       }
     }
@@ -430,10 +450,8 @@ export async function handleHasPluginBackup(_event: unknown, appName: string): P
   if (!isPluginName(appName)) {
     return false;
   }
-  const plugin = PLUGIN_DEFINITIONS[appName];
-
-  const backupPath = path.join(plugin.configDir, `${plugin.mainConfigFile}.ricekit-backup`);
-  return existsSync(backupPath);
+  const { configPath } = resolvePluginConfigPath(appName);
+  return existsSync(`${configPath}.ricekit-backup`);
 }
 
 /**
@@ -446,10 +464,9 @@ export async function handleRestorePluginBackup(
   if (!isPluginName(appName)) {
     return { success: false, error: `Unknown plugin: ${appName}` };
   }
-  const plugin = PLUGIN_DEFINITIONS[appName];
 
-  const configPath = path.join(plugin.configDir, plugin.mainConfigFile);
-  const backupPath = path.join(plugin.configDir, `${plugin.mainConfigFile}.ricekit-backup`);
+  const { configPath } = resolvePluginConfigPath(appName);
+  const backupPath = `${configPath}.ricekit-backup`;
 
   // Check if backup exists
   if (!existsSync(backupPath)) {

@@ -7,6 +7,7 @@ import os from 'os';
 import type { AppInfo } from '../../shared/types';
 import { existsSync, readFile } from '../utils/fs';
 import { hasRicekitIntegration } from './setup';
+import { AEROSPACE_CONFIG_PATHS } from './constants';
 
 // Re-export setup functions and types
 export * from './setup';
@@ -22,6 +23,8 @@ interface AppDefinition {
   category: AppCategory;
   paths: string[];
   configPath: string;
+  /** Ordered config paths to check (first match wins). Takes precedence over configPath. */
+  configPaths?: readonly string[];
 }
 
 /**
@@ -67,6 +70,7 @@ const APP_DEFINITIONS: readonly AppDefinition[] = [
       '/usr/local/bin/aerospace',
     ],
     configPath: path.join(os.homedir(), '.config', 'aerospace', 'aerospace.toml'),
+    configPaths: AEROSPACE_CONFIG_PATHS,
   },
 ];
 
@@ -74,14 +78,25 @@ const APP_DEFINITIONS: readonly AppDefinition[] = [
 const DIRECTORY_CONFIG_APPS = new Set<string>();
 
 /**
+ * Resolve the effective config path for an app.
+ * For apps with configPaths, returns the first existing path or the first entry as default.
+ */
+function resolveConfigPath(app: AppDefinition): string {
+  if (app.configPaths) {
+    return app.configPaths.find((p) => existsSync(p)) ?? app.configPaths[0] ?? app.configPath;
+  }
+  return app.configPath;
+}
+
+/**
  * Check if an app's config has Ricekit integration
  */
-async function checkIntegration(app: AppDefinition): Promise<boolean> {
-  if (!existsSync(app.configPath)) return false;
+async function checkIntegration(app: AppDefinition, configPath: string): Promise<boolean> {
+  if (!existsSync(configPath)) return false;
 
   // Neovim: check init.lua inside the config directory
   if (app.name === 'neovim') {
-    const initLua = path.join(app.configPath, 'init.lua');
+    const initLua = path.join(configPath, 'init.lua');
     if (!existsSync(initLua)) return false;
     try {
       const content = await readFile(initLua);
@@ -98,7 +113,7 @@ async function checkIntegration(app: AppDefinition): Promise<boolean> {
 
   // File-based configs: read and check content
   try {
-    const content = await readFile(app.configPath);
+    const content = await readFile(configPath);
     return hasRicekitIntegration(content);
   } catch {
     return false;
@@ -112,9 +127,10 @@ export async function detectApps(): Promise<AppInfo[]> {
   return Promise.all(
     APP_DEFINITIONS.map(async (app) => {
       const isInstalled = app.paths.some((p) => existsSync(p));
-      const isConfigured = existsSync(app.configPath);
+      const configPath = resolveConfigPath(app);
+      const isConfigured = existsSync(configPath);
       const hasIntegration = isInstalled && isConfigured
-        ? await checkIntegration(app)
+        ? await checkIntegration(app, configPath)
         : false;
 
       return {
@@ -124,7 +140,7 @@ export async function detectApps(): Promise<AppInfo[]> {
         isInstalled,
         isConfigured: isInstalled && isConfigured,
         hasRicekitIntegration: hasIntegration,
-        configPath: app.configPath,
+        configPath,
       };
     }),
   );

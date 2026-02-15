@@ -12,6 +12,7 @@ import { ok, err } from '../interfaces';
 import { existsSync } from '../utils/fs';
 import type { PluginStatus as BasePluginStatus } from '../../shared/types';
 import { typedKeys } from '../../shared/types';
+import { AEROSPACE_CONFIG_PATHS } from '../apps/constants';
 
 const homeDir = os.homedir();
 
@@ -92,7 +93,10 @@ export function getPluginStatus(name: string): PluginStatus | null {
   if (!plugin) return null;
 
   const binaryPath = plugin.binaryPaths.find((p) => existsSync(p));
-  const hasConfig = existsSync(plugin.configPath);
+  const configPath = name === 'aerospace'
+    ? (AEROSPACE_CONFIG_PATHS.find((p) => existsSync(p)) ?? plugin.configPath)
+    : plugin.configPath;
+  const hasConfig = existsSync(configPath);
 
   let version: string | undefined;
   if (binaryPath && !binaryPath.endsWith('.app') && !binaryPath.includes('.app/')) {
@@ -115,7 +119,7 @@ export function getPluginStatus(name: string): PluginStatus | null {
     isInstalled: !!binaryPath,
     hasConfig,
     hasExistingConfig: hasConfig, // Alias for base interface compatibility
-    configPath: plugin.configPath,
+    configPath,
     version,
     binaryPath,
   };
