@@ -1,5 +1,7 @@
 <div align="center">
 
+# Ricekit
+
 🎨 A beautiful Electron desktop application for unified theming across multiple macOS applications
 
 **[Features](#features) • [Installation](#installation) • [Development](#development) • [Architecture](#architecture)**
@@ -14,39 +16,43 @@ Ricekit is inspired by Omarchy's Linux theming system and brings unified theme m
 
 ### Key Features
 
-- 🎨 **11+ Built-in Themes** - Tokyo Night, Catppuccin, Gruvbox, Nord, Dracula, and more
+- 🎨 **14 Built-in Themes** - Tokyo Night, Catppuccin, Gruvbox, Nord, Rose Pine, and more
 - 🖼️ **Wallpaper Management** - Automatic wallpaper switching with theme changes
 - ✨ **Custom Theme Creator** - Build your own themes with a beautiful color picker
 - ⚡ **Quick Switcher** - Global keyboard shortcut for instant theme switching
 - 🌓 **Auto-Switching** - Match system appearance, schedule, or sunrise/sunset
-- 🔧 **20+ App Support** - Terminals, editors, CLI tools, and launchers
 - 💎 **Native macOS UI** - SF Pro fonts, vibrancy effects, and native controls
 
 ### Supported Applications
 
 #### Terminals
-
-- Alacritty • Kitty • iTerm2 • Warp • Hyper • Terminal.app
+- WezTerm
 
 #### Editors
-
-- VS Code • Cursor • Neovim • Sublime Text
-
-#### CLI Tools
-
-- bat • delta • starship • zsh-syntax-highlighting • fzf • lazygit
-
-#### Launchers
-
-- Raycast • Alfred
+- Neovim
 
 #### System
-
 - Desktop Wallpaper • macOS Accent Color • SketchyBar
 
 #### Tiling Managers
+- AeroSpace
 
-- AeroSpace (with JankyBorders)
+### Available Themes
+
+**14 built-in themes:**
+- Catppuccin (Mocha & Latte)
+- Ethereal
+- Everforest
+- Flexoki Light
+- Gruvbox
+- Hackerman
+- Kanagawa
+- Matte Black
+- Nord
+- Osaka Jade
+- Ristretto
+- Rose Pine
+- Tokyo Night
 
 ---
 
@@ -104,9 +110,11 @@ ricekit/
 │   │   ├── components/ # Reusable components
 │   │   └── hooks/      # Custom React hooks
 │   ├── preload/        # Preload script (context bridge)
-│   └── shared/         # Shared types and constants
+│   ├── shared/         # Shared types and constants
+│   ├── core/           # Core app detection and theme logic
+│   └── templates/      # App configuration templates
 ├── bundled-themes/     # Built-in theme files
-├── bundled-presets/    # Theme presets
+├── bundled-presets/    # Theme presets (AeroSpace configs)
 └── public/             # Static assets
 ```
 
@@ -157,22 +165,22 @@ Ricekit uses a symlink-based architecture for seamless theme switching:
 
 ### Example Configuration
 
-**Alacritty** (`~/.config/alacritty/alacritty.toml`):
+**WezTerm** (`~/.wezterm.lua`):
 
-```toml
-import = ["~/Library/Application Support/Ricekit/current/theme/alacritty.toml"]
+```lua
+dofile(os.getenv("HOME") .. "/Library/Application Support/Ricekit/current/theme/wezterm.lua")
 ```
 
-**Kitty** (`~/.config/kitty/kitty.conf`):
-
-```
-include ~/Library/Application Support/Ricekit/current/theme/kitty.conf
-```
-
-**Neovim** (`~/.config/nvim/lua/plugins/theme.lua`):
+**Neovim** (`~/.config/nvim/init.lua`):
 
 ```lua
 dofile(vim.fn.expand("~/Library/Application Support/Ricekit/current/theme/neovim.lua"))
+```
+
+**SketchyBar** (`~/.config/sketchybar/sketchybarrc`):
+
+```bash
+source "$HOME/Library/Application Support/Ricekit/current/theme/sketchybar.sh"
 ```
 
 ### IPC Channels
@@ -189,9 +197,30 @@ The main process exposes these IPC channels:
 
 ---
 
-## Testing
+## Contributing
 
-### Automated Testing
+Ricekit is in active development! Contributions are welcome.
+
+### Adding Support for New Applications
+
+To add support for a new application:
+
+1. Add the app definition to `src/core/apps/index.ts`
+2. Create a template file in `src/templates/`
+3. Add setup logic in `src/core/apps/setup.ts`
+
+### Roadmap
+
+Want to help? Here are some apps we'd love to support:
+
+**Terminals:** Alacritty, Kitty, iTerm2, Warp, Hyper, Terminal.app  
+**Editors:** VS Code, Cursor, Sublime Text, Zed  
+**CLI Tools:** bat, delta, starship, fzf, lazygit, zsh-syntax-highlighting  
+**Launchers:** Raycast, Alfred
+
+---
+
+## Testing
 
 ```bash
 npm test              # Run all tests
@@ -201,9 +230,7 @@ npm run test:e2e      # Run end-to-end tests
 
 ---
 
-## Deployment
-
-### Building for Distribution
+## Building for Distribution
 
 ```bash
 # Build for current platform
@@ -220,10 +247,10 @@ npm run package:linux
 
 ---
 
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
 ## License
 
 MIT License - see [LICENSE](LICENSE) for details.
+
+## Author
+
+Created by [Brandon Smith](https://github.com/brs98)
