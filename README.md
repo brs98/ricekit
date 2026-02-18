@@ -55,17 +55,17 @@ Ricekit is inspired by Omarchy's Linux theming system and brings unified theme m
 ### Prerequisites
 
 - macOS 11.0 or later
-- Node.js 18+ (for development)
+- Node.js 18+ (for building from source)
 
 ### Quick Start
 
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone https://github.com/brs98/ricekit.git
 cd ricekit
 
-# Run setup script
-./init.sh
+# Install dependencies
+npm install
 
 # Start development
 npm run dev
@@ -105,18 +105,10 @@ ricekit/
 │   │   └── hooks/      # Custom React hooks
 │   ├── preload/        # Preload script (context bridge)
 │   └── shared/         # Shared types and constants
-├── public/             # Static assets
-├── themes/             # Bundled theme files
-└── feature_list.json   # Test cases and development tracking
+├── bundled-themes/     # Built-in theme files
+├── bundled-presets/    # Theme presets
+└── public/             # Static assets
 ```
-
-### Development Workflow
-
-1. **Check feature_list.json** - Find the next feature to implement
-2. **Implement the feature** - Write code following the architecture
-3. **Test thoroughly** - Verify all test steps pass
-4. **Update feature_list.json** - Mark feature as passing
-5. **Commit your work** - Use descriptive commit messages
 
 ### Available Scripts
 
@@ -197,48 +189,7 @@ The main process exposes these IPC channels:
 
 ---
 
-## Feature Development
-
-This project uses a comprehensive test-driven approach. The `feature_list.json` file contains 200+ test cases covering:
-
-- ✅ **Functional Features** - Core functionality and user interactions
-- 🎨 **Style Features** - UI/UX and visual design requirements
-
-### Development Approach
-
-1. **Never remove or edit features** in `feature_list.json`
-2. **Only mark features as passing** when fully implemented and tested
-3. **Work on features in priority order** - fundamental features first
-4. **Test exhaustively** - all test steps must pass before marking complete
-5. **Commit frequently** - save progress for future sessions
-
-### For Future Agents
-
-This is a **long-running autonomous project** across many sessions:
-
-- Read `feature_list.json` to see what needs to be done
-- Read `claude-progress.txt` to see what was completed
-- Continue from where the previous agent left off
-- Focus on quality - production-ready is the goal
-- Update progress files before session ends
-
----
-
 ## Testing
-
-### Manual Testing
-
-Use the test steps in `feature_list.json` to verify functionality:
-
-```bash
-# Example: Testing theme switching
-1. Launch application
-2. Navigate to Themes view
-3. Click Apply on Tokyo Night theme
-4. Verify symlink points to tokyo-night
-5. Check that theme.json is updated
-6. Verify notification appears
-```
 
 ### Automated Testing
 
@@ -269,9 +220,10 @@ npm run package:linux
 
 ---
 
-## License
-MIT License - see [LICENSE](LICENSE) for details.
-
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+MIT License - see [LICENSE](LICENSE) for details.
