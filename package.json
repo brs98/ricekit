@@ -7,8 +7,8 @@
     "ricekit": "./dist/cli/cli/index.js"
   },
   "author": "Ricekit",
-  "license": "UNLICENSED",
-  "private": true,
+  "license": "MIT",
+  "private": false,
   "scripts": {
     "dev": "concurrently \"npm run dev:vite\" \"npm run dev:electron\"",
     "dev:vite": "vite",
