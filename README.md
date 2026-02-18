@@ -270,5 +270,8 @@ npm run package:linux
 ---
 
 ## License
+MIT License - see [LICENSE](LICENSE) for details.
 
-All rights reserved. This software is proprietary and may not be copied, modified, or distributed without a valid license.
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
