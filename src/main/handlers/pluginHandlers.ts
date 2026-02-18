@@ -429,8 +429,6 @@ export async function handleResetPluginToCustom(_event: unknown, appName: string
   if (!isPluginName(appName)) {
     throw new Error(`Unknown plugin: ${appName}`);
   }
-  const _plugin = PLUGIN_DEFINITIONS[appName]; // Validate plugin exists
-
   // Update preferences
   const prefs = await handleGetPreferences();
   if (prefs.pluginConfigs?.[appName]) {

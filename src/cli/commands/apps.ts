@@ -5,7 +5,7 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import { execSync } from 'child_process';
-import { detectApps, getInstalledApps, getConfiguredApps, setupApp, getSetupableApps } from '../../core/apps';
+import { detectApps, setupApp, getSetupableApps } from '../../core/apps';
 import type { SetupResult } from '../../core/apps';
 import { getPreferences, savePreferences } from '../../core/preferences';
 import { isJsonMode, output, success, error, table, info, warn } from '../utils/output';

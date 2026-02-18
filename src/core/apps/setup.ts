@@ -178,7 +178,6 @@ export async function setupApp(
   }
 
   const configPath = resolveConfigPath(normalizedName, config.configPath);
-  const configDir = path.dirname(configPath);
 
   // Check if config already exists
   if (existsSync(configPath)) {

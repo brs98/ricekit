@@ -62,16 +62,15 @@ export function createConfigCommand(): Command {
         const prefs = await getPreferences();
 
         // Type guard for nested objects
-        function isRecord(value: unknown): value is Record<string, unknown> {
-          return typeof value === 'object' && value !== null;
-        }
+        const isRecord = (value: unknown): value is Record<string, unknown> =>
+          typeof value === 'object' && value !== null;
 
         // Type-safe nested value setter
-        function setNestedValue(
+        const setNestedValue = (
           obj: Record<string, unknown>,
           keyPath: string[],
           value: unknown
-        ): void {
+        ): void => {
           let current = obj;
           for (let i = 0; i < keyPath.length - 1; i++) {
             const k = keyPath[i];
@@ -88,7 +87,7 @@ export function createConfigCommand(): Command {
           if (finalKey !== undefined) {
             current[finalKey] = value;
           }
-        }
+        };
 
         // Safely convert prefs to mutable record for updates
         const mutablePrefs: Record<string, unknown> = { ...prefs };

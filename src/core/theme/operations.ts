@@ -21,7 +21,6 @@ import {
   copyFile,
   stat,
   readDir,
-  unlink,
 } from '../utils/fs';
 import { getPathProvider } from '../paths';
 import type { Result } from '../interfaces';

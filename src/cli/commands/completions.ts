@@ -144,12 +144,12 @@ _${cli}() {
         '2: :->subcommand' \\
         '*::arg:->args'
 
-    case "\$state" in
+    case "$state" in
         command)
             _describe -t commands 'command' commands
             ;;
         subcommand)
-            case "\$words[2]" in
+            case "$words[2]" in
                 theme)
                     _describe -t theme_cmds 'theme command' theme_cmds
                     ;;
@@ -170,7 +170,7 @@ _${cli}() {
     esac
 }
 
-_${cli} "\$@"
+_${cli} "$@"
 `;
 }
 

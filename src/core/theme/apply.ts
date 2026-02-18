@@ -172,7 +172,7 @@ async function executeHookScript(
   }
 
   return new Promise((resolve) => {
-    exec(`"${expandedPath}" "${themeName}"`, (error, stdout, stderr) => {
+    exec(`"${expandedPath}" "${themeName}"`, (error, stdout, _stderr) => {
       if (error) {
         onLog?.(`Hook script failed: ${error.message}`);
         resolve(false);

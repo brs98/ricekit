@@ -2,7 +2,7 @@
 
 🎨 A beautiful Electron desktop application for unified theming across multiple macOS applications
 
-**[Features](#features) • [Installation](#installation) • [Development](#development) • [Architecture](#architecture) • [Contributing](#contributing)**
+**[Features](#features) • [Installation](#installation) • [Development](#development) • [Architecture](#architecture)**
 
 </div>
 
@@ -224,33 +224,6 @@ This is a **long-running autonomous project** across many sessions:
 
 ---
 
-## Contributing
-
-### Adding a New Theme
-
-1. Create theme directory in `themes/`
-2. Add `theme.json` with metadata and color palette
-3. Generate config files for all supported applications
-4. Add preview images
-5. Test theme across multiple applications
-
-### Adding Application Support
-
-1. Add app detection logic in `src/main/apps/detect.ts`
-2. Create config generator in `src/main/theme/generators/`
-3. Add setup wizard instructions
-4. Update documentation
-
-### Code Style
-
-- Use TypeScript for type safety
-- Follow Airbnb style guide
-- Use Prettier for formatting
-- Write descriptive commit messages
-- Add comments for complex logic
-
----
-
 ## Testing
 
 ### Manual Testing
@@ -294,56 +267,8 @@ npm run package:win
 npm run package:linux
 ```
 
-### Distribution Channels
-
-- GitHub Releases
-- Homebrew Cask
-- Direct download from website
-
----
-
-## Roadmap
-
-See `feature_list.json` for the complete development roadmap. Major milestones:
-
-- ✅ **Phase 1**: Project setup and architecture (Current)
-- ⏳ **Phase 2**: Core theme system and symlink management
-- ⏳ **Phase 3**: Theme browser UI
-- ⏳ **Phase 4**: Application integration and detection
-- ⏳ **Phase 5**: Theme editor and custom themes
-- ⏳ **Phase 6**: Wallpaper manager
-- ⏳ **Phase 7**: Menu bar and quick switcher
-- ⏳ **Phase 8**: Auto-switching features
-- ⏳ **Phase 9**: Polish and production release
-
 ---
 
 ## License
 
-[License TBD]
-
----
-
-## Acknowledgments
-
-- Inspired by [Omarchy's Linux theming system](https://github.com/omakoto/omarchy)
-- Theme designs from the amazing open-source community
-- Built with Electron, React, and lots of ☕
-
----
-
-## Support
-
-- 📖 [Documentation](docs/)
-- 🐛 [Issue Tracker](issues/)
-- 💬 [Discussions](discussions/)
-
----
-
-<div align="center">
-
-Made with 💙 for the macOS theming community
-
-**[⬆ Back to Top](#ricekit---unified-macos-theming-system)**
-
-</div>
+All rights reserved. This software is proprietary and may not be copied, modified, or distributed without a valid license.

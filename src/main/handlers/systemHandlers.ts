@@ -13,7 +13,7 @@ import { readDir, existsSync, readJson } from '../utils/asyncFs';
 import { getErrorMessage } from '../../shared/errors';
 import { handleGetPreferences } from './preferencesHandlers';
 import { handleGetState } from './stateHandlers';
-import { isGeoLocation, type GeoLocation } from '../../shared/validation';
+import { isGeoLocation } from '../../shared/validation';
 
 // Options for apply handlers when called from scheduler
 export interface ApplyOptions {

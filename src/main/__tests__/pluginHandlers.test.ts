@@ -103,7 +103,6 @@ import { handleGetPreferences, handleSetPreferences } from '../handlers/preferen
 import {
   existsSync as mockExistsSync,
   writeFile as mockWriteFile,
-  readFile as mockReadFile,
 } from '../utils/asyncFs';
 
 // Binary paths that should NOT exist by default in tests
@@ -344,8 +343,7 @@ describe('handleInstallPlugin', () => {
 
   it('should throw error and open brew.sh when Homebrew is not installed', async () => {
     // Configure existsSync to return false for all brew paths
-    vi.mocked(mockExistsSync).mockImplementation((filePath) => {
-      const filePathStr = String(filePath);
+    vi.mocked(mockExistsSync).mockImplementation((_filePath) => {
       // All binary paths including Homebrew should not exist
       return false;
     });

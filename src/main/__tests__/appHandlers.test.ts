@@ -106,10 +106,9 @@ vi.mock('../../core/apps', () => ({
 import {
   existsSync as mockExistsSync,
 } from '../utils/asyncFs';
-import { handleGetPreferences, handleSetPreferences } from '../handlers/preferencesHandlers';
+import { handleSetPreferences } from '../handlers/preferencesHandlers';
 import { clipboard } from 'electron';
 import {
-  handleDetectApps,
   handleSetupApp,
 } from '../handlers/appHandlers';
 import { setupApp as coreSetupApp } from '../../core/apps/setup';

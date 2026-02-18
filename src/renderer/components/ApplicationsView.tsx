@@ -55,7 +55,8 @@ export function ApplicationsView() {
 
       const statusMap: Record<string, PluginStatus> = {};
       pluginNames.forEach((name, i) => {
-        statusMap[name] = statuses[i];
+        const s = statuses[i];
+        if (s) statusMap[name] = s;
       });
       setPluginStatuses(statusMap);
     } catch (err: unknown) {
@@ -218,7 +219,6 @@ export function ApplicationsView() {
           const isEnabled = enabledApps.length === 0 || enabledApps.includes(item.name);
 
           if (item.kind === 'plugin') {
-            const status = getPluginStatus(item.name);
             return (
               <div
                 key={item.name}
