@@ -4,19 +4,14 @@
  */
 import { ipcMain, clipboard, IpcMainInvokeEvent } from 'electron';
 import path from 'path';
-import os from 'os';
-import { execSync } from 'child_process';
 import type { AppInfo } from '../../shared/types';
 import { getErrorMessage } from '../../shared/errors';
 import { logger } from '../logger';
-import {
-  existsSync,
-  copyFile,
-  touch,
-} from '../utils/asyncFs';
 import { handleGetPreferences, handleSetPreferences } from './preferencesHandlers';
 import { setupApp as coreSetupApp, previewSetup as corePreviewSetup, type SetupResult, type SetupPreview } from '../../core/apps/setup';
 import { detectApps } from '../../core/apps';
+import { getAdapter } from '../../core/apps/registry';
+import { getPathProvider } from '../../core/paths';
 
 /**
  * Detect installed applications
@@ -115,108 +110,35 @@ export async function handlePreviewSetup(
 }
 
 /**
+ * Get the current theme path from the symlink.
+ */
+function getCurrentThemePath(): string {
+  const paths = getPathProvider();
+  return path.join(paths.getCurrentDir(), 'theme');
+}
+
+/**
  * Refresh an application's theme
- * Sends reload signal to supported applications
+ * Sends reload signal to supported applications via adapter
  */
 export async function handleRefreshApp(_event: IpcMainInvokeEvent | null, appName: string): Promise<void> {
   logger.info(`Refreshing app: ${appName}`);
 
   try {
-    switch (appName.toLowerCase()) {
-      case 'wezterm':
-        // WezTerm watches the wezterm-colors.lua file we manage
-        // Re-copy the current theme to trigger a reload
-        try {
-          const currentThemePath = path.join(
-            os.homedir(),
-            'Library',
-            'Application Support',
-            'Ricekit',
-            'current',
-            'theme'
-          );
-          const weztermThemeSrc = path.join(currentThemePath, 'wezterm.lua');
-          const weztermThemeDest = path.join(os.homedir(), 'Library', 'Application Support', 'Ricekit', 'wezterm-colors.lua');
+    const adapter = getAdapter(appName);
 
-          if (existsSync(weztermThemeSrc)) {
-            // copyFile is atomic (no truncation race unlike writeFile)
-            await copyFile(weztermThemeSrc, weztermThemeDest);
+    if (!adapter?.notify) {
+      logger.info(`App refresh not supported for ${appName}`);
+      return;
+    }
 
-            // Touch WezTerm's primary config to force reload (more reliable than watch list)
-            const weztermConfigPaths = [
-              path.join(os.homedir(), '.wezterm.lua'),
-              path.join(os.homedir(), '.config', 'wezterm', 'wezterm.lua'),
-            ];
-            for (const configPath of weztermConfigPaths) {
-              if (existsSync(configPath)) {
-                await touch(configPath);
-                break;
-              }
-            }
+    const themePath = getCurrentThemePath();
+    const success = await adapter.notify(themePath, (msg) => logger.info(msg));
 
-            logger.info('WezTerm theme file updated - will auto-reload');
-          } else {
-            logger.info('WezTerm theme source not found');
-          }
-        } catch (err: unknown) {
-          logger.info('Could not refresh WezTerm:', getErrorMessage(err));
-        }
-        break;
-
-      case 'sketchybar': {
-        // SketchyBar can be reloaded via command line
-        // Use absolute path - in production, PATH doesn't include Homebrew
-        const sketchybarPaths = ['/opt/homebrew/bin/sketchybar', '/usr/local/bin/sketchybar'];
-        const sketchybarBin = sketchybarPaths.find((p) => existsSync(p));
-        if (sketchybarBin) {
-          try {
-            execSync(`"${sketchybarBin}" --reload`, {
-              stdio: 'pipe',
-              timeout: 5000,
-            });
-            logger.info('SketchyBar theme refreshed successfully');
-          } catch (err: unknown) {
-            logger.info('Could not refresh SketchyBar - it may not be running:', getErrorMessage(err));
-          }
-        } else {
-          logger.info('SketchyBar binary not found');
-        }
-        break;
-      }
-
-      case 'aerospace':
-        // AeroSpace uses JankyBorders for window borders
-        // Re-run the borders command with updated colors from the theme
-        try {
-          const currentThemePath = path.join(
-            os.homedir(),
-            'Library',
-            'Application Support',
-            'Ricekit',
-            'current',
-            'theme'
-          );
-          const bordersScript = path.join(currentThemePath, 'aerospace-borders.sh');
-
-          if (existsSync(bordersScript)) {
-            // Execute the borders script to apply new colors
-            // The script handles killing existing borders process and starting fresh
-            execSync(`bash "${bordersScript}"`, {
-              shell: '/bin/bash',
-              stdio: 'pipe',
-              timeout: 5000,
-            });
-            logger.info('AeroSpace/JankyBorders theme refreshed successfully');
-          } else {
-            logger.info('AeroSpace borders script not found');
-          }
-        } catch (err: unknown) {
-          logger.info('Could not refresh AeroSpace/JankyBorders - borders may not be installed:', getErrorMessage(err));
-        }
-        break;
-
-      default:
-        logger.info(`App refresh not supported for ${appName}`);
+    if (success) {
+      logger.info(`${adapter.displayName} theme refreshed successfully`);
+    } else {
+      logger.info(`Could not refresh ${adapter.displayName} - may not be running or configured`);
     }
   } catch (error: unknown) {
     logger.error(`Failed to refresh ${appName}:`, error);

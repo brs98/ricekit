@@ -7,14 +7,12 @@
 
 import path from 'path';
 import os from 'os';
-import { execSync } from 'child_process';
+import { exec } from 'child_process';
 import type { State, Preferences } from '../../shared/types';
 import {
   existsSync,
   readJson,
   writeJson,
-  copyFile,
-  touch,
   isSymlink,
   isDirectory,
   unlink,
@@ -28,6 +26,10 @@ import { listWallpapers, applyWallpaper } from '../wallpaper';
 import type { Result } from '../interfaces';
 import { ok, err } from '../interfaces';
 import { createErrorWithHint } from '../../shared/errors';
+import { getAdaptersWithNotify } from '../apps/registry';
+
+// Ensure all adapters are registered
+import '../apps/adapters';
 
 /**
  * Options for theme application
@@ -50,102 +52,6 @@ export interface ApplyThemeResult {
   previousTheme: string | null;
   currentTheme: string;
   notifiedApps: string[];
-}
-
-/**
- * Notify WezTerm by updating the theme file
- */
-async function notifyWezTerm(themePath: string, onLog?: (msg: string) => void): Promise<boolean> {
-  try {
-    const weztermThemeSrc = path.join(themePath, 'wezterm.lua');
-    const weztermThemeDest = path.join(
-      os.homedir(),
-      'Library',
-      'Application Support',
-      'Ricekit',
-      'wezterm-colors.lua'
-    );
-
-    if (existsSync(weztermThemeSrc)) {
-      // copyFile is atomic (no truncation race unlike writeFile)
-      await copyFile(weztermThemeSrc, weztermThemeDest);
-
-      // Touch WezTerm's primary config to force reload (more reliable than watch list)
-      const weztermConfigPaths = [
-        path.join(os.homedir(), '.wezterm.lua'),
-        path.join(os.homedir(), '.config', 'wezterm', 'wezterm.lua'),
-      ];
-      for (const configPath of weztermConfigPaths) {
-        if (existsSync(configPath)) {
-          await touch(configPath);
-          break;
-        }
-      }
-
-      onLog?.('✓ WezTerm theme file updated');
-      return true;
-    }
-    return false;
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Reload SketchyBar
- */
-async function notifySketchyBar(onLog?: (msg: string) => void): Promise<boolean> {
-  const sketchybarPaths = ['/opt/homebrew/bin/sketchybar', '/usr/local/bin/sketchybar'];
-  const sketchybarBin = sketchybarPaths.find((p) => existsSync(p));
-
-  if (!sketchybarBin) {
-    return false;
-  }
-
-  // Check if SketchyBar is running
-  let sketchybarRunning = false;
-  try {
-    execSync('pgrep -x sketchybar', { stdio: 'pipe' });
-    sketchybarRunning = true;
-  } catch {
-    // Not running
-  }
-
-  if (!sketchybarRunning) {
-    return false;
-  }
-
-  try {
-    execSync(`"${sketchybarBin}" --reload`, {
-      stdio: 'pipe',
-      timeout: 5000,
-    });
-    onLog?.('✓ SketchyBar reloaded');
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Apply AeroSpace/JankyBorders theme
- */
-async function notifyAeroSpace(themePath: string, onLog?: (msg: string) => void): Promise<boolean> {
-  try {
-    const bordersScript = path.join(themePath, 'aerospace-borders.sh');
-    if (existsSync(bordersScript)) {
-      execSync(`bash "${bordersScript}"`, {
-        shell: '/bin/bash',
-        stdio: 'pipe',
-        timeout: 5000,
-      });
-      onLog?.('✓ AeroSpace/JankyBorders theme applied');
-      return true;
-    }
-    return false;
-  } catch {
-    return false;
-  }
 }
 
 /**
@@ -220,27 +126,21 @@ export async function notifyApps(
     // Continue with defaults
   }
 
-  // Notify WezTerm (only if enabled)
-  if (isAppEnabled(prefs, 'wezterm')) {
-    if (await notifyWezTerm(themePath, onLog)) {
-      notifiedApps.push('wezterm');
+  // Iterate adapters with notify() method
+  const adapters = getAdaptersWithNotify();
+  let isFirst = true;
+
+  for (const adapter of adapters) {
+    if (!isAppEnabled(prefs, adapter.name)) continue;
+
+    if (await adapter.notify!(themePath, onLog)) {
+      notifiedApps.push(adapter.name);
     }
-  }
 
-  // Small delay for symlink to be visible
-  await new Promise((resolve) => setTimeout(resolve, 100));
-
-  // Reload SketchyBar (only if enabled)
-  if (isAppEnabled(prefs, 'sketchybar')) {
-    if (await notifySketchyBar(onLog)) {
-      notifiedApps.push('sketchybar');
-    }
-  }
-
-  // Apply AeroSpace/JankyBorders (only if enabled)
-  if (isAppEnabled(prefs, 'aerospace')) {
-    if (await notifyAeroSpace(themePath, onLog)) {
-      notifiedApps.push('aerospace');
+    // Small delay after first notification for symlink visibility
+    if (isFirst) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      isFirst = false;
     }
   }
 

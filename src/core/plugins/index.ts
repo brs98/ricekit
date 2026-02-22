@@ -12,7 +12,7 @@ import { ok, err } from '../interfaces';
 import { existsSync } from '../utils/fs';
 import type { PluginStatus as BasePluginStatus } from '../../shared/types';
 import { typedKeys } from '../../shared/types';
-import { AEROSPACE_CONFIG_PATHS } from '../apps/constants';
+import { AEROSPACE_CONFIG_PATHS } from '../apps/adapters/aerospace';
 
 const homeDir = os.homedir();
 

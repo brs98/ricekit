@@ -2,13 +2,12 @@
  * App setup operations
  *
  * Configure applications for Ricekit integration.
- * - No config exists → Create minimal working config from template
- * - Config exists with Ricekit → Return 'already_setup'
- * - Config exists without Ricekit → Return snippet for clipboard
+ * - No config exists -> Create minimal working config from template
+ * - Config exists with Ricekit -> Return 'already_setup'
+ * - Config exists without Ricekit -> Return snippet for clipboard
  */
 
 import path from 'path';
-import os from 'os';
 import fs from 'fs';
 import type { Result } from '../interfaces';
 import { ok, err } from '../interfaces';
@@ -19,12 +18,11 @@ import {
   ensureDir,
 } from '../utils/fs';
 import { APP_CONFIG } from '../../shared/constants';
-import { typedKeys } from '../../shared/types';
 import { createErrorWithHint } from '../../shared/errors';
-import { getSnippet, hasSnippet, type AppSnippet } from './snippets';
-import { AEROSPACE_CONFIG_PATHS } from './constants';
+import { getAdapter, getAllAdapters, resolveConfigPath } from './registry';
 
-const homeDir = os.homedir();
+// Ensure all adapters are registered
+import './adapters';
 
 /**
  * Result of app setup operation
@@ -56,39 +54,11 @@ export interface SetupPreview {
 }
 
 /**
- * App configuration definitions
+ * Snippet info returned by adapter or legacy lookup
  */
-const APP_CONFIGS = {
-  neovim: {
-    configPath: path.join(homeDir, '.config', 'nvim', 'init.lua'),
-    templateFile: 'neovim-init.lua',
-  },
-  wezterm: {
-    configPath: path.join(homeDir, '.config', 'wezterm', 'wezterm.lua'),
-    templateFile: 'wezterm.lua',
-  },
-  sketchybar: {
-    configPath: path.join(homeDir, '.config', 'sketchybar', 'sketchybarrc'),
-    templateFile: 'sketchybarrc',
-  },
-  aerospace: {
-    configPath: path.join(homeDir, '.config', 'aerospace', 'aerospace.toml'),
-    templateFile: 'aerospace.toml',
-  },
-} as const satisfies Record<string, { readonly configPath: string; readonly templateFile: string }>;
-
-type AppConfigKey = keyof typeof APP_CONFIGS;
-
-/**
- * Resolve the effective config path for an app.
- * For aerospace, checks the priority path list and returns the first existing path,
- * falling back to the XDG default for new config creation.
- */
-function resolveConfigPath(normalizedName: string, defaultPath: string): string {
-  if (normalizedName === 'aerospace') {
-    return AEROSPACE_CONFIG_PATHS.find((p) => existsSync(p)) ?? defaultPath;
-  }
-  return defaultPath;
+export interface AppSnippet {
+  snippet: string;
+  instructions: string;
 }
 
 /**
@@ -109,29 +79,26 @@ export function hasRicekitIntegration(content: string): boolean {
 }
 
 /**
- * Get template content for an app
+ * Get template content for an app by templateFile name.
  * Templates are bundled in src/templates/ for development
- * and resources/templates/ for production builds
+ * and resources/templates/ for production builds.
  */
-export async function getTemplate(appName: string): Promise<string | null> {
-  const config = APP_CONFIGS[appName.toLowerCase() as AppConfigKey];
-  if (!config) return null;
-
+export async function getTemplate(templateFile: string): Promise<string | null> {
   // Build list of paths to try
   // In CLI context, __dirname is dist/cli/core/apps
   // In main context, __dirname is dist/main/core/apps
   const templatePaths: string[] = [
     // Development CLI: dist/cli/core/apps -> src/templates (4 levels up + src/templates)
-    path.join(__dirname, '..', '..', '..', '..', 'src', 'templates', config.templateFile),
+    path.join(__dirname, '..', '..', '..', '..', 'src', 'templates', templateFile),
     // Development: relative to dist (compiled output)
-    path.join(__dirname, '..', '..', 'templates', config.templateFile),
+    path.join(__dirname, '..', '..', 'templates', templateFile),
   ];
 
   // Electron production: in app resources
   // process.resourcesPath only exists in Electron
   const resourcesPath = (process as NodeJS.Process & { resourcesPath?: string }).resourcesPath;
   if (resourcesPath) {
-    templatePaths.unshift(path.join(resourcesPath, 'templates', config.templateFile));
+    templatePaths.unshift(path.join(resourcesPath, 'templates', templateFile));
   }
 
   for (const templatePath of templatePaths) {
@@ -142,7 +109,7 @@ export async function getTemplate(appName: string): Promise<string | null> {
 
   // Fallback: try sync read for bundled templates
   try {
-    const fallbackPath = path.join(__dirname, '../../templates', config.templateFile);
+    const fallbackPath = path.join(__dirname, '../../templates', templateFile);
     if (fs.existsSync(fallbackPath)) {
       return fs.readFileSync(fallbackPath, 'utf-8');
     }
@@ -166,10 +133,9 @@ export async function setupApp(
 ): Promise<Result<SetupResult, Error>> {
   const normalizedName = appName.toLowerCase();
 
-  // Check if app is supported
-  const config = APP_CONFIGS[normalizedName as AppConfigKey];
-  if (!config) {
-    const supportedApps = typedKeys(APP_CONFIGS).join(', ');
+  const adapter = getAdapter(normalizedName);
+  if (!adapter) {
+    const supportedApps = getAllAdapters().map((a) => a.name).join(', ');
     return err(createErrorWithHint(
       'UNEXPECTED_ERROR',
       `Unsupported app: ${appName}`,
@@ -177,7 +143,7 @@ export async function setupApp(
     ));
   }
 
-  const configPath = resolveConfigPath(normalizedName, config.configPath);
+  const configPath = resolveConfigPath(adapter);
 
   // Check if config already exists
   if (existsSync(configPath)) {
@@ -208,10 +174,19 @@ export async function setupApp(
     return err(new Error(`No integration snippet defined for ${appName}`));
   }
 
-  // No config exists - create from template (always use XDG default path)
-  const createPath = config.configPath;
+  // No config exists - create from template (always use adapter.configPath for creation)
+  const createPath = adapter.configPath;
   const createDir = path.dirname(createPath);
-  const template = await getTemplate(normalizedName);
+
+  if (!adapter.templateFile) {
+    return err(createErrorWithHint(
+      'FILE_NOT_FOUND',
+      `No template defined for ${appName}`,
+      `Create the config manually at: ${createPath}`
+    ));
+  }
+
+  const template = await getTemplate(adapter.templateFile);
   if (!template) {
     return err(createErrorWithHint(
       'FILE_NOT_FOUND',
@@ -238,16 +213,17 @@ export async function setupApp(
 /**
  * Get list of apps that can be set up
  */
-export function getSetupableApps(): AppConfigKey[] {
-  return typedKeys(APP_CONFIGS);
+export function getSetupableApps(): string[] {
+  return getAllAdapters()
+    .filter((a) => a.templateFile)
+    .map((a) => a.name);
 }
 
 /**
  * Get the config path for an app
  */
 export function getAppConfigPath(appName: string): string | undefined {
-  const config = APP_CONFIGS[appName.toLowerCase() as AppConfigKey];
-  return config?.configPath;
+  return getAdapter(appName.toLowerCase())?.configPath;
 }
 
 /**
@@ -255,6 +231,25 @@ export function getAppConfigPath(appName: string): string | undefined {
  */
 export function supportsClipboardSetup(appName: string): boolean {
   return hasSnippet(appName);
+}
+
+/**
+ * Get the integration snippet for an app (delegates to adapter)
+ */
+export function getSnippet(appName: string): AppSnippet | undefined {
+  const adapter = getAdapter(appName.toLowerCase());
+  if (!adapter?.snippet) return undefined;
+  return {
+    snippet: adapter.snippet.code,
+    instructions: adapter.snippet.instructions,
+  };
+}
+
+/**
+ * Check if an app has a snippet defined (delegates to adapter)
+ */
+export function hasSnippet(appName: string): boolean {
+  return !!getAdapter(appName.toLowerCase())?.snippet;
 }
 
 /**
@@ -268,10 +263,9 @@ export async function previewSetup(
 ): Promise<Result<SetupPreview, Error>> {
   const normalizedName = appName.toLowerCase();
 
-  // Check if app is supported
-  const config = APP_CONFIGS[normalizedName as AppConfigKey];
-  if (!config) {
-    const supportedApps = typedKeys(APP_CONFIGS).join(', ');
+  const adapter = getAdapter(normalizedName);
+  if (!adapter) {
+    const supportedApps = getAllAdapters().map((a) => a.name).join(', ');
     return err(createErrorWithHint(
       'UNEXPECTED_ERROR',
       `Unsupported app: ${appName}`,
@@ -279,7 +273,7 @@ export async function previewSetup(
     ));
   }
 
-  const configPath = resolveConfigPath(normalizedName, config.configPath);
+  const configPath = resolveConfigPath(adapter);
   const fileExists = existsSync(configPath);
 
   // Check if config already exists
@@ -317,9 +311,18 @@ export async function previewSetup(
     return err(new Error(`No integration snippet defined for ${appName}`));
   }
 
-  // No config exists - would create from template (always use XDG default path)
-  const createPath = config.configPath;
-  const template = await getTemplate(normalizedName);
+  // No config exists - would create from template (always use adapter.configPath)
+  const createPath = adapter.configPath;
+
+  if (!adapter.templateFile) {
+    return err(createErrorWithHint(
+      'FILE_NOT_FOUND',
+      `No template defined for ${appName}`,
+      `Create the config manually at: ${createPath}`
+    ));
+  }
+
+  const template = await getTemplate(adapter.templateFile);
   if (!template) {
     return err(createErrorWithHint(
       'FILE_NOT_FOUND',
@@ -349,6 +352,3 @@ function truncateContent(content: string, maxLines = 50): string {
   }
   return lines.slice(0, maxLines).join('\n') + `\n\n... (${lines.length - maxLines} more lines)`;
 }
-
-// Re-export snippet utilities
-export { getSnippet, hasSnippet, type AppSnippet };

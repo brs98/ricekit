@@ -17,6 +17,7 @@ export function getDefaultPreferences(): Preferences {
     recentThemes: [],
     keyboardShortcuts: {
       quickSwitcher: 'Cmd+Shift+T',
+      cycleWallpaper: 'Cmd+Shift+W',
     },
     startAtLogin: false,
     showInMenuBar: true,

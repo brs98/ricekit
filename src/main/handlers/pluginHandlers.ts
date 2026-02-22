@@ -25,7 +25,7 @@ import {
   RECOMMENDED_NERD_FONT,
 } from '../utils/fontDetection';
 import { getErrorMessage } from '../../shared/errors';
-import { AEROSPACE_CONFIG_PATHS } from '../../core/apps/constants';
+import { AEROSPACE_CONFIG_PATHS } from '../../core/apps/adapters/aerospace';
 
 /** Shape for plugin definition entries */
 interface PluginDefinition {
